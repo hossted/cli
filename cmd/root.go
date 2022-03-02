@@ -7,17 +7,17 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// var cfgFile string
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	cfgFile string
 	rootCmd = &cobra.Command{
 		Use:   "hossted",
 		Short: "A brief description of your application.",
@@ -35,14 +35,19 @@ func Execute() {
 }
 
 func init() {
-
+	var err error
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hossted.yaml)")
-
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	cfgFile, err = checkFilePath()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func initConfig() {
+
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -55,6 +60,7 @@ func initConfig() {
 		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".hossted")
+
 	}
 
 	viper.AutomaticEnv()
@@ -62,5 +68,34 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+	fmt.Println(fmt.Printf("cfgFile:%s \n", cfgFile))
 	return
+}
+
+// checkFilePath checks if the ~/.hossted.yaml is created under root folder
+// Create it if it doesnt exist
+func checkFilePath() (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	path := filepath.Join(home, ".hossted.yaml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+
+		file, err := os.Create(path)
+		if err != nil {
+			return "", err
+		}
+		defer file.Close()
+
+		// Create file
+		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", path)
+		return "", err
+	} else {
+		// Normal case
+		// fmt.Printf("\nUsing TODO file  - %s \n\n", path)
+	}
+
+	return path, nil
 }
