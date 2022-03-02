@@ -15,12 +15,12 @@ import (
 var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register your application with the hossted ecosystem",
-	Long: `The hossted register commands asks for your email and organization name 
+	Long: `The hossted register commands asks for your email and organization name
 	and registers you with the hossted platfrom
 
-The hossted platform provides secure and hardened docker images and provides 
+The hossted platform provides secure and hardened docker images and provides
 best practices such as tracking updates , monitoring, centralized logging , backups and much more `,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// TOLEARN - move cmd to config
 		//curl -k -H "Authorization: Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA" -X POST --compressed "https://app.dev.hossted.com/api/register?uuid=$UUID&email=$EMAIL&organization=$ORGANIZATION"
 
@@ -63,6 +63,7 @@ best practices such as tracking updates , monitoring, centralized logging , back
 				fmt.Println("Error: " + gopherName + " not exists! :-(")
 			}
 		*/
+		return nil
 	},
 }
 
