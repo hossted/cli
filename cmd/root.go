@@ -68,12 +68,13 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
-	fmt.Println(fmt.Printf("cfgFile:%s \n", cfgFile))
+
 	return
 }
 
 // checkFilePath checks if the ~/.hossted.yaml is created under root folder
 // Create it if it doesnt exist
+// TODO: put upder .hossted dir
 func checkFilePath() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
