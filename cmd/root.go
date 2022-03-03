@@ -80,7 +80,7 @@ func checkFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	path := filepath.Join(home, ".hossted.yaml")
+	path := filepath.Join(home, ".hossted", "config.yaml")
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 
