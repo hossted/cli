@@ -9,7 +9,9 @@ import (
 // RegisterUsers updates email, organization, etc,.. in the yaml file
 func RegisterUsers() error {
 
+	viper.ConfigFileUsed()
 	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("here")
 		return err
 	}
 

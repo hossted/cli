@@ -37,7 +37,6 @@ func Execute() {
 func init() {
 	var err error
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hossted.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	cfgFile, err = checkConfigFilePath()
@@ -48,20 +47,13 @@ func init() {
 
 func initConfig() {
 
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".cobra" (without extension).
-		viper.AddConfigPath(home)
-		viper.AddConfigPath(".")
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".hossted")
-
-	}
+	// Not allowed to change cfg path anyway
+	home, err := homedir.Dir()
+	cobra.CheckErr(err)
+	folder := fmt.Sprintf("%s/%s", home, ".hossted")
+	viper.AddConfigPath(folder)
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
 
 	viper.AutomaticEnv()
 
@@ -73,13 +65,15 @@ func initConfig() {
 }
 
 // checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
-// Create it if it doesnt exist. Will create folder recursively
-// TODO: put upder .hossted dir
+// Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
+// TODO: init yaml file
 func checkConfigFilePath() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
 		return "", err
 	}
+
+	// Derive config path, and .hossted folder. Under user home
 	filePath := path.Join(home, ".hossted", "config.yaml")
 	folder := path.Dir(filePath)
 
@@ -103,7 +97,7 @@ func checkConfigFilePath() (string, error) {
 		return "", err
 	} else {
 		// Normal case
-		// fmt.Printf("\nUsing TODO file  - %s \n\n", path)
+		// Do nothing. config.yaml exists
 	}
 
 	return filePath, nil
