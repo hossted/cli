@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -40,7 +40,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hossted.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	cfgFile, err = checkFilePath()
+	cfgFile, err = checkConfigFilePath()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -72,31 +72,39 @@ func initConfig() {
 	return
 }
 
-// checkFilePath checks if the ~/.hossted.yaml is created under root folder
-// Create it if it doesnt exist
+// checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
+// Create it if it doesnt exist. Will create folder recursively
 // TODO: put upder .hossted dir
-func checkFilePath() (string, error) {
+func checkConfigFilePath() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
 		return "", err
 	}
-	path := filepath.Join(home, ".hossted", "config.yaml")
+	filePath := path.Join(home, ".hossted", "config.yaml")
+	folder := path.Dir(filePath)
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(filePath); err != nil {
 
-		file, err := os.Create(path)
+		// Create directory if not exists
+		if _, err := os.Stat(folder); err != nil {
+			os.MkdirAll(folder, os.ModePerm)
+		}
+
+		// Create file
+		file, err := os.Create(filePath)
 		if err != nil {
 			return "", err
 		}
 		defer file.Close()
 
 		// Create file
-		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", path)
+		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", filePath)
+
 		return "", err
 	} else {
 		// Normal case
 		// fmt.Printf("\nUsing TODO file  - %s \n\n", path)
 	}
 
-	return path, nil
+	return filePath, nil
 }
