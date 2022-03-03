@@ -5,6 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/hossted/hossted"
 )
@@ -16,7 +18,9 @@ var devCmd = &cobra.Command{
 	Long:    `[x] For Development only.`,
 	Aliases: []string{"x"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.Dev()
+		res, err := hossted.Prompt()
+		fmt.Println(res)
+
 		if err != nil {
 			return err
 		}

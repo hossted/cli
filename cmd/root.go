@@ -40,6 +40,8 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	cfgFile, err = checkConfigFilePath()
+	_ = cfgFile
+
 	if err != nil {
 		fmt.Println(err)
 	}
