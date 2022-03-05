@@ -36,7 +36,7 @@ func RegisterUsers() error {
 func WriteConfig(w io.Writer, config Config) error {
 
 	// Read Template
-	t, err := template.ParseFS(templates, "templates/config.gohtml")
+	t, err := template.ParseFS(templates, "templates/config.tmpl")
 	if err != nil {
 		return err
 	}

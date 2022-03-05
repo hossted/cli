@@ -91,14 +91,15 @@ func checkConfigFilePath() (string, error) {
 		}
 
 		// Create file
-		f, err := os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		f, err := os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			return "", err
 		}
 		defer f.Close()
 
 		// Write init config from template
-		err = hossted.WriteDummyConfig(f)
+		var config hossted.Config
+		err = hossted.WriteConfig(f, config) // empty config
 		if err != nil {
 			return "", err
 		}
