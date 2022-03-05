@@ -93,6 +93,8 @@ func checkConfigFilePath() (string, error) {
 		}
 		defer file.Close()
 
+		// Write init config from template
+
 		// Create file
 		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", filePath)
 
