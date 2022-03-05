@@ -2,14 +2,16 @@ package hossted
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
+	"github.com/spf13/hossted/utils"
 	"github.com/spf13/viper"
 )
 
 var (
 	//go:embed template/config.gohtml
-	b []byte
+	configTmpl []byte // config
 )
 
 // RegisterUsers updates email, organization, etc,.. in the yaml file
@@ -30,8 +32,10 @@ func RegisterUsers() error {
 
 // WriteDummyConfig writes the initial config to the ~/.hossted/config.yaml
 func WriteDummyConfig() error {
+	var config Config
 
-	fmt.Println(string(b))
+	json.Unmarshal(configTmpl, &config)
+	fmt.Println(utils.PrettyPrint(config))
 
 	return nil
 }
