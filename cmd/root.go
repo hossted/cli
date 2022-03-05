@@ -72,6 +72,7 @@ func initConfig() {
 
 // checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
 // Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
+// TODO: Use the util function one instead
 func checkConfigFilePath() (string, error) {
 
 	// Get config path, and .hossted folder. Under user home

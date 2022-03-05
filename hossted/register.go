@@ -1,17 +1,13 @@
 package hossted
 
 import (
-	"bufio"
 	"embed"
 	"errors"
 	"regexp"
 
 	"fmt"
-	"html/template"
-	"io"
 
 	"github.com/manifoldco/promptui"
-	"github.com/spf13/hossted/utils"
 )
 
 var (
@@ -34,31 +30,8 @@ func RegisterUsers() error {
 	config.Organization = company
 
 	// Write back to file
-	fmt.Println(utils.PrettyPrint(config))
-	fmt.Println("Register User")
-	return nil
-}
 
-// WriteConfig writes the config to the config file (~/.hossted/config.yaml)
-func WriteConfig(w io.Writer, config Config) error {
-
-	// Read Template
-	t, err := template.ParseFS(templates, "templates/config.tmpl")
-	if err != nil {
-		return err
-	}
-
-	// Write to template
-	err = t.Execute(w, config)
-	if err != nil {
-		return err
-	}
-	writer := bufio.NewWriter(w)
-	err = writer.Flush()
-	if err != nil {
-		fmt.Println(err)
-	}
-
+	fmt.Println("Updated config. Registered User")
 	return nil
 }
 
