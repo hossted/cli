@@ -64,7 +64,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 
 	return
@@ -72,7 +72,6 @@ func initConfig() {
 
 // checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
 // Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
-// TODO: init yaml file
 func checkConfigFilePath() (string, error) {
 
 	// Get config path, and .hossted folder. Under user home
@@ -104,7 +103,6 @@ func checkConfigFilePath() (string, error) {
 			return "", err
 		}
 
-		// Create file
 		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
 
 		return "", err

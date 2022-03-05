@@ -3,28 +3,19 @@ package hossted
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
+	"github.com/spf13/hossted/utils"
 )
 
 // For development only
 func Dev() error {
-	fmt.Println("Dev")
-	// Create file
-	f, err := os.OpenFile("/tmp/abcd.text", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	config, err := GetConfig()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	// Write init config from template
-	var config = Config{}
-	err = WriteConfig(f, config)
-	if err != nil {
-		return err
-	}
+	fmt.Println(utils.PrettyPrint(config))
 
 	return nil
 }
