@@ -21,7 +21,7 @@ func RegisterUsers() error {
 		return err
 	}
 
-	s := viper.Get("martin")
+	s := viper.Get("email")
 	fmt.Println(fmt.Sprintf("Getting config file - %s", s))
 
 	fmt.Println("Register User")

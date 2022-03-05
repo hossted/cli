@@ -11,6 +11,10 @@ import (
 // For development only
 func Dev() error {
 	fmt.Println("Dev")
+	err := WriteDummyConfig()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
