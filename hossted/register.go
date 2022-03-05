@@ -2,10 +2,8 @@ package hossted
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 
-	"github.com/spf13/hossted/utils"
 	"github.com/spf13/viper"
 )
 
@@ -34,8 +32,7 @@ func RegisterUsers() error {
 func WriteDummyConfig() error {
 	var config Config
 
-	json.Unmarshal(configTmpl, &config)
-	fmt.Println(utils.PrettyPrint(config))
+	// Construct empty struct for initialization
 
 	return nil
 }

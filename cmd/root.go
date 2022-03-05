@@ -74,16 +74,12 @@ func initConfig() {
 // Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
 // TODO: init yaml file
 func checkConfigFilePath() (string, error) {
-	home, err := homedir.Dir()
-	if err != nil {
-		return "", err
-	}
 
-	// Derive config path, and .hossted folder. Under user home
-	filePath := path.Join(home, ".hossted", "config.yaml")
-	folder := path.Dir(filePath)
+	// Get config path, and .hossted folder. Under user home
+	cfgPath := hossted.GetConfigPath()
+	folder := path.Dir(cfgPath)
 
-	if _, err := os.Stat(filePath); err != nil {
+	if _, err := os.Stat(cfgPath); err != nil {
 
 		// Create directory if not exists
 		if _, err := os.Stat(folder); err != nil {
@@ -91,20 +87,20 @@ func checkConfigFilePath() (string, error) {
 		}
 
 		// Create file
-		file, err := os.Create(filePath)
+		f, err := os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			return "", err
 		}
-		defer file.Close()
+		defer f.Close()
 
 		// Write init config from template
-		err = hossted.WriteDummyConfig()
+		err = hossted.WriteDummyConfig(f)
 		if err != nil {
 			return "", err
 		}
 
 		// Create file
-		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", filePath)
+		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
 
 		return "", err
 	} else {
@@ -112,5 +108,5 @@ func checkConfigFilePath() (string, error) {
 		// Do nothing. config.yaml exists
 	}
 
-	return filePath, nil
+	return cfgPath, nil
 }
