@@ -3,6 +3,7 @@ package hossted
 import (
 	_ "embed"
 	"fmt"
+	"io"
 
 	"github.com/spf13/viper"
 )
@@ -29,10 +30,12 @@ func RegisterUsers() error {
 }
 
 // WriteDummyConfig writes the initial config to the ~/.hossted/config.yaml
-func WriteDummyConfig() error {
+func WriteDummyConfig(w io.Writer) error {
 	var config Config
+	_ = config
 
 	// Construct empty struct for initialization
+	w.Write([]byte("abc"))
 
 	return nil
 }

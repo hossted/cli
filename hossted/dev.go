@@ -3,6 +3,7 @@ package hossted
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
@@ -11,7 +12,15 @@ import (
 // For development only
 func Dev() error {
 	fmt.Println("Dev")
-	err := WriteDummyConfig()
+	// Create file
+	f, err := os.OpenFile("/tmp/abcd.text", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Write init config from template
+	err = WriteDummyConfig(f)
 	if err != nil {
 		return err
 	}

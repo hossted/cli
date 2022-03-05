@@ -76,7 +76,11 @@ func initConfig() {
 func checkConfigFilePath() (string, error) {
 
 	// Get config path, and .hossted folder. Under user home
-	cfgPath := hossted.GetConfigPath()
+	cfgPath, err := hossted.GetConfigPath()
+	if err != nil {
+		return "", err
+	}
+
 	folder := path.Dir(cfgPath)
 
 	if _, err := os.Stat(cfgPath); err != nil {
