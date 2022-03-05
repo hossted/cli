@@ -1,6 +1,7 @@
 package hossted
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 
@@ -20,6 +21,7 @@ func GetConfigPath() (string, error) {
 }
 
 // GetConfigPath gets the config object
+// TODO: Check which field is missing
 func GetConfig() (Config, error) {
 	var config Config
 	cfgPath, err := GetConfigPath()
@@ -34,6 +36,12 @@ func GetConfig() (Config, error) {
 	err = yaml.Unmarshal(b, &config)
 	if err != nil {
 		return config, err
+	}
+
+	// Check if all the fields are set
+	// TODO: Check which field is missing
+	if (config.Email == "") || (config.Organization == "") || (config.UserToken == "") {
+		return config, fmt.Errorf("One of the fields is null")
 	}
 
 	return config, nil

@@ -3,12 +3,14 @@ package hossted
 import (
 	"bufio"
 	"embed"
+	"errors"
 
 	"fmt"
 	"html/template"
 	"io"
 
-	"github.com/spf13/viper"
+	"github.com/manifoldco/promptui"
+	"github.com/spf13/hossted/utils"
 )
 
 var (
@@ -19,15 +21,17 @@ var (
 // RegisterUsers updates email, organization, etc,.. in the yaml file
 func RegisterUsers() error {
 
-	viper.ConfigFileUsed()
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("here")
-		return err
-	}
+	config, _ := GetConfig() // Ignore error
+	_ = config
 
-	s := viper.Get("email")
-	fmt.Println(fmt.Sprintf("Getting config file - %s", s))
+	email, _ := emailPrompt()
 
+	// Assign back to config object
+	config.Email = email
+	config.Organization = "Axa"
+
+	// Write back to file
+	fmt.Println(utils.PrettyPrint(config))
 	fmt.Println("Register User")
 	return nil
 }
@@ -53,4 +57,27 @@ func WriteConfig(w io.Writer, config Config) error {
 	}
 
 	return nil
+}
+
+// registerPromp prompt the user for email and organization
+func emailPrompt() (string, error) {
+	validate := func(input string) error {
+		if len(input) <= 5 {
+			return errors.New("Invalid length. Must be larger than 5.")
+		}
+		return nil
+	}
+
+	prompt := promptui.Prompt{
+		Label:    "Email",
+		Validate: validate,
+	}
+
+	result, err := prompt.Run()
+
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return "", err
+	}
+	return result, nil
 }
