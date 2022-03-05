@@ -5,16 +5,20 @@ Copyright © 2022 Lior Kesos lior@hossted.com
 package cmd
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/hossted/hossted"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var (
@@ -94,6 +98,10 @@ func checkConfigFilePath() (string, error) {
 		defer file.Close()
 
 		// Write init config from template
+		err = hossted.WriteDummyConfig()
+		if err != nil {
+			return "", err
+		}
 
 		// Create file
 		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", filePath)
