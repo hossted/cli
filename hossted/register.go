@@ -1,16 +1,19 @@
 package hossted
 
 import (
-	_ "embed"
+	"bufio"
+	"embed"
+
 	"fmt"
+	"html/template"
 	"io"
 
 	"github.com/spf13/viper"
 )
 
 var (
-	//go:embed template/config.gohtml
-	configTmpl []byte // config
+	//go:embed templates
+	templates embed.FS
 )
 
 // RegisterUsers updates email, organization, etc,.. in the yaml file
@@ -29,13 +32,25 @@ func RegisterUsers() error {
 	return nil
 }
 
-// WriteDummyConfig writes the initial config to the ~/.hossted/config.yaml
-func WriteDummyConfig(w io.Writer) error {
-	var config Config
-	_ = config
+// WriteConfig writes the config to the config file (~/.hossted/config.yaml)
+func WriteConfig(w io.Writer, config Config) error {
 
-	// Construct empty struct for initialization
-	w.Write([]byte("abc"))
+	// Read Template
+	t, err := template.ParseFS(templates, "templates/config.gohtml")
+	if err != nil {
+		return err
+	}
+
+	// Write to template
+	err = t.Execute(w, config)
+	if err != nil {
+		return err
+	}
+	writer := bufio.NewWriter(w)
+	err = writer.Flush()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return nil
 }
