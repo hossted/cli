@@ -59,7 +59,7 @@ func WriteConfig(w io.Writer, config Config) error {
 	return nil
 }
 
-// registerPromp prompt the user for email and organization
+// emailPromp prompt the user for email
 func emailPrompt() (string, error) {
 	validate := func(input string) error {
 		if len(input) <= 5 {
@@ -73,11 +73,34 @@ func emailPrompt() (string, error) {
 		Validate: validate,
 	}
 
-	result, err := prompt.Run()
+	res, err := prompt.Run()
 
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return "", err
 	}
-	return result, nil
+	return res, nil
+}
+
+// organizationPrompt prompts the user for  organization
+func organizationPrompt() (string, error) {
+	validate := func(input string) error {
+		if len(input) <= 5 {
+			return errors.New("Invalid length. Must be longer than 5 characters.")
+		}
+		return nil
+	}
+
+	prompt := promptui.Prompt{
+		Label:    "Organization",
+		Validate: validate,
+	}
+
+	res, err := prompt.Run()
+
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return "", err
+	}
+	return res, nil
 }
