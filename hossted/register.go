@@ -41,11 +41,18 @@ func RegisterUsers() error {
 	if err != nil {
 		return err
 	}
-	_ = response
+
+	// TODO: Check response status
+	fmt.Println(response.Message)
+	jwt := response.JWT
+	endpoint := response.URL
 
 	// Assign back to config object
 	config.Email = email
 	config.Organization = organization
+	config.Organization = organization
+	config.SessionToken = jwt
+	config.EndPoint = endpoint
 
 	// Write back to file
 	err = WriteConfigWrapper(config)
@@ -54,11 +61,13 @@ func RegisterUsers() error {
 	}
 
 	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, organization))
+	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s"))
 	return nil
 }
 
 // registerRequest sends register request based on the input, env/email/organization, etc..
 // TODO: Set BearToken to env variable
+// TODO: Check response status
 func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
 
 	var response RegisterResponse
