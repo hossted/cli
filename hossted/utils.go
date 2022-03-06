@@ -122,7 +122,7 @@ func GetHosstedEnv() string {
 	case "prod":
 		env = "prod"
 	case "":
-		fmt.Printf("Environment variable (HOSSTED_ENV) is not set.\nUsing dev instead.\n")
+		// fmt.Printf("Environment variable (HOSSTED_ENV) is not set.\nUsing dev instead.\n")
 		env = "dev"
 	default:
 		fmt.Printf("Only dev/prod is supported for (HOSSTED_ENV).\nUsing dev instead.\n")
