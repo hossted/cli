@@ -24,11 +24,11 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	raw := h.EndPoint
 	u, _ := url.Parse(raw)
 	q, _ := url.ParseQuery(u.RawQuery)
-	q.Add("uuid", h.Params["uuid"])
-	q.Add("email", h.Params["email"])
-	q.Add("organization", h.Params["organization"])
+	for k, v := range h.Params {
+		q.Add(k, v)
+	}
 	u.RawQuery = q.Encode()
-	endpoint := u.RawQuery
+	endpoint := u.String()
 
 	req, err := http.NewRequest("POST", endpoint, nil)
 	if err != nil {
