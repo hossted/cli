@@ -2,7 +2,6 @@ package hossted
 
 import (
 	"crypto/tls"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,8 +13,6 @@ import (
 // TODO: Check all params is not null
 // TODO: Check response status
 func (h *HosstedRequest) SendRequest() (string, error) {
-
-	fmt.Println("Send Request")
 
 	// Set http client
 	tr := &http.Transport{
