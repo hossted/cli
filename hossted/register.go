@@ -24,11 +24,13 @@ func RegisterUsers() error {
 
 	// Prompt user for input
 	email, _ := emailPrompt()
-	company, _ := companyPrompt()
+	organization, _ := organizationPrompt()
 
 	// Assign back to config object
 	config.Email = email
-	config.Organization = company
+	config.Organization = organization
+
+	// Send request
 
 	// Write back to file
 	err := WriteConfigWrapper(config)
@@ -36,7 +38,31 @@ func RegisterUsers() error {
 		return fmt.Errorf("Can not write to config file. Please check.")
 	}
 
-	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, company))
+	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, organization))
+	return nil
+}
+
+// Send request
+func registerRequest(email, organization, uuid string) error {
+
+	// Construct param map for input params
+	params := make(map[string]string)
+	params["email"] = email
+	params["organization"] = organization
+	params["uuid"] = uuid
+
+	req := HosstedRequest{
+		EndPoint:     "https://app.dev.hossted.com/api/register",
+		Environment:  "dev",
+		Params:       params,
+		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
+		SessionToken: "",
+	}
+	resp, err := req.SendRequest()
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp)
 	return nil
 }
 
@@ -70,8 +96,8 @@ func emailPrompt() (string, error) {
 	return res, nil
 }
 
-// companyPrompt prompts the user for  organization
-func companyPrompt() (string, error) {
+// organizationPrompt prompts the user for organization
+func organizationPrompt() (string, error) {
 	validate := func(input string) error {
 		if len(input) <= 5 {
 			return errors.New("Invalid length. Must be longer than 5 characters.")
