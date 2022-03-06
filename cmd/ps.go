@@ -8,33 +8,27 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/hossted/hossted"
 )
 
 // psCmd represents the ps command
 var psCmd = &cobra.Command{
 	Use:   "ps",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Short: "tba",
+	Long: `
+TBA
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		err := hossted.ListPS()
+		if err != nil {
+			return err
+		}
 		fmt.Println("ps called")
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(psCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// psCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// psCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
