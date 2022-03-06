@@ -146,3 +146,9 @@ func GetHosstedUUID(path string) (string, error) {
 	}
 	return uuid, nil
 }
+
+// updateEndpointEnv replace the place holder with the environment specified
+func updateEndpointEnv(endpoint, env string) string {
+	endpoint = strings.ReplaceAll(endpoint, "__ENV__", env)
+	return endpoint
+}

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 // SendRequest sends a request to hossted API server with parameters
@@ -31,7 +30,7 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	}
 	u.RawQuery = q.Encode()
 	endpoint := u.String()
-	endpoint = strings.ReplaceAll(endpoint, "__ENV__", h.Environment)
+	endpoint = updateEndpointEnv(endpoint, h.Environment)
 
 	req, err := http.NewRequest("POST", endpoint, nil)
 	if err != nil {
