@@ -16,6 +16,7 @@ var (
 )
 
 // RegisterUsers updates email, organization, etc,.. in the yaml file
+// TODO: Use the original values as default.
 func RegisterUsers() error {
 
 	config, _ := GetConfig() // Ignore error
@@ -30,8 +31,12 @@ func RegisterUsers() error {
 	config.Organization = company
 
 	// Write back to file
+	err := WriteConfigWrapper(config)
+	if err != nil {
+		return fmt.Errorf("Can not write to config file. Please check.")
+	}
 
-	fmt.Println("Updated config. Registered User")
+	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, company))
 	return nil
 }
 
