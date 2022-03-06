@@ -11,7 +11,12 @@ import (
 // For development only
 func Dev() error {
 
+	// Construct param struct for input params
 	params := make(map[string]string)
+	params["uuid"] = "55cdfdae-ce22-4c36-8513-b09df945734a"
+	params["email"] = "billy@hossted.com"
+	params["organization"] = "asdf"
+
 	req := HosstedRequest{
 		EndPoint:     "https://app.dev.hossted.com/api/register",
 		Environment:  "dev",
@@ -19,11 +24,11 @@ func Dev() error {
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
 		SessionToken: "",
 	}
-	res, err := req.Send()
+	resp, err := req.SendRequest()
 	if err != nil {
 		return err
 	}
-	fmt.Println(res)
+	fmt.Println(resp)
 
 	return nil
 }
