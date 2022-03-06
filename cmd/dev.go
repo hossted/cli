@@ -16,8 +16,7 @@ var devCmd = &cobra.Command{
 	Long:    `[x] For Development only.`,
 	Aliases: []string{"x"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// res, err := hossted.Prompt()
-		// fmt.Println(res)
+
 		err := hossted.Dev()
 		if err != nil {
 			return err

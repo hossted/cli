@@ -6,16 +6,24 @@ import (
 	"strconv"
 
 	"github.com/manifoldco/promptui"
-	"github.com/spf13/hossted/utils"
 )
 
 // For development only
 func Dev() error {
-	config, err := GetConfig()
+
+	params := make(map[string]string)
+	req := HosstedRequest{
+		EndPoint:     "https://app.dev.hossted.com/api/register",
+		Environment:  "dev",
+		Params:       params,
+		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
+		SessionToken: "",
+	}
+	res, err := req.Send()
 	if err != nil {
 		return err
 	}
-	fmt.Println(utils.PrettyPrint(config))
+	fmt.Println(res)
 
 	return nil
 }

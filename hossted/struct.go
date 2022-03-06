@@ -11,9 +11,9 @@ type Config struct {
 
 // HosstedRequest is a struct to construct neccessary information to send the request to hossted backend
 type HosstedRequest struct {
-	EndPoint    string            // Request end point
-	Environment string            // environment, dev or prod
-	Params      map[string]string // kv pairs for param
-	BearToken   string            // Authorization token
-	JWT         string            // Session token
+	EndPoint     string            // Request end point
+	Environment  string            // environment, dev or prod
+	Params       map[string]string // kv pairs for param
+	BearToken    string            // Authorization token
+	SessionToken string            // Session token. JWT
 }
