@@ -25,8 +25,10 @@ func RegisterUsers() error {
 	config, _ := GetConfig() // Ignore error
 
 	// Prompt user for input
-	email, _ := emailPrompt()
-	organization, _ := organizationPrompt()
+	// email, _ := emailPrompt()
+	// organization, _ := organizationPrompt()
+	email := "billy@hossted.com"
+	organization := "asdf"
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
@@ -78,7 +80,8 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 	params["uuid"] = uuid
 
 	req := HosstedRequest{
-		EndPoint:     fmt.Sprintf("https://app.%d.hossted.com/api/register", env),
+		// Endpoint env needs to replace in runtime to for url parse to work. Otherwise runtime error.
+		EndPoint:     "https://app.dev.hossted.com/api/register",
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
