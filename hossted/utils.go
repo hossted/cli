@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 
 	"github.com/mitchellh/go-homedir"
@@ -109,4 +110,23 @@ func WriteConfig(w io.Writer, config Config) error {
 	}
 
 	return nil
+}
+
+// GetHosstedEnv gets the value of the env variable HOSSTED_ENV. Support dev/prod only.
+// If it is not set, default as dev
+func GetHosstedEnv() string {
+	env := strings.TrimSpace(os.Getenv("HOSSTED_ENV"))
+	switch env {
+	case "dev":
+		env = "dev"
+	case "prod":
+		env = "prod"
+	case "":
+		fmt.Printf("Environment variable (HOSSTED_ENV) is not set.\nUsing dev instead.\n")
+		env = "dev"
+	default:
+		fmt.Printf("Only dev/prod is supported for (HOSSTED_ENV).\nUsing dev instead.\n")
+		env = "dev"
+	}
+	return env
 }

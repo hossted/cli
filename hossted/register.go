@@ -15,7 +15,9 @@ var (
 	templates embed.FS
 )
 
-// RegisterUsers updates email, organization, etc,.. in the yaml file
+// RegisterUsers updates email, organization in the yaml file, if successful.
+// Also it will get the uuid of the machine, and environment from $HOSSTED_ENV.
+// It will then send an request to the API server, to get the JWT sessin token.
 // TODO: Use the original values as default.
 func RegisterUsers() error {
 
@@ -30,7 +32,12 @@ func RegisterUsers() error {
 	config.Email = email
 	config.Organization = organization
 
+	// Get uuid, env. Env default to be dev, if env varible
+	env := GetHosstedEnv()
+	uuid := "dummy"
+
 	// Send request
+	err := registerRequest(email, organization, uuid, env)
 
 	// Write back to file
 	err := WriteConfigWrapper(config)
@@ -42,8 +49,9 @@ func RegisterUsers() error {
 	return nil
 }
 
-// Send request
-func registerRequest(email, organization, uuid string) error {
+// registerRequest sends register request based on the input, env/email/organization, etc..
+// TODO: Set BearToken to env variable
+func registerRequest(email, organization, uuid, env string) error {
 
 	// Construct param map for input params
 	params := make(map[string]string)
@@ -52,8 +60,8 @@ func registerRequest(email, organization, uuid string) error {
 	params["uuid"] = uuid
 
 	req := HosstedRequest{
-		EndPoint:     "https://app.dev.hossted.com/api/register",
-		Environment:  "dev",
+		EndPoint:     fmt.Sprintf("https://app.%d.hossted.com/api/register", env),
+		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
 		SessionToken: "",
