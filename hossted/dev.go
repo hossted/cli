@@ -1,11 +1,13 @@
 package hossted
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
+	"github.com/spf13/hossted/utils"
 )
 
 // For development only
@@ -28,7 +30,12 @@ func Dev() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(resp)
+	var response RegisterResponse
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return err
+	}
+	fmt.Println(utils.PrettyPrint(resp))
 
 	return nil
 }

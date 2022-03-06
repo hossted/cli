@@ -2,6 +2,7 @@ package hossted
 
 import (
 	"embed"
+	"encoding/json"
 	"errors"
 	"regexp"
 
@@ -28,10 +29,6 @@ func RegisterUsers() error {
 	email, _ := emailPrompt()
 	organization, _ := organizationPrompt()
 
-	// Assign back to config object
-	config.Email = email
-	config.Organization = organization
-
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
 	uuid, err := GetHosstedUUID(config.UUIDPath)
@@ -40,7 +37,15 @@ func RegisterUsers() error {
 	}
 
 	// Send request
-	err = registerRequest(email, organization, uuid, env)
+	response, err := registerRequest(email, organization, uuid, env)
+	if err != nil {
+		return err
+	}
+	_ = response
+
+	// Assign back to config object
+	config.Email = email
+	config.Organization = organization
 
 	// Write back to file
 	err = WriteConfigWrapper(config)
@@ -75,7 +80,11 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 	if err != nil {
 		return response, err
 	}
-	fmt.Println(resp)
+
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return response, err
+	}
 	return response, nil
 }
 
