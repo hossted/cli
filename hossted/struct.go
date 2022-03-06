@@ -18,3 +18,11 @@ type HosstedRequest struct {
 	BearToken    string            // Authorization token
 	SessionToken string            // Session token. JWT
 }
+
+// RegisterResponse
+type RegisterResponse struct {
+	StatusCode int    `yaml:"status"`
+	Message    string `yaml:"msg"`
+	JWT        string `yaml:"jwt"`
+	URL        string `yaml:"url"`
+}

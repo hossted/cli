@@ -54,7 +54,9 @@ func RegisterUsers() error {
 
 // registerRequest sends register request based on the input, env/email/organization, etc..
 // TODO: Set BearToken to env variable
-func registerRequest(email, organization, uuid, env string) error {
+func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
+
+	var response RegisterResponse
 
 	// Construct param map for input params
 	params := make(map[string]string)
@@ -71,10 +73,10 @@ func registerRequest(email, organization, uuid, env string) error {
 	}
 	resp, err := req.SendRequest()
 	if err != nil {
-		return err
+		return response, err
 	}
 	fmt.Println(resp)
-	return nil
+	return response, nil
 }
 
 // emailPromp prompt the user for email
