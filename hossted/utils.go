@@ -130,3 +130,19 @@ func GetHosstedEnv() string {
 	}
 	return env
 }
+
+// GetHosstedUUID gets the uuid from the file /opt/linnovate/run/uuid.tzyb
+// Return error if it's empty or file not exists
+// TODO: Ask whether it's a request to get the uuid or somewhat being saved to the VM during creation
+func GetHosstedUUID(path string) (string, error) {
+	var uuid string
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return uuid, err
+	}
+	uuid = strings.TrimSpace(string(b))
+	if uuid == "" {
+		return uuid, fmt.Errorf("uuid is empty. Please check the content of the file - %s.", path)
+	}
+	return uuid, nil
+}

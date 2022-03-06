@@ -7,6 +7,7 @@ type Config struct {
 	UserToken    string `yaml:"userToken"`
 	SessionToken string `yaml:"sessionToken"`
 	EndPoint     string `yaml:"endPoint"`
+	UUIDPath     string `yaml:"uuidPath"`
 }
 
 // HosstedRequest is a struct to construct neccessary information to send the request to hossted backend

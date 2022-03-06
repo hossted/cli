@@ -34,13 +34,16 @@ func RegisterUsers() error {
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
-	uuid := "dummy"
+	uuid, err := GetHosstedUUID(config.UUIDPath)
+	if err != nil {
+		return err
+	}
 
 	// Send request
-	err := registerRequest(email, organization, uuid, env)
+	err = registerRequest(email, organization, uuid, env)
 
 	// Write back to file
-	err := WriteConfigWrapper(config)
+	err = WriteConfigWrapper(config)
 	if err != nil {
 		return fmt.Errorf("Can not write to config file. Please check.")
 	}
