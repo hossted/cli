@@ -1,11 +1,7 @@
 package hossted
 
 import (
-	"crypto/tls"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
 )
 
 // SendRequest sends a request to hossted API server with parameters
@@ -18,40 +14,42 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	fmt.Println("Send Request")
 
 	// Set http client
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	// Parse url params. "https://app.dev.hossted.com/api/register?uuid=$UUID&email=$EMAIL&organization=$ORGANIZATION"
-	raw := h.EndPoint
-	fmt.Sprintln(raw)
-	u, _ := url.Parse(raw)
-	q, _ := url.ParseQuery(u.RawQuery)
-
-	// for k, v := range h.Params {
-	// 	q.Add(k, v)
+	// tr := &http.Transport{
+	// 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	// }
-	fmt.Println("Two")
-	u.RawQuery = q.Encode()
-	endpoint := u.String()
+	// client := &http.Client{Transport: tr}
 
-	req, err := http.NewRequest("POST", endpoint, nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", h.BearToken)
+	// // Parse url params. "https://app.dev.hossted.com/api/register?uuid=$UUID&email=$EMAIL&organization=$ORGANIZATION"
+	// raw := h.EndPoint
+	// fmt.Sprintln(raw)
+	// u, _ := url.Parse(raw)
+	// q, _ := url.ParseQuery(u.RawQuery)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+	// // for k, v := range h.Params {
+	// // 	q.Add(k, v)
+	// // }
+	// fmt.Println("Two")
+	// u.RawQuery = q.Encode()
+	// endpoint := u.String()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
+	// req, err := http.NewRequest("POST", endpoint, nil)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// req.Header.Set("Authorization", h.BearToken)
+
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// defer resp.Body.Close()
+
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	body := "abc"
 
 	return string(body), nil
 }

@@ -71,11 +71,6 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 
 	var response RegisterResponse
 
-	fmt.Printf("email: %+v\n", email)
-	fmt.Printf("organization: %+v\n", organization)
-	fmt.Printf("uuid: %+v\n", uuid)
-	fmt.Printf("env: %+v\n", env)
-
 	// Construct param map for input params
 	params := make(map[string]string)
 	params["email"] = email
@@ -96,7 +91,7 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		return response, err
+		return response, fmt.Errorf("Failed to parse JSON. %w", err)
 	}
 	return response, nil
 }
@@ -121,6 +116,7 @@ func emailPrompt() (string, error) {
 	prompt := promptui.Prompt{
 		Label:    "Email",
 		Validate: validate,
+		Default:  "billy@hossted.com",
 	}
 
 	res, err := prompt.Run()
@@ -143,6 +139,7 @@ func organizationPrompt() (string, error) {
 	prompt := promptui.Prompt{
 		Label:    "Organization",
 		Validate: validate,
+		Default:  "asdf",
 	}
 
 	res, err := prompt.Run()
