@@ -23,7 +23,6 @@ var (
 func RegisterUsers() error {
 
 	config, _ := GetConfig() // Ignore error
-	_ = config
 
 	// Prompt user for input
 	email, _ := emailPrompt()
@@ -71,6 +70,11 @@ func RegisterUsers() error {
 func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
 
 	var response RegisterResponse
+
+	fmt.Printf("email: %+v\n", email)
+	fmt.Printf("organization: %+v\n", organization)
+	fmt.Printf("uuid: %+v\n", uuid)
+	fmt.Printf("env: %+v\n", env)
 
 	// Construct param map for input params
 	params := make(map[string]string)
@@ -130,7 +134,7 @@ func emailPrompt() (string, error) {
 // organizationPrompt prompts the user for organization
 func organizationPrompt() (string, error) {
 	validate := func(input string) error {
-		if len(input) <= 5 {
+		if len(input) < 3 {
 			return errors.New("Invalid length. Must be longer than 5 characters.")
 		}
 		return nil

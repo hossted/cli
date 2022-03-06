@@ -2,6 +2,7 @@ package hossted
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,6 +15,8 @@ import (
 // TODO: Check response status
 func (h *HosstedRequest) SendRequest() (string, error) {
 
+	fmt.Println("Send Request")
+
 	// Set http client
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -22,11 +25,14 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 
 	// Parse url params. "https://app.dev.hossted.com/api/register?uuid=$UUID&email=$EMAIL&organization=$ORGANIZATION"
 	raw := h.EndPoint
+	fmt.Sprintln(raw)
 	u, _ := url.Parse(raw)
 	q, _ := url.ParseQuery(u.RawQuery)
-	for k, v := range h.Params {
-		q.Add(k, v)
-	}
+
+	// for k, v := range h.Params {
+	// 	q.Add(k, v)
+	// }
+	fmt.Println("Two")
 	u.RawQuery = q.Encode()
 	endpoint := u.String()
 
