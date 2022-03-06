@@ -56,11 +56,11 @@ func RegisterUsers() error {
 	// Write back to file
 	err = WriteConfigWrapper(config)
 	if err != nil {
-		return fmt.Errorf("Can not write to config file. Please check.")
+		return fmt.Errorf("Can not write to config file. Please check. %w", err)
 	}
 
 	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, organization))
-	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s"))
+	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s\n", endpoint))
 	return nil
 }
 
