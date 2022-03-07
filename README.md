@@ -38,7 +38,7 @@ cd cli
 go install .
 ```
 # Pre-requiste
-  uuid being saved under `/opt/linnovate/run/uuid.tzy`
+  uuid being saved under `/opt/linnovate/run/uuid.txt`
   ```
   <uuid>
   ```
@@ -65,5 +65,5 @@ go install .
    organization: hossted
    userToken:
    sessionToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjcxLCJpYXQiOjE2NDY1NTE5MTgsImV4cCI6MTY0NjYzODMxOH0.jgweC-by2l7ksJ9NZUtjgIqvpu27ls7NZEsZgKrmkGA
-   uuidPath: /opt/linnovate/run/uuid.tzy
+   uuidPath: /opt/linnovate/run/uuid.txt
    ```

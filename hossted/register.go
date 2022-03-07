@@ -58,7 +58,7 @@ func RegisterUsers() error {
 		return fmt.Errorf("Can not write to config file. Please check. %w", err)
 	}
 
-	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]", email, organization))
+	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]\n", email, organization))
 	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s\n", endpoint))
 	return nil
 }
@@ -107,11 +107,11 @@ func emailPrompt() (string, error) {
 
 	validate := func(input string) error {
 		if len(input) <= 5 {
-			return errors.New("Invalid length. Must be larger than 5.")
+			return errors.New("Invalid length. Must be larger than 5")
 		}
 
 		if !re.MatchString(input) {
-			return errors.New("Must be in valid email format.")
+			return errors.New("Must be in valid email format")
 		}
 		return nil
 	}

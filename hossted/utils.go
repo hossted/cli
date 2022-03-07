@@ -131,7 +131,7 @@ func GetHosstedEnv() string {
 	return env
 }
 
-// GetHosstedUUID gets the uuid from the file /opt/linnovate/run/uuid.tzyb
+// GetHosstedUUID gets the uuid from the file /opt/linnovate/run/uuid.txt
 // Return error if it's empty or file not exists
 // TODO: Ask whether it's a request to get the uuid or somewhat being saved to the VM during creation
 func GetHosstedUUID(path string) (string, error) {
