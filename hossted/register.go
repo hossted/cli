@@ -49,7 +49,6 @@ func RegisterUsers() error {
 	// Assign back to config object
 	config.Email = email
 	config.Organization = organization
-	config.Organization = organization
 	config.SessionToken = jwt
 	config.EndPoint = endpoint
 
