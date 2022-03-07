@@ -23,6 +23,6 @@ type HosstedRequest struct {
 type RegisterResponse struct {
 	StatusCode int    `yaml:"status"`
 	Message    string `yaml:"msg"`
-	JWT        string `yaml:"jwt"`
-	URL        string `yaml:"url"`
+	jwt        string `yaml:"jwt"`
+	url        string `yaml:"url"`
 }

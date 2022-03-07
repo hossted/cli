@@ -43,8 +43,8 @@ func RegisterUsers() error {
 
 	// TODO: Check response status
 	fmt.Println(response.Message)
-	jwt := response.JWT
-	endpoint := response.URL
+	jwt := response.jwt
+	endpoint := response.url
 
 	// Assign back to config object
 	config.Email = email
@@ -78,7 +78,8 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
-		EndPoint:     "https://app.__ENV__.hossted.com/api/register",
+		// currently disabling env support - LK
+		EndPoint:     "https://app.hossted.com/api/register",
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
