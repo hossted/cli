@@ -4,7 +4,9 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"os"
 	"regexp"
+	"strings"
 
 	"fmt"
 
@@ -42,9 +44,8 @@ func RegisterUsers() error {
 	}
 
 	// TODO: Check response status
-	fmt.Println(response.Message)
-	jwt := response.jwt
-	endpoint := response.url
+	jwt := strings.TrimSpace(response.JWT)
+	endpoint := strings.TrimSpace(response.URL)
 
 	// Assign back to config object
 	config.Email = email
@@ -65,7 +66,6 @@ func RegisterUsers() error {
 
 // registerRequest sends register request based on the input, env/email/organization, etc..
 // TODO: Set BearToken to env variable
-// TODO: Check response status
 func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
 
 	var response RegisterResponse
@@ -96,6 +96,13 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 	if err != nil {
 		return response, fmt.Errorf("Failed to parse JSON. %w", err)
 	}
+
+	// Check if the sessionToken is null
+	if strings.TrimSpace(response.JWT) == "" {
+		fmt.Printf("Empty Session Token. Please check the api requests. %s.\n", resp)
+		os.Exit(0)
+	}
+
 	return response, nil
 }
 
