@@ -25,8 +25,10 @@ func RegisterUsers() error {
 	config, _ := GetConfig() // Ignore error
 
 	// Prompt user for input
-	email, _ := emailPrompt()
-	organization, _ := organizationPrompt()
+	// email, _ := emailPrompt()
+	// organization, _ := organizationPrompt()
+	email := "billy@hossted.com"
+	organization := "adf"
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
@@ -40,6 +42,7 @@ func RegisterUsers() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(PrettyPrint(response))
 
 	// TODO: Check response status
 	fmt.Println(response.Message)
