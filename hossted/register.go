@@ -99,7 +99,7 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 
 	// Check if the sessionToken is null
 	if strings.TrimSpace(response.JWT) == "" {
-		fmt.Printf("Empty Session Token. Please check the api requests. %s.\n", resp)
+		fmt.Printf("Empty Session Token. The email or organization is already being registered. %s.\n", resp)
 		os.Exit(0)
 	}
 
