@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+	"strings"
 
 	"fmt"
 
@@ -25,10 +26,8 @@ func RegisterUsers() error {
 	config, _ := GetConfig() // Ignore error
 
 	// Prompt user for input
-	// email, _ := emailPrompt()
-	// organization, _ := organizationPrompt()
-	email := "billy@hossted.com"
-	organization := "adf"
+	email, _ := emailPrompt()
+	organization, _ := organizationPrompt()
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
@@ -42,12 +41,10 @@ func RegisterUsers() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(PrettyPrint(response))
 
 	// TODO: Check response status
-	fmt.Println(response.Message)
-	jwt := response.jwt
-	endpoint := response.url
+	jwt := strings.TrimSpace(response.jwt)
+	endpoint := strings.TrimSpace(response.url)
 
 	// Assign back to config object
 	config.Email = email
@@ -68,7 +65,6 @@ func RegisterUsers() error {
 
 // registerRequest sends register request based on the input, env/email/organization, etc..
 // TODO: Set BearToken to env variable
-// TODO: Check response status
 func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
 
 	var response RegisterResponse
@@ -89,10 +85,6 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 		SessionToken: "",
 	}
 
-	fmt.Printf("uuid: %+v\n", uuid)
-	fmt.Printf("env: %+v\n", env)
-	fmt.Printf("params: %+v\n", params)
-
 	fmt.Println("Registering user. Please wait a second.")
 	resp, err := req.SendRequest()
 	if err != nil {
@@ -103,6 +95,12 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 	if err != nil {
 		return response, fmt.Errorf("Failed to parse JSON. %w", err)
 	}
+
+	// Check if the sessionToken is null
+	if strings.TrimSpace(response.jwt) == "" {
+		return response, fmt.Errorf("Empty Session Token. Please check the api requests. %s.\n", resp)
+	}
+
 	return response, nil
 }
 
