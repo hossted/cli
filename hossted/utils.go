@@ -2,6 +2,7 @@ package hossted
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -151,4 +152,10 @@ func GetHosstedUUID(path string) (string, error) {
 func updateEndpointEnv(endpoint, env string) string {
 	endpoint = strings.ReplaceAll(endpoint, "__ENV__", env)
 	return endpoint
+}
+
+// PrettyPrint to print struct in a readable way
+func PrettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
 }
