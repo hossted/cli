@@ -58,9 +58,9 @@ func RegisterUsers() error {
 	if err != nil {
 		return fmt.Errorf("Can not write to config file. Please check. %w", err)
 	}
-
+	dashboardUrl := endpoint + "?token=" + config.SessionToken
 	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]\n", email, organization))
-	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s\n", endpoint))
+	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s\n", dashboardUrl))
 	return nil
 }
 
