@@ -89,6 +89,10 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 		SessionToken: "",
 	}
 
+	fmt.Printf("uuid: %+v\n", uuid)
+	fmt.Printf("env: %+v\n", env)
+	fmt.Printf("params: %+v\n", params)
+
 	fmt.Println("Registering user. Please wait a second.")
 	resp, err := req.SendRequest()
 	if err != nil {
