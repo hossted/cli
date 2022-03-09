@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"os"
 	"regexp"
 	"strings"
 
@@ -43,8 +44,8 @@ func RegisterUsers() error {
 	}
 
 	// TODO: Check response status
-	jwt := strings.TrimSpace(response.jwt)
-	endpoint := strings.TrimSpace(response.url)
+	jwt := strings.TrimSpace(response.JWT)
+	endpoint := strings.TrimSpace(response.URL)
 
 	// Assign back to config object
 	config.Email = email
@@ -97,8 +98,9 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 	}
 
 	// Check if the sessionToken is null
-	if strings.TrimSpace(response.jwt) == "" {
-		return response, fmt.Errorf("Empty Session Token. Please check the api requests. %s.\n", resp)
+	if strings.TrimSpace(response.JWT) == "" {
+		fmt.Printf("Empty Session Token. Please check the api requests. %s.\n", resp)
+		os.Exit(0)
 	}
 
 	return response, nil

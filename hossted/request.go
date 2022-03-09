@@ -49,7 +49,6 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Status code - %d. Message - %s\n", resp.StatusCode, string(body))
 
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("HTTP Status is not 200. %s", string(body))
