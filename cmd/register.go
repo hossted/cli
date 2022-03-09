@@ -12,7 +12,7 @@ import (
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "Register your application with the hossted ecosystem",
+	Short: "[r] Register your application with the hossted ecosystem",
 	Long: `
 The hossted register commands asks for your email and organization name
 and registers you with the hossted platfrom
