@@ -72,6 +72,7 @@ func initConfig() {
 
 // checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
 // Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
+// Also it will check for the new fields in the Config Struct and write to config.yaml again
 // TODO: Use the util function one instead
 func checkConfigFilePath() (string, error) {
 
@@ -110,6 +111,19 @@ func checkConfigFilePath() (string, error) {
 	} else {
 		// Normal case
 		// Do nothing. config.yaml exists
+	}
+
+	// Check for new fields, In case new config is available.
+	// Write back to file with the original content and new fields (if any).
+	config, err := hossted.GetConfig()
+	if err != nil {
+		return cfgPath, fmt.Errorf("Can not open config file. %w", err)
+	}
+
+	// Just write back to the config file, new fields should be written as well
+	err = hossted.WriteConfigWrapper(config)
+	if err != nil {
+		return cfgPath, fmt.Errorf("Can not write the new config to config.yaml. %w", err)
 	}
 
 	return cfgPath, nil
