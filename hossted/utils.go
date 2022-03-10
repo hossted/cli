@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -177,8 +178,13 @@ func GetAppInfo() (string, string, error) {
 		_ = cloudEnv
 		appName = matches[2]
 	}
-	appPath = appName
-	fmt.Println(appName)
+	appName = strings.TrimSpace(appName)
+	if appName == "" {
+		return "", "", fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
+	}
+
+	appPath = filepath.Join("/opt", appName)
+
 	return appName, appPath, nil
 }
 
