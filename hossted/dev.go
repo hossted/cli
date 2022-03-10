@@ -23,7 +23,7 @@ func Dev() error {
 }
 
 // For development only
-func Prompt() (string, error) {
+func prompt() (string, error) {
 	validate := func(input string) error {
 		_, err := strconv.ParseFloat(input, 64)
 		if err != nil {
@@ -82,6 +82,6 @@ func testCommand() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf(out)
+	fmt.Println(out)
 	return nil
 }
