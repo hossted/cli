@@ -178,7 +178,7 @@ func GetAppInfo() (string, string, error) {
 		_ = cloudEnv
 		appName = matches[2]
 	}
-	appName = strings.TrimSpace(appName)
+	appName = strings.ToLower(strings.TrimSpace(appName))
 	if appName == "" {
 		return "", "", fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
 	}
