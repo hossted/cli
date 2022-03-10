@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -158,10 +159,24 @@ func GetAppInfo() (string, string, error) {
 	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return appName, appPath, fmt.Errorf("Can not open %s. Please check. %w", path, err)
+		return appName, appPath, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
+	}
+	text := string(b)
+
+	// Assume single line only
+	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+	if len(lines) >= 1 {
+		text = lines[0] // First line only
 	}
 
-	appName = string(b)
+	// Grep cloud env and app name with regex
+	re := regexp.MustCompile(`\w*\-(\w*)\-(\w*)`) // e.g. Linnovate-AWS-wikijs
+	matches := re.FindStringSubmatch(text)
+	if len(matches) >= 3 {
+		cloudEnv := matches[1] // e.g. AWS
+		_ = cloudEnv
+		appName = matches[2]
+	}
 	appPath = appName
 	fmt.Println(appName)
 	return appName, appPath, nil
