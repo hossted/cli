@@ -54,7 +54,7 @@ func GetConfig() (Config, error) {
 	// Check if all the fields are set
 	// TODO: Check which field is missing. May be add UserToken back for checking
 	if (config.Email == "") || (config.Organization == "") {
-		return config, fmt.Errorf("One of the fields is null. %w.", err)
+		return config, fmt.Errorf("One of the fields [Email, Organization] is null.")
 	}
 
 	return config, nil
