@@ -183,7 +183,11 @@ func GetAppInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
 	}
 
+	// Check if path exists
 	appPath = filepath.Join("/opt", appName)
+	if _, err := os.Stat(appPath); os.IsNotExist(err) {
+		return "", "", fmt.Errorf("App path does not exists - %s. Please check.\n%w", appPath, err)
+	}
 
 	return appName, appPath, nil
 }
