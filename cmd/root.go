@@ -120,6 +120,14 @@ func checkConfigFilePath() (string, error) {
 		return cfgPath, fmt.Errorf("Can not open config file. %w", err)
 	}
 
+	// Update App related info anyway
+	appName, appPath, err := hossted.GetAppInfo()
+	if err != nil {
+		return cfgPath, err
+	}
+	config.AppName = appName
+	config.AppPath = appPath
+
 	// Just write back to the config file, new fields should be written as well
 	err = hossted.WriteConfigWrapper(config)
 	if err != nil {
