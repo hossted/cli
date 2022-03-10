@@ -5,8 +5,6 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/hossted/hossted"
 )
@@ -14,16 +12,15 @@ import (
 // psCmd represents the ps command
 var psCmd = &cobra.Command{
 	Use:   "ps",
-	Short: "tba",
+	Short: "docker-compose ps",
 	Long: `
-TBA
+docker-compose ps
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.ListPS()
+		err := hossted.ListDockerPS()
 		if err != nil {
 			return err
 		}
-		fmt.Println("ps called")
 
 		return nil
 	},

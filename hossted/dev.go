@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
@@ -13,7 +14,7 @@ import (
 
 // For development only
 func Dev() error {
-	_, _, err := GetAppInfo()
+	err := testCommand()
 	if err != nil {
 		return err
 	}
@@ -22,7 +23,7 @@ func Dev() error {
 }
 
 // For development only
-func Prompt() (string, error) {
+func prompt() (string, error) {
 	validate := func(input string) error {
 		_, err := strconv.ParseFloat(input, 64)
 		if err != nil {
@@ -72,4 +73,15 @@ func checkCurl() error {
 	fmt.Println(string(body))
 	return nil
 
+}
+
+func testCommand() error {
+	cmd := exec.Command("docker-compose", "ps")
+	cmd.Dir = "/tmp"
+	out, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	fmt.Println(out)
+	return nil
 }
