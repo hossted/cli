@@ -37,6 +37,11 @@ func GetConfig() (Config, error) {
 		return config, err
 	}
 
+	// Exit function if no config path.
+	if _, err := os.Stat(cfgPath); err != nil {
+		fmt.Println("Can not open config file - %s. Please check.\n%w", cfgPath, err)
+	}
+
 	b, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
 		return config, err

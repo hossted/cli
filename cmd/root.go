@@ -115,10 +115,7 @@ func checkConfigFilePath() (string, error) {
 
 	// Check for new fields, In case new config is available.
 	// Write back to file with the original content and new fields (if any).
-	config, err := hossted.GetConfig()
-	if err != nil {
-		return cfgPath, fmt.Errorf("Can not open config file. %w", err)
-	}
+	config, _ := hossted.GetConfig()
 
 	// Update App related info anyway
 	appName, appPath, err := hossted.GetAppInfo()
