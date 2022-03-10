@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -47,7 +49,7 @@ func GetConfig() (Config, error) {
 	// Check if all the fields are set
 	// TODO: Check which field is missing. May be add UserToken back for checking
 	if (config.Email == "") || (config.Organization == "") {
-		return config, fmt.Errorf("One of the fields is null")
+		return config, fmt.Errorf("One of the fields is null. %w.", err)
 	}
 
 	return config, nil
@@ -148,7 +150,46 @@ func GetHosstedUUID(path string) (string, error) {
 	return uuid, nil
 }
 
+// GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
+// Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
+func GetAppInfo() (string, string, error) {
+	var (
+		appName string // Application name, e.g. wikijs
+		appPath string // Application folder, e.g. /opt/wikijs
+	)
+	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return appName, appPath, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
+	}
+	text := string(b)
+
+	// Assume single line only
+	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+	if len(lines) >= 1 {
+		text = lines[0] // First line only
+	}
+
+	// Grep cloud env and app name with regex
+	re := regexp.MustCompile(`\w*\-(\w*)\-(\w*)`) // e.g. Linnovate-AWS-wikijs
+	matches := re.FindStringSubmatch(text)
+	if len(matches) >= 3 {
+		cloudEnv := matches[1] // e.g. AWS
+		_ = cloudEnv
+		appName = matches[2]
+	}
+	appName = strings.TrimSpace(appName)
+	if appName == "" {
+		return "", "", fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
+	}
+
+	appPath = filepath.Join("/opt", appName)
+
+	return appName, appPath, nil
+}
+
 // updateEndpointEnv replace the place holder with the environment specified
+// TODO: Review later. Now only use prod link.
 func updateEndpointEnv(endpoint, env string) string {
 	endpoint = strings.ReplaceAll(endpoint, "__ENV__", env)
 	return endpoint
