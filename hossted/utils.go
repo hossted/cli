@@ -148,7 +148,27 @@ func GetHosstedUUID(path string) (string, error) {
 	return uuid, nil
 }
 
+// GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
+// Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
+func GetAppInfo() (string, string, error) {
+	var (
+		appName string // Application name, e.g. wikijs
+		appPath string // Application folder, e.g. /opt/wikijs
+	)
+	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return appName, appPath, fmt.Errorf("Can not open %s. Please check. %w", path, err)
+	}
+
+	appName = string(b)
+	appPath = appName
+	fmt.Println(appName)
+	return appName, appPath, nil
+}
+
 // updateEndpointEnv replace the place holder with the environment specified
+// TODO: Review later. Now only use prod link.
 func updateEndpointEnv(endpoint, env string) string {
 	endpoint = strings.ReplaceAll(endpoint, "__ENV__", env)
 	return endpoint

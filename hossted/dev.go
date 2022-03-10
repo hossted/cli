@@ -13,7 +13,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := checkCurl()
+	_, _, err := GetAppInfo()
 	if err != nil {
 		return err
 	}
