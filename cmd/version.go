@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	COMMITHASH = ""
-	BUILDTIME  = ""
+	COMMITHASH = "-"
+	BUILDTIME  = "-"
 )
 
 // versionCmd represents the version command
