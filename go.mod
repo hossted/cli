@@ -1,4 +1,4 @@
-module github.com/spf13/hossted
+module github.com/hossted/cli
 
 go 1.16
 

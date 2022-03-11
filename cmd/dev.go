@@ -5,8 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
-	"github.com/spf13/hossted/hossted"
 )
 
 // devCmd represents the dev command

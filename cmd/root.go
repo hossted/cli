@@ -10,9 +10,9 @@ import (
 	"os"
 	"path"
 
+	"github.com/hossted/cli/hossted"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/hossted/hossted"
 	"github.com/spf13/viper"
 )
 
