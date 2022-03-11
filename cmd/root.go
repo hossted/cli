@@ -10,21 +10,22 @@ import (
 	"os"
 	"path"
 
+	"github.com/hossted/cli/hossted"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/hossted/hossted"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
+	VERSION = "dev" // Update during build time
 )
 
 // rootCmd represents the base command when called without any subcommands
 var (
 	rootCmd = &cobra.Command{
-		Use:   "hossted",
-		Short: "A brief description of your application.",
+		Use:     "hossted",
+		Version: VERSION,
+		Short:   "A brief description of your application.",
 		Long: `
 A brief description of your application
 `,
@@ -43,8 +44,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	cfgFile, err = checkConfigFilePath()
-	_ = cfgFile
+	_, err = checkConfigFilePath()
 
 	if err != nil {
 		fmt.Println(err)
@@ -72,6 +72,7 @@ func initConfig() {
 
 // checkConfigFilePath checks if the ~/.hossted/config.yaml is created under home folder
 // Create it if it doesnt exist. Will create folder recursively. Also it will init the config file yaml.
+// Also it will check for the new fields in the Config Struct and write to config.yaml again
 // TODO: Use the util function one instead
 func checkConfigFilePath() (string, error) {
 
@@ -110,6 +111,24 @@ func checkConfigFilePath() (string, error) {
 	} else {
 		// Normal case
 		// Do nothing. config.yaml exists
+	}
+
+	// Check for new fields, In case new config is available.
+	// Write back to file with the original content and new fields (if any).
+	config, _ := hossted.GetConfig()
+
+	// Update App related info anyway
+	appName, appPath, err := hossted.GetAppInfo()
+	if err != nil {
+		return cfgPath, err
+	}
+	config.AppName = appName
+	config.AppPath = appPath
+
+	// Just write back to the config file, new fields should be written as well
+	err = hossted.WriteConfigWrapper(config)
+	if err != nil {
+		return cfgPath, fmt.Errorf("Can not write the new config to config.yaml. %w", err)
 	}
 
 	return cfgPath, nil
