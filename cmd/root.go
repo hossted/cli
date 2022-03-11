@@ -10,21 +10,22 @@ import (
 	"os"
 	"path"
 
+	"github.com/hossted/cli/hossted"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/hossted/hossted"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
+	VERSION = "" // Update during build time
 )
 
 // rootCmd represents the base command when called without any subcommands
 var (
 	rootCmd = &cobra.Command{
-		Use:   "hossted",
-		Short: "A brief description of your application.",
+		Use:     "hossted",
+		Version: VERSION,
+		Short:   "A brief description of your application.",
 		Long: `
 A brief description of your application
 `,
@@ -43,8 +44,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	cfgFile, err = checkConfigFilePath()
-	_ = cfgFile
+	_, err = checkConfigFilePath()
 
 	if err != nil {
 		fmt.Println(err)
