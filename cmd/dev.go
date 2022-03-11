@@ -12,8 +12,8 @@ import (
 // devCmd represents the dev command
 var devCmd = &cobra.Command{
 	Use:     "dev",
-	Short:   "[x] For Development only.",
-	Long:    `[x] For Development only.`,
+	Short:   "[x] For Development only",
+	Long:    `[x] For Development only`,
 	Aliases: []string{"x"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
