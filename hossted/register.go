@@ -28,7 +28,6 @@ func RegisterUsers() error {
 
 	// Prompt user for input
 	email, _ := emailPrompt()
-	organization, _ := organizationPrompt()
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env := GetHosstedEnv()
@@ -38,7 +37,7 @@ func RegisterUsers() error {
 	}
 
 	// Send request
-	response, err := registerRequest(email, organization, uuid, env)
+	response, err := registerRequest(email, uuid, env)
 	if err != nil {
 		return err
 	}
@@ -49,7 +48,6 @@ func RegisterUsers() error {
 
 	// Assign back to config object
 	config.Email = email
-	config.Organization = organization
 	config.SessionToken = jwt
 	config.EndPoint = endpoint
 
@@ -59,21 +57,20 @@ func RegisterUsers() error {
 		return fmt.Errorf("Can not write to config file. Please check. %w", err)
 	}
 	dashboardUrl := endpoint + "?token=" + config.SessionToken
-	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s - %s]\n", email, organization))
+	fmt.Println(fmt.Sprintf("Updated config. Registered User - [%s]\n", email))
 	fmt.Println(fmt.Sprintf("Please visit the dashboard link - %s\n", dashboardUrl))
 	return nil
 }
 
 // registerRequest sends register request based on the input, env/email/organization, etc..
 // TODO: Set BearToken to env variable
-func registerRequest(email, organization, uuid, env string) (RegisterResponse, error) {
+func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 
 	var response RegisterResponse
 
 	// Construct param map for input params
 	params := make(map[string]string)
 	params["email"] = email
-	params["organization"] = organization
 	params["uuid"] = uuid
 
 	req := HosstedRequest{
@@ -99,7 +96,7 @@ func registerRequest(email, organization, uuid, env string) (RegisterResponse, e
 
 	// Check if the sessionToken is null
 	if strings.TrimSpace(response.JWT) == "" {
-		fmt.Printf("Empty Session Token. The email or organization is already being registered. %s.\n", resp)
+		fmt.Printf("Empty Session Token. Some kind of error occoured - %s.\n", resp)
 		os.Exit(0)
 	}
 
@@ -130,27 +127,6 @@ func emailPrompt() (string, error) {
 
 	res, err := prompt.Run()
 
-	if err != nil {
-		return "", err
-	}
-	return res, nil
-}
-
-// organizationPrompt prompts the user for organization
-func organizationPrompt() (string, error) {
-	validate := func(input string) error {
-		if len(input) < 3 {
-			return errors.New("Invalid length. Must be longer than 5 characters.")
-		}
-		return nil
-	}
-
-	prompt := promptui.Prompt{
-		Label:    "Organization",
-		Validate: validate,
-	}
-
-	res, err := prompt.Run()
 	if err != nil {
 		return "", err
 	}
