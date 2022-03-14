@@ -4,5 +4,4 @@ sessionToken: {{ .SessionToken }}
 uuidPath: /opt/linnovate/run/uuid.txt
 applications:{{ range .Applications }}
     - appName: {{ .AppName}}
-      appPath: {{ .AppPath}}
-{{ end }}
+      appPath: {{ .AppPath}}{{ end }}
