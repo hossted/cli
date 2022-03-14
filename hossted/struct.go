@@ -2,14 +2,17 @@ package hossted
 
 // Config is a struct to parse config.yaml file
 type Config struct {
-	Email        string `yaml:"email"`
-	Organization string `yaml:"organization"`
-	UserToken    string `yaml:"userToken"`
-	SessionToken string `yaml:"sessionToken"`
-	EndPoint     string `yaml:"endPoint"`
-	UUIDPath     string `yaml:"uuidPath"`
-	AppName      string `yaml:"AppName"`
-	AppPath      string `yaml:"AppPath"`
+	Email        string               `yaml:"email"`
+	UserToken    string               `yaml:"userToken"`
+	SessionToken string               `yaml:"sessionToken"`
+	EndPoint     string               `yaml:"endPoint"`
+	UUIDPath     string               `yaml:"uuidPath"`
+	Applications []ConfigApplications `yaml:"applications"`
+}
+
+type ConfigApplications struct {
+	AppName string `yaml:"appName"`
+	AppPath string `yaml:"appPath"`
 }
 
 // HosstedRequest is a struct to construct neccessary information to send the request to hossted backend

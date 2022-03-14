@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-// ListDockerPS goes to the app dire, then calls docker-compose ps
+// ListDockerPS goes to the app directory, then calls docker-compose ps
 func ListDockerPS() error {
 
 	config, err := GetConfig()
@@ -16,11 +16,14 @@ func ListDockerPS() error {
 	}
 
 	cmd := exec.Command("docker-compose", "ps")
-	cmd.Dir = config.AppPath
-	out, err := cmd.Output()
-	if err != nil {
-		return err
+	for _, app := range config.Applications {
+		cmd.Dir = app.AppPath
+		out, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		fmt.Println(out)
 	}
-	fmt.Println(out)
+
 	return nil
 }

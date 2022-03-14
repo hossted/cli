@@ -118,12 +118,13 @@ func checkConfigFilePath() (string, error) {
 	config, _ := hossted.GetConfig()
 
 	// Update App related info anyway
-	appName, appPath, err := hossted.GetAppInfo()
+	apps, err := hossted.GetAppInfo()
 	if err != nil {
 		return cfgPath, err
 	}
-	config.AppName = appName
-	config.AppPath = appPath
+
+	// Assume Single Application for now
+	config.Applications = apps
 
 	// Just write back to the config file, new fields should be written as well
 	err = hossted.WriteConfigWrapper(config)
