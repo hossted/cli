@@ -17,7 +17,8 @@ var psCmd = &cobra.Command{
 docker-compose ps
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.ListDockerPS()
+
+		err := hossted.ListAppPS()
 		if err != nil {
 			return err
 		}

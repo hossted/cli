@@ -103,7 +103,7 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 	return response, nil
 }
 
-// emailPromp prompt the user for email
+// emailPrompt prompts the user for email
 func emailPrompt() (string, error) {
 
 	// Regex for email checking

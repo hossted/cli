@@ -158,11 +158,11 @@ func GetHosstedUUID(path string) (string, error) {
 // GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
 // Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
 // TODO assume single application for now
-func GetAppInfo() ([]ConfigApplications, error) {
+func GetAppInfo() ([]ConfigApplication, error) {
 	var (
 		appName string // Application name, e.g. wikijs
 		appPath string // Application folder, e.g. /opt/wikijs
-		apps    []ConfigApplications
+		apps    []ConfigApplication
 	)
 	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
 	b, err := ioutil.ReadFile(path)
@@ -196,7 +196,7 @@ func GetAppInfo() ([]ConfigApplications, error) {
 		return apps, fmt.Errorf("App path does not exists - %s. Please check.\n%w", appPath, err)
 	}
 
-	app := ConfigApplications{
+	app := ConfigApplication{
 		AppName: appName,
 		AppPath: appPath,
 	}
