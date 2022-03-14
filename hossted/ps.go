@@ -23,17 +23,15 @@ func ListAppPS() error {
 	if err != nil {
 		return err
 	}
-	_ = app
+	fmt.Println(app.AppName)
 
 	cmd := exec.Command("docker-compose", "ps")
-	for _, app := range config.Applications {
-		cmd.Dir = app.AppPath
-		out, err := cmd.Output()
-		if err != nil {
-			return err
-		}
-		fmt.Println(out)
+	cmd.Dir = app.AppPath
+	out, err := cmd.Output()
+	if err != nil {
+		return err
 	}
+	fmt.Println(out)
 
 	return nil
 }
@@ -43,26 +41,36 @@ func appPrompt(apps []ConfigApplication) (ConfigApplication, error) {
 	var (
 		options   []string                     // options for applications
 		configMap map[string]ConfigApplication // e.g. map[wikijs] -> ConfigApplication{}
+		app       ConfigApplication            // Config for selected App
 	)
 	configMap = make(map[string]ConfigApplication)
 
+	// Build select options and mapping
 	for _, app := range apps {
 		name := strings.TrimSpace(app.AppName)
 		options = append(options, name)
 		configMap[name] = app
 	}
 
+	// Prompt for selection
 	prompt := promptui.Select{
 		Label: "Applications",
 		Items: options,
 	}
 
-	_, result, err := prompt.Run()
+	_, input, err := prompt.Run()
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
-		return "", err
+		return app, err
+	}
+	fmt.Printf("Application: %q\n", input)
+
+	// Return selected app config
+	if val, ok := configMap[input]; ok {
+		app = val
+	} else {
+		return app, fmt.Errorf("Invalid selection for app. Available applications are [%v]", options)
 	}
 
-	fmt.Printf("Application: %q\n", result)
-	return result, nil
+	return app, nil
 }
