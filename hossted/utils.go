@@ -53,7 +53,7 @@ func GetConfig() (Config, error) {
 
 	// Check if all the fields are set
 	// TODO: Check which field is missing. May be add UserToken back for checking
-	if (config.Email == "") || (config.Organization == "") {
+	if config.Email == "" {
 		return config, fmt.Errorf("One of the fields [Email, Organization] is null.")
 	}
 
@@ -157,15 +157,17 @@ func GetHosstedUUID(path string) (string, error) {
 
 // GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
 // Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
-func GetAppInfo() (string, string, error) {
+// TODO assume single application for now
+func GetAppInfo() ([]ConfigApplications, error) {
 	var (
 		appName string // Application name, e.g. wikijs
 		appPath string // Application folder, e.g. /opt/wikijs
+		apps    []ConfigApplications
 	)
 	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return appName, appPath, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
+		return apps, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
 	}
 	text := string(b)
 
@@ -185,16 +187,22 @@ func GetAppInfo() (string, string, error) {
 	}
 	appName = strings.ToLower(strings.TrimSpace(appName))
 	if appName == "" {
-		return "", "", fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
+		return apps, fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
 	}
 
 	// Check if path exists
 	appPath = filepath.Join("/opt", appName)
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return "", "", fmt.Errorf("App path does not exists - %s. Please check.\n%w", appPath, err)
+		return apps, fmt.Errorf("App path does not exists - %s. Please check.\n%w", appPath, err)
 	}
 
-	return appName, appPath, nil
+	app := ConfigApplications{
+		AppName: appName,
+		AppPath: appPath,
+	}
+	apps = append(apps, app)
+
+	return apps, nil
 }
 
 // updateEndpointEnv replace the place holder with the environment specified

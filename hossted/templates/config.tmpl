@@ -2,5 +2,7 @@ email: {{ .Email }}
 userToken: {{ .UserToken }}
 sessionToken: {{ .SessionToken }}
 uuidPath: /opt/linnovate/run/uuid.txt
-appName: {{ .AppName}}
-appPath: {{ .AppPath}}
+application:{{ range .Applications }}
+    - appName: {{ .AppName}}
+      appPath: {{ .AppPath}}
+{{ end }}

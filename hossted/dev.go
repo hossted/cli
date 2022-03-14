@@ -14,7 +14,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := testCommand()
+	err := testNestedYAML()
 	if err != nil {
 		return err
 	}
@@ -83,5 +83,11 @@ func testCommand() error {
 		return err
 	}
 	fmt.Println(out)
+	return nil
+}
+
+func testNestedYAML() error {
+	fmt.Println("Test")
+
 	return nil
 }
