@@ -157,7 +157,8 @@ func GetHosstedUUID(path string) (string, error) {
 
 // GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
 // Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
-// TODO assume single application for now
+// TODO Assume single application for now
+// TODO Remove dummy app (for dropdown select demo)
 func GetAppInfo() ([]ConfigApplication, error) {
 	var (
 		appName string // Application name, e.g. wikijs
@@ -201,6 +202,13 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		AppPath: appPath,
 	}
 	apps = append(apps, app)
+
+	// TODO: Demo purpose. Remove later
+	demo := ConfigApplication{
+		AppName: "demoapp",
+		AppPath: "/tmp/demoapp",
+	}
+	apps = append(apps, demo)
 
 	return apps, nil
 }

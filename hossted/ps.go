@@ -23,7 +23,6 @@ func ListAppPS() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(app.AppName)
 
 	cmd := exec.Command("docker-compose", "ps")
 	cmd.Dir = app.AppPath
@@ -63,7 +62,6 @@ func appPrompt(apps []ConfigApplication) (ConfigApplication, error) {
 		fmt.Printf("Prompt failed %v\n", err)
 		return app, err
 	}
-	fmt.Printf("Application: %q\n", input)
 
 	// Return selected app config
 	if val, ok := configMap[input]; ok {
