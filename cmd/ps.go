@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	input string
+)
+
 // psCmd represents the ps command
 var psCmd = &cobra.Command{
 	Use:   "ps",
@@ -40,4 +44,5 @@ docker-compose ps of the application
 
 func init() {
 	rootCmd.AddCommand(psCmd)
+	psCmd.Flags().StringVarP(&input, "follow", "f", "", "Follow log output.")
 }
