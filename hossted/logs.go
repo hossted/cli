@@ -8,8 +8,10 @@ import (
 )
 
 // GetAppLogs goes to the app directory, then calls docker-compose logs
-func GetAppLogs() error {
+// Similar to ListAppPS func
+func GetAppLogs(input string) error {
 
+	var app ConfigApplication
 	config, err := GetConfig()
 	if err != nil {
 		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
@@ -17,7 +19,7 @@ func GetAppLogs() error {
 	}
 
 	// Get App from prompt
-	app, err := appPrompt(config.Applications)
+	app, err = appPrompt(config.Applications, input)
 	if err != nil {
 		return err
 	}

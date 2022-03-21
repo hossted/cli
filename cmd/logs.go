@@ -15,9 +15,19 @@ var logsCmd = &cobra.Command{
 	Aliases: []string{"l"},
 	Short:   "[l] View Applicatin logs",
 	Long:    `[l] View Applicatin logs`,
+	Example: `
+  hossted logs
+  hossted logs <app_name> (e.g. hossted ps wikijs)
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		err := hossted.GetAppLogs()
+		// Check if the user provides the apps name manually
+		var input string
+		if len(args) >= 1 {
+			input = args[0]
+		}
+
+		err := hossted.GetAppLogs(input)
 		if err != nil {
 			return err
 		}
