@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	input string
+)
+
 // psCmd represents the ps command
 var psCmd = &cobra.Command{
 	Use:   "ps",

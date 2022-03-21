@@ -13,6 +13,7 @@ import (
 // if input is "", call prompt to get user input, otherwise look up the application in the config
 func ListAppPS(input string) error {
 	var app ConfigApplication
+
 	config, err := GetConfig()
 	if err != nil {
 		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
@@ -26,6 +27,8 @@ func ListAppPS(input string) error {
 
 	cmd := exec.Command("docker-compose", "ps")
 	cmd.Dir = app.AppPath
+	fmt.Printf("Called command: %v\n", strings.Join(cmd.Args, " "))
+
 	out, err := cmd.Output()
 	if err != nil {
 		return err
