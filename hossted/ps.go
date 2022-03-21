@@ -10,16 +10,16 @@ import (
 )
 
 // ListAppPS goes to the app directory, then calls docker-compose ps
-func ListAppPS() error {
-
+// if input is "", call prompt to get user input, otherwise look up the application in the config
+func ListAppPS(input string) error {
+	var app ConfigApplication
 	config, err := GetConfig()
 	if err != nil {
 		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
 		os.Exit(0)
 	}
 
-	// Get App from prompt
-	app, err := appPrompt(config.Applications)
+	app, err = appPrompt(config.Applications, input)
 	if err != nil {
 		return err
 	}
@@ -36,13 +36,15 @@ func ListAppPS() error {
 }
 
 // appPrompt prompt the user for which app to select
-func appPrompt(apps []ConfigApplication) (ConfigApplication, error) {
+func appPrompt(apps []ConfigApplication, input string) (ConfigApplication, error) {
 	var (
 		options   []string                     // options for applications
 		configMap map[string]ConfigApplication // e.g. map[wikijs] -> ConfigApplication{}
 		app       ConfigApplication            // Config for selected App
+		selected  string
 	)
 	configMap = make(map[string]ConfigApplication)
+	input = strings.TrimSpace(input)
 
 	// Build select options and mapping
 	for _, app := range apps {
@@ -51,20 +53,28 @@ func appPrompt(apps []ConfigApplication) (ConfigApplication, error) {
 		configMap[name] = app
 	}
 
-	// Prompt for selection
-	prompt := promptui.Select{
-		Label: "Applications",
-		Items: options,
-	}
+	// If input is empty, prompt for user to input
+	// Otherwise use the provided value as application
+	if input == "" {
+		// Prompt for selection
+		prompt := promptui.Select{
+			Label: "Applications",
+			Items: options,
+		}
 
-	_, input, err := prompt.Run()
-	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
-		return app, err
+		_, selected, err := prompt.Run()
+		input = selected
+
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return app, err
+		}
+	} else {
+		selected = input
 	}
 
 	// Return selected app config
-	if val, ok := configMap[input]; ok {
+	if val, ok := configMap[selected]; ok {
 		app = val
 	} else {
 		return app, fmt.Errorf("Invalid selection for app. Available applications are [%v]", options)
