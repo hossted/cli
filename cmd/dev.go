@@ -15,6 +15,10 @@ var devCmd = &cobra.Command{
 	Short:   "[x] For Development only",
 	Long:    `[x] For Development only`,
 	Aliases: []string{"x"},
+	Example: `
+  hossted dev
+`,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		err := hossted.Dev()

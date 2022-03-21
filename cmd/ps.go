@@ -14,7 +14,11 @@ var psCmd = &cobra.Command{
 	Use:   "ps",
 	Short: "docker-compose ps",
 	Long: `
-docker-compose ps
+docker-compose ps of the application
+`,
+	Example: `
+  hossted ps
+  hossted ps <app_name> (e.g. hossted ps wikijs)
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 

@@ -22,6 +22,9 @@ best practices such as tracking updates , monitoring, centralized logging ,
 backups and much more.
 `,
 	Aliases: []string{"r"},
+	Example: `
+  hossted register
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := hossted.RegisterUsers()
 		if err != nil {
