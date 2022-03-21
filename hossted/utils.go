@@ -3,6 +3,7 @@ package hossted
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -54,7 +55,7 @@ func GetConfig() (Config, error) {
 	// Check if all the fields are set
 	// TODO: Check which field is missing. May be add UserToken back for checking
 	if config.Email == "" {
-		return config, fmt.Errorf("One of the fields [Email, Organization] is null.")
+		return config, errors.New("One of the fields [Email] is null.\n")
 	}
 
 	return config, nil
