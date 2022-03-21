@@ -72,9 +72,8 @@ func appPrompt(apps []ConfigApplication, input string) (ConfigApplication, error
 			fmt.Printf("Prompt failed %v\n", err)
 			return app, err
 		}
-	} else {
-		selected = input
 	}
+	selected = input
 
 	// Return selected app config
 	if val, ok := configMap[selected]; ok {
