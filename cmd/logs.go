@@ -16,7 +16,12 @@ var logsCmd = &cobra.Command{
 	Short:   "[l] View Applicatin logs",
 	Long:    `[l] View Applicatin logs`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
 		err := hossted.GetAppLogs()
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 }

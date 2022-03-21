@@ -29,6 +29,7 @@ docker-compose ps of the application
 		}
 
 		err := hossted.ListAppPS(input)
+
 		if err != nil {
 			return err
 		}
