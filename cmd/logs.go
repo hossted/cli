@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var followFlag bool
+
 // logsCmd represents the logs command
 var logsCmd = &cobra.Command{
 	Use:     "logs",
@@ -27,7 +29,7 @@ var logsCmd = &cobra.Command{
 			input = args[0]
 		}
 
-		err := hossted.GetAppLogs(input)
+		err := hossted.GetAppLogs(input, followFlag)
 		if err != nil {
 			return err
 		}
@@ -38,4 +40,5 @@ var logsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(logsCmd)
+	logsCmd.Flags().BoolVarP(&followFlag, "follow", "f", false, "Follow log output.")
 }

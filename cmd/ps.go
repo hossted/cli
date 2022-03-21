@@ -43,5 +43,4 @@ docker-compose ps of the application
 
 func init() {
 	rootCmd.AddCommand(psCmd)
-	psCmd.Flags().StringVarP(&input, "follow", "f", "", "Follow log output.")
 }

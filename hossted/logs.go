@@ -9,7 +9,7 @@ import (
 
 // GetAppLogs goes to the app directory, then calls docker-compose logs
 // Similar to ListAppPS func
-func GetAppLogs(input string) error {
+func GetAppLogs(input string, followFlag bool) error {
 
 	var app ConfigApplication
 	config, err := GetConfig()
@@ -23,8 +23,13 @@ func GetAppLogs(input string) error {
 	if err != nil {
 		return err
 	}
+	var cmd *exec.Cmd
+	if followFlag {
+		cmd = exec.Command("docker-compose", "logs", "-f")
+	} else {
+		cmd = exec.Command("docker-compose", "logs")
+	}
 
-	cmd := exec.Command("docker-compose", "logs")
 	cmd.Dir = app.AppPath
 	fmt.Printf("Called command: %v\n", strings.Join(cmd.Args, " "))
 
