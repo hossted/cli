@@ -20,6 +20,7 @@ var setAuthCmd = &cobra.Command{
   hossted set auth <AppName> true
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
 		fmt.Println("setAuth called")
 		return nil
 	},

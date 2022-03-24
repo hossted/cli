@@ -5,7 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -22,7 +22,10 @@ var setCmd = &cobra.Command{
   hossted set ssl <AppName> sign
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("set called")
+		if len(args) == 0 {
+			cmd.Help()
+			os.Exit(0)
+		}
 		return nil
 	},
 }
