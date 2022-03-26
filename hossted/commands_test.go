@@ -100,3 +100,40 @@ app:
 		})
 	}
 }
+
+func TestCheckCommands(t *testing.T) {
+	type args struct {
+		app     string
+		command string
+	}
+	tests := []struct {
+		name               string
+		args               args
+		wantErr            bool
+		wantErrMsgContains string
+	}{
+		{
+			// App Command not in predefined list.
+			// Assume there are some commands defined
+			name: "App Command not predefined",
+			args: args{
+				app:     "aaa",
+				command: "bbb",
+			},
+			wantErr:            true,
+			wantErrMsgContains: "is not supported",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := CheckCommands(tt.args.app, tt.args.command)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CheckCommands() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if tt.wantErr && (tt.wantErrMsgContains != "") {
+				assert.Containsf(t, strings.ToLower(err.Error()), strings.ToLower(tt.wantErrMsgContains), "expected error containing %q, got %s", tt.wantErrMsgContains, err)
+			}
+		})
+	}
+}

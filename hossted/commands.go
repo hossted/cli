@@ -22,8 +22,6 @@ apps:
 
 // CheckCommands check whether the app, and corresponding commands/subcommands are supported.
 // Return error if the provided values are not in the pre-defined list
-// TODO: cross check available apps in config
-// TODO: Error handling. Add a list of availabe app/commands, etc,..
 func CheckCommands(app, command string) error {
 
 	// Get the map of available apps and commands
@@ -37,9 +35,8 @@ func CheckCommands(app, command string) error {
 		// happy path. app.command is available
 		return nil
 	} else {
-		// TODO: Add supported apps
 		// app not supported
-		return fmt.Errorf("Provided application is not support - %s\nPlease use `hossted set list` to check the available commands.\n", key)
+		return fmt.Errorf("Provided application is not supported - %s\nPlease use `hossted set list` to check the available commands.\n", key)
 	}
 
 	return nil
