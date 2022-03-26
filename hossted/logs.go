@@ -25,9 +25,9 @@ func GetAppLogs(input string, followFlag bool) error {
 	}
 	var cmd *exec.Cmd
 	if followFlag {
-		cmd = exec.Command("docker-compose", "logs", "-f")
+		cmd = exec.Command("sudo", "docker-compose", "logs", "-f")
 	} else {
-		cmd = exec.Command("docker-compose", "logs")
+		cmd = exec.Command("sudo", "docker-compose", "logs")
 	}
 
 	cmd.Dir = app.AppPath
@@ -37,7 +37,7 @@ func GetAppLogs(input string, followFlag bool) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(out)
+	fmt.Println(string(out))
 
 	return nil
 }
