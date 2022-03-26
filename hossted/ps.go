@@ -27,7 +27,6 @@ func ListAppPS(input string) error {
 
 	cmd := exec.Command("sudo", "docker-compose", "ps")
 	cmd.Dir = app.AppPath
-	fmt.Printf("Called command: %v\n", strings.Join(cmd.Args, " "))
 
 	out, err := cmd.Output()
 	if err != nil {

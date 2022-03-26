@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 // GetAppLogs goes to the app directory, then calls docker-compose logs
@@ -31,7 +30,6 @@ func GetAppLogs(input string, followFlag bool) error {
 	}
 
 	cmd.Dir = app.AppPath
-	fmt.Printf("Called command: %v\n", strings.Join(cmd.Args, " "))
 
 	out, err := cmd.Output()
 	if err != nil {
