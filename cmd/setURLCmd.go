@@ -26,7 +26,7 @@ var setURLCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if len(args) < 2 {
-			fmt.Println("Not enough arguments. Please blah blah.\n")
+			fmt.Println("Not enough arguments. Please blah blah.")
 			cmd.Help()
 			os.Exit(0)
 		}
