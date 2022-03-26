@@ -17,10 +17,8 @@ var (
 // hossted ps <appName>
 var psCmd = &cobra.Command{
 	Use:   "ps",
-	Short: "docker-compose ps",
-	Long: `
-docker-compose ps of the application
-`,
+	Short: "[ps] docker-compose ps of the application",
+	Long:  "[ps] docker-compose ps of the application",
 	Example: `
   hossted ps
   hossted ps <app_name> (e.g. hossted ps wikijs)

@@ -29,7 +29,8 @@ func ListCommands() error {
 	for _, app := range apps {
 		if commands, ok := m[app.AppName]; ok {
 			check = true
-			fmt.Println(app)
+			fmt.Println("")
+			fmt.Println(app.AppName)
 			fmt.Println("--------------")
 			fmt.Println(commands)
 			fmt.Println("")

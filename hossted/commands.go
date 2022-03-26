@@ -12,9 +12,11 @@ var AVAILABLE = `
 apps:
   - app: prometheus
     commands: [url]
+    values: [example.com]
 
   - app: demo
     commands: [abc, def]
+    values: [abc, def]
 `
 
 // CheckCommands check whether the app, and corresponding commands/subcommands are supported.
@@ -66,7 +68,7 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 
 	// k as app, v as commands
 	for _, val := range available.Commands {
-		m[val.App] = val.Commands
+		m[val.App] = val
 	}
 
 	return m, nil
