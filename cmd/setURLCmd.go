@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// setURLCmdCmd represents the setUrlCmd command
+// setURLCmd represents the setUrlCmd command
 // hossted set url <AppName> example.com
-var setURLCmdCmd = &cobra.Command{
+var setURLCmd = &cobra.Command{
 	Use:     "url",
 	Short:   "[u] Set URL endpoints of the provided application",
 	Long:    "[u] Set URL endpoints of the provided application",
@@ -44,5 +44,5 @@ var setURLCmdCmd = &cobra.Command{
 }
 
 func init() {
-	setCmd.AddCommand(setURLCmdCmd)
+	setCmd.AddCommand(setURLCmd)
 }

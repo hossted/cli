@@ -14,7 +14,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := CheckCommands()
+	err := CheckCommands("prometheus", "url")
 	if err != nil {
 		return err
 	}

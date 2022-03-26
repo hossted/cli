@@ -38,3 +38,7 @@ type AvailableCommand struct {
 		Commands []string `yaml:"commands"`
 	} `yaml:"apps"`
 }
+
+// AvailableCommandMap saves the map for available commands
+// e.g. map["prometheus"] -> ["url", "xxx"]
+type AvailableCommandMap map[string][]string
