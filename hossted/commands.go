@@ -48,12 +48,6 @@ func CheckCommands(app, command string) error {
 	return nil
 }
 
-// TODO: list available commands for the available services on the machine
-func ListCommands() error {
-	// To be implemented
-	return nil
-}
-
 // getCommandsMap gets a mapping for available apps and commands mapping
 // input as the yaml formatted available commands
 func getCommandsMap(input string) (AvailableCommandMap, error) {
