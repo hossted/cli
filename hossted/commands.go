@@ -12,8 +12,8 @@ import (
 var AVAILABLE = `
 apps:
   - app: prometheus
-    commands: [url]
-    values: [example.com]
+    commands: [url, auth]
+    values: [example.com, false]
 
   - app: demo
     commands: [abc, def]
