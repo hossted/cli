@@ -60,6 +60,9 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 	if err != nil {
 		return m, fmt.Errorf("Can not parse avilable commands yaml. %w", err)
 	}
+	if len(available.Apps) == 0 {
+		return m, errors.New("No available apps and commands. Please check.")
+	}
 
 	// k as app, v as commands
 	for _, app := range available.Apps {
