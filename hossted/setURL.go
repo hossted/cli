@@ -2,15 +2,14 @@ package hossted
 
 import (
 	"fmt"
-	"os"
 )
 
 func SetURL(app, url string) error {
 	command := "url"
 	config, err := GetConfig()
 	if err != nil {
-		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
-		os.Exit(0)
+		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
+
 	}
 	err = CheckCommands(app, command)
 	if err != nil {

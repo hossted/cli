@@ -6,6 +6,24 @@ import (
 )
 
 func Test_getCommandsMap(t *testing.T) {
+	inputA := `
+apps:
+  - app: demo
+    commands: [url, auth]
+    values: [example.com, false]
+`
+	mapA := AvailableCommandMap{}
+	mapA["demo.url"] = Command{
+		App:     "demo",
+		Command: "url",
+		Value:   "example.com",
+	}
+	mapA["demo.auth"] = Command{
+		App:     "demo",
+		Command: "auth",
+		Value:   "false",
+	}
+
 	type args struct {
 		input string
 	}
@@ -15,7 +33,13 @@ func Test_getCommandsMap(t *testing.T) {
 		want    AvailableCommandMap
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Normal case",
+			args: args{
+				input: inputA,
+			},
+			want: mapA,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
