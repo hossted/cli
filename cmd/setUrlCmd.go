@@ -5,21 +5,36 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
 
 // setURLCmdCmd represents the setUrlCmd command
+// hossted set url <AppName> example.com
 var setURLCmdCmd = &cobra.Command{
 	Use:     "url",
-	Short:   "[a] Set authorization of the provided application",
-	Long:    `[a] Set authorization of the provided application`,
+	Short:   "[u] Set URL endpoints of the provided application",
+	Long:    "[u] Set URL endpoints of the provided application",
 	Aliases: []string{"u"},
 	Example: `
   hossted set url <AppName> example.com
+  hossted set url prometheus example.com
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.SetURL()
+
+		if len(args) < 2 {
+			fmt.Println("Not enough arguments. Please blah blah.\n")
+			cmd.Help()
+			os.Exit(0)
+		}
+
+		app := args[0]
+		url := args[1]
+
+		err := hossted.SetURL(app, url)
 		if err != nil {
 			return err
 		}

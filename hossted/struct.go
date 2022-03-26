@@ -31,3 +31,10 @@ type RegisterResponse struct {
 	JWT        string `json:"jwt"`
 	URL        string `json:"url"`
 }
+
+type AvailableCommand struct {
+	Commands []struct {
+		App      string   `yaml:"app"`
+		Commands []string `yaml:"commands"`
+	} `yaml:"apps"`
+}

@@ -14,6 +14,7 @@ var (
 )
 
 // psCmd represents the ps command
+// hossted ps <appName>
 var psCmd = &cobra.Command{
 	Use:   "ps",
 	Short: "docker-compose ps",

@@ -14,7 +14,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := testNestedYAML()
+	err := CheckCommands()
 	if err != nil {
 		return err
 	}
