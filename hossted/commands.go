@@ -13,11 +13,12 @@ func CheckCommands() error {
 
 	// Available commands map, kv as map[appName] -> available commands, []string
 	// e.g. map["prometheus"] -> ["url", "xxx"]
-	var commands []AvailableCommand
+	var commands AvailableCommand
 	available := `
 apps:
   - app: server1
     commands: [pepito, asd]
+
   - app: server2
     commands: [juanito]
 `
