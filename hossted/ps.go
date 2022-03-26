@@ -33,7 +33,7 @@ func ListAppPS(input string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(out)
+	fmt.Println(string(out))
 
 	return nil
 }
