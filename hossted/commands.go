@@ -64,11 +64,12 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 	// k as app, v as commands
 	for _, app := range available.Apps {
 		appName := app.App
+
 		if len(app.Commands) != len(app.Values) {
 			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
 		}
 		for i, _ := range app.Commands {
-			name := fmt.Sprintf("%s.%s", app, app.Commands[i]) // e.g. prometheus.url
+			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.url
 			c := Command{
 				App:     appName,
 				Command: app.Commands[i],

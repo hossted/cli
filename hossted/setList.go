@@ -67,6 +67,7 @@ func ListCommands() error {
 		}
 		fmt.Printf("hossted set %s %s %s\n", c.Command, c.App, c.Value)
 	}
+	fmt.Println("")
 
 	return nil
 }
