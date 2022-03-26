@@ -3,7 +3,6 @@ package hossted
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 )
@@ -15,12 +14,11 @@ func ListCommands() error {
 
 	// Get available apps
 	config, err := GetConfig()
-	apps := config.Applications
-
 	if err != nil {
-		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
-		os.Exit(0)
+		return err
 	}
+
+	apps := config.Applications
 
 	// Applications available on the vm
 	vmAppsMap := make(map[string]bool) // e.g. map["prometheus"]true

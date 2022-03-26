@@ -13,7 +13,7 @@ func GetAppLogs(input string, followFlag bool) error {
 	var app ConfigApplication
 	config, err := GetConfig()
 	if err != nil {
-		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
+		fmt.Printf("Please call the command `hossted register` first.")
 		os.Exit(0)
 	}
 

@@ -2,7 +2,6 @@ package hossted
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -16,8 +15,9 @@ func ListAppPS(input string) error {
 
 	config, err := GetConfig()
 	if err != nil {
-		fmt.Printf("Please call the command `hossted register` first.\n%w", err)
-		os.Exit(0)
+		// fmt.Printf("Please call the command `hossted register` first.\n%w", err)
+		// os.Exit(0)
+		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
 	}
 
 	app, err = appPrompt(config.Applications, input)

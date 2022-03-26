@@ -40,7 +40,7 @@ func GetConfig() (Config, error) {
 
 	// Exit function if no config path.
 	if _, err := os.Stat(cfgPath); err != nil {
-		fmt.Println("Can not open config file - %s. Please check.\n%w", cfgPath, err)
+		return config, fmt.Errorf("Can not open config file - %s. Please check.\n%w", cfgPath, err)
 	}
 
 	b, err := ioutil.ReadFile(cfgPath)
@@ -55,7 +55,7 @@ func GetConfig() (Config, error) {
 	// Check if all the fields are set
 	// TODO: Check which field is missing. May be add UserToken back for checking
 	if config.Email == "" {
-		return config, errors.New("One of the fields [Email] is null.\n")
+		return config, errors.New("One of the fields [Email] is null.\nPlease call `hossted register` first.\n")
 	}
 
 	return config, nil
