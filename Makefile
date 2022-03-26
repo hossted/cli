@@ -18,4 +18,4 @@ dev: main.go
 	go build -o bin/dev/hossted -v -ldflags=${DEVFLAGS}
 
 test: main.go
-        go test -v ./... -short
+	go test -v ./... -short
