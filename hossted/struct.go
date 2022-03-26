@@ -33,14 +33,21 @@ type RegisterResponse struct {
 }
 
 type AvailableCommand struct {
-	Commands []Command `yaml:"apps"`
+	Apps []App `yaml:"apps"`
 }
-type Command struct {
+
+type App struct {
 	App      string   `yaml:"app"`
 	Commands []string `yaml:"commands"`
 	Values   []string `yaml:"values"`
 }
 
+type Command struct {
+	App     string
+	Command string
+	Value   string
+}
+
 // AvailableCommandMap saves the map for available commands
-// e.g. map["prometheus"] -> ["url", "xxx"]
-type AvailableCommandMap map[string][]Command
+// e.g. map["app.command"] -> [{app command value} {prometheus url example.com} ]
+type AvailableCommandMap map[string]Command

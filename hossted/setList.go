@@ -4,9 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 )
 
-// TODO: list available commands for the available services on the machine
+// ListCommands lists the available services on the virtual machine
+// The available application is defined under the file /opt/linoovate/run/uuid.txt.
+// Also it would depends on whether the "action" is predefined as available of the certain app.
 func ListCommands() error {
 
 	// Get available apps
@@ -18,28 +22,60 @@ func ListCommands() error {
 		os.Exit(0)
 	}
 
+	// Applications available on the vm
+	vmAppsMap := make(map[string]bool) // e.g. map["prometheus"]true
+	for _, app := range apps {
+		vmAppsMap[app.AppName] = true
+	}
+	if len(vmAppsMap) == 0 {
+		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\n")
+	}
+
 	// Get all available apps/commands
 	m, err := getCommandsMap(AVAILABLE)
 	if err != nil {
 		return err
 	}
 
-	// Only print the application available on the vm
-	var check bool // check if there is any apps available
-	for _, app := range apps {
-		if commands, ok := m[app.AppName]; ok {
-			check = true
-			fmt.Println("")
-			fmt.Println(app.AppName)
-			fmt.Println("--------------")
-			fmt.Println(commands)
-			fmt.Println("")
+	// Check matching commands
+	var validCommands []Command
+	for k, v := range m { // k: app.command, v: Command{}
+		app := getAppNameFromKey(k)
+		if _, ok := vmAppsMap[app]; ok { // append to validCommands only if its on vm
+			validCommands = append(validCommands, v)
 		}
 	}
-	if !check {
-		return errors.New("No available applications. Please check the file /opt/linnovate/run/uuid.txt.\n")
+
+	if len(vmAppsMap) == 0 {
+		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\n")
 	}
 
-	fmt.Println(m)
+	// Sort
+	sort.Slice(validCommands, func(i, j int) bool {
+		return validCommands[i].App < validCommands[j].App
+	})
+
+	// List the available commands (vm + predefined)
+	var prev string // For formatting only. Group same apps together.
+	for _, c := range validCommands {
+		app := c.App
+		if prev != app {
+			prev = app
+			fmt.Println("")
+			fmt.Println(app)
+			fmt.Println("------------")
+		}
+		fmt.Printf("hossted set %s %s %s\n", c.Command, c.App, c.Value)
+	}
+
 	return nil
+}
+
+func getAppNameFromKey(key string) string {
+	var app string
+	s := strings.Split(key, ".")
+	if len(s) > 0 {
+		app = s[0] // Get the app/first part from the key
+	}
+	return app
 }

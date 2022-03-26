@@ -1,6 +1,7 @@
 package hossted
 
 import (
+	"errors"
 	"fmt"
 
 	"gopkg.in/yaml.v2"
@@ -30,21 +31,15 @@ func CheckCommands(app, command string) error {
 	if err != nil {
 		return err
 	}
-	if ac, ok := m[app]; ok { // available commands
-		// Check the input command in the available ones.
-		for _, c := range ac {
-			if c == command {
-				return nil
-			}
-		}
+	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.url
 
-		// commands not supported for certain app
-		return fmt.Errorf("Provided command is not supported in  - %s\nPlease use `hossted set list` to check the available commands.\n", command)
-
+	if _, ok := m[key]; ok {
+		// happy path. app.command is available
+		return nil
 	} else {
 		// TODO: Add supported apps
 		// app not supported
-		return fmt.Errorf("Provided application is not support - %s\nPlease use `hossted set list` to check the available commands.\n", app)
+		return fmt.Errorf("Provided application is not support - %s\nPlease use `hossted set list` to check the available commands.\n", key)
 	}
 
 	return nil
@@ -54,8 +49,8 @@ func CheckCommands(app, command string) error {
 // input as the yaml formatted available commands
 func getCommandsMap(input string) (AvailableCommandMap, error) {
 
-	// Available commands map, kv as map[appName] -> available commands, []string
-	// e.g. map["prometheus"] -> ["url", "xxx"]
+	// Available commands map, kv as map[appName.command] -> available commands, []Command
+	// e.g. map["prometheus.url"] -> []Command[{prometheus url example.com}]
 	var (
 		m         AvailableCommandMap // result available map
 		available AvailableCommand    // For parsing yaml
@@ -67,8 +62,20 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 	}
 
 	// k as app, v as commands
-	for _, val := range available.Commands {
-		m[val.App] = val
+	for _, app := range available.Apps {
+		appName := app.App
+		if len(app.Commands) != len(app.Values) {
+			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
+		}
+		for i, _ := range app.Commands {
+			name := fmt.Sprintf("%s.%s", app, app.Commands[i]) // e.g. prometheus.url
+			c := Command{
+				App:     appName,
+				Command: app.Commands[i],
+				Value:   app.Values[i],
+			}
+			m[name] = c
+		}
 	}
 
 	return m, nil
