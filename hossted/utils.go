@@ -221,6 +221,31 @@ func updateEndpointEnv(endpoint, env string) string {
 	return endpoint
 }
 
+// verifyInputFormat verify different types of user input like, email, url, etc..
+func verifyInputFormat(in, format string) bool {
+
+	// Reference: https://stackoverflow.com/questions/10306690/what-is-a-regular-expression-which-will-match-a-valid-domain-name-without-a-subd
+	if format == "url" {
+
+		// Replace https and http
+		if strings.HasPrefix(in, "https://") {
+			in = strings.Replace(in, "https://", "", 1)
+		} else if strings.HasPrefix(in, "http://") {
+			in = strings.Replace(in, "http://", "", 1)
+		} else {
+			// pass
+		}
+		fmt.Println(in)
+		re := regexp.MustCompile(`^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6}\/?$`)
+		if re.MatchString(in) {
+			return true
+		}
+	} else {
+		panic("Input format is not supported. Please check")
+	}
+	return false
+}
+
 // PrettyPrint to print struct in a readable way
 func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
