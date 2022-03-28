@@ -246,9 +246,49 @@ func verifyInputFormat(in, format string) bool {
 	return false
 }
 
-func replaceYamlSetting(b []byte) error {
-	fmt.Println(string(b))
-	return nil
+// TODO: Find out what is the deal for the space in value
+// TODO: Fix additonal lines for result
+func replaceYamlSettings(b []byte, setting YamlSetting) (string, error) {
+	var (
+		pattern  = setting.Pattern  // regex pattern. e.g. `(PROJECT_BASE_URL=).*`
+		value    = setting.NewValue // New values. e.g. "$1abc"
+		newLines []string
+		result   string // result content of the file
+		matched  bool   // Match exactly once only
+	)
+	_ = value
+	content := strings.ReplaceAll(string(b), "\r\n", "\n") // For windows
+	lines := strings.Split(content, "\n")
+
+	// For each line, check with the pattern
+	for _, line := range lines {
+
+		// regex
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return "", fmt.Errorf("Invaid regex. Pattern (%s). %w", pattern, err)
+		}
+
+		// Check if match, then replace
+		if !matched && re.MatchString(line) { // only once
+			new := re.ReplaceAllString(line, value)
+			new = strings.ReplaceAll(new, " ", "")
+			newLines = append(newLines, new)
+			matched = true
+		} else {
+			newLines = append(newLines, line)
+		}
+
+	}
+	// If no matched, return error
+	if matched == false {
+		return "", fmt.Errorf("No matching pattern for [%s]. Please check", pattern)
+	}
+
+	// Join back the lines
+	result = strings.Join(newLines, "\n")
+
+	return result, nil
 }
 
 // PrettyPrint to print struct in a readable way

@@ -101,10 +101,16 @@ func testReplace() error {
 		return err
 	}
 
-	err = replaceYamlSetting(b)
+	setting := YamlSetting{
+		Pattern:  `(PROJECT_BASE_URL=).*$`,
+		NewValue: "$1 abc",
+	}
+
+	res, err := replaceYamlSettings(b, setting)
 	if err != nil {
 		return err
 	}
+	fmt.Println(res)
 
 	return nil
 }

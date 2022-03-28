@@ -62,6 +62,6 @@ type Command struct {
 type AvailableCommandMap map[string]Command
 
 type YamlSetting struct {
-	Pattern   string   // regex
-	NewValues []string // value of the new input
+	Pattern  string // regex
+	NewValue string // value of the new input, should be matching the number of match groups in regex
 }
