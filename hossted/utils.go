@@ -235,7 +235,6 @@ func verifyInputFormat(in, format string) bool {
 		} else {
 			// pass
 		}
-		fmt.Println(in)
 		re := regexp.MustCompile(`^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6}\/?$`)
 		if re.MatchString(in) {
 			return true
@@ -260,14 +259,14 @@ func replaceYamlSettings(b []byte, setting YamlSetting) (string, error) {
 	content := strings.ReplaceAll(string(b), "\r\n", "\n") // For windows
 	lines := strings.Split(content, "\n")
 
+	// Compile regex
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", fmt.Errorf("Invaid regex. Pattern (%s). %w", pattern, err)
+	}
+
 	// For each line, check with the pattern
 	for _, line := range lines {
-
-		// regex
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			return "", fmt.Errorf("Invaid regex. Pattern (%s). %w", pattern, err)
-		}
 
 		// Check if match, then replace
 		if !matched && re.MatchString(line) { // only once
@@ -289,6 +288,23 @@ func replaceYamlSettings(b []byte, setting YamlSetting) (string, error) {
 	result = strings.Join(newLines, "\n")
 
 	return result, nil
+}
+
+func overwriteFile(filepath string, content string) error {
+	f, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	_, err = w.WriteString(content)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+
+	return nil
 }
 
 func getAppFilePath(base, relative string) (string, error) {
