@@ -4,8 +4,11 @@ import (
 	"fmt"
 )
 
+// SetURL set the url for different apps
+// TODO: check whether the function is generic for different apps. Divide to cases if not
 func SetURL(app, url string) error {
 	command := "url"
+
 	_, err := GetConfig()
 	if err != nil {
 		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
@@ -20,6 +23,9 @@ func SetURL(app, url string) error {
 	if !check {
 		return fmt.Errorf("Invalid url input. Expecting domain name (e.g.example.com).\nInput - %s\n", url)
 	}
+
+	// Get .env file
+	// path, err := getAppFilePath()
 
 	return nil
 

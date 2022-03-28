@@ -1,6 +1,8 @@
 package hossted
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_verifyInputFormat(t *testing.T) {
 	type args struct {
@@ -57,6 +59,50 @@ func Test_verifyInputFormat(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := verifyInputFormat(tt.args.in, tt.args.format); got != tt.want {
 				t.Errorf("verifyInputFormat() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getAppFilePath(t *testing.T) {
+	type args struct {
+		base     string
+		relative string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			// Simple test - assume /usr/local/bin exists
+			name: "Simple test",
+			args: args{
+				base:     "/usr/local",
+				relative: "bin",
+			},
+			want: "/usr/local/bin",
+		},
+		{
+			// Simple test - assume /usr/local/bin exists
+			name: "Simple test 2 ",
+			args: args{
+				base:     "/usr/local/",
+				relative: "bin",
+			},
+			want: "/usr/local/bin",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppFilePath(tt.args.base, tt.args.relative)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getAppFilePath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getAppFilePath() = %v, want %v", got, tt.want)
 			}
 		})
 	}

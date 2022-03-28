@@ -291,6 +291,14 @@ func replaceYamlSettings(b []byte, setting YamlSetting) (string, error) {
 	return result, nil
 }
 
+func getAppFilePath(base, relative string) (string, error) {
+	path := filepath.Join(base, relative)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("File not exists. Please check. %w", err)
+	}
+	return path, nil
+}
+
 // PrettyPrint to print struct in a readable way
 func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
