@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
@@ -14,7 +13,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := CheckCommands("prometheus", "aaa")
+	err := testCommand()
 	if err != nil {
 		return err
 	}
@@ -76,13 +75,22 @@ func checkCurl() error {
 }
 
 func testCommand() error {
-	cmd := exec.Command("docker-compose", "ps")
-	cmd.Dir = "/tmp"
-	out, err := cmd.Output()
+	config, err := GetConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
 	}
-	fmt.Println(out)
+
+	input := "prometheus"
+	apps := config.Applications
+	var appPath string
+	for _, app := range apps {
+		if app.AppName == input {
+			appPath = app.AppPath
+		}
+	}
+	filepath := fmt.Sprintf("%s/.env", appPath)
+	fmt.Println(filepath)
+
 	return nil
 }
 
