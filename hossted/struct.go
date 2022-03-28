@@ -61,7 +61,7 @@ type Command struct {
 // e.g. map["app.command"] -> [{app command value} {prometheus url example.com} ]
 type AvailableCommandMap map[string]Command
 
-type YAMLSetting struct {
+type YamlSetting struct {
 	Pattern   string   // regex
 	NewValues []string // value of the new input
 }

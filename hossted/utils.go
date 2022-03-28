@@ -246,6 +246,11 @@ func verifyInputFormat(in, format string) bool {
 	return false
 }
 
+func replaceYamlSetting(b []byte) error {
+	fmt.Println(string(b))
+	return nil
+}
+
 // PrettyPrint to print struct in a readable way
 func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")

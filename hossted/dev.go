@@ -13,7 +13,7 @@ import (
 
 // For development only
 func Dev() error {
-	err := testCommand()
+	err := testReplace()
 	if err != nil {
 		return err
 	}
@@ -94,8 +94,17 @@ func testCommand() error {
 	return nil
 }
 
-func testNestedYAML() error {
-	fmt.Println("Test")
+func testReplace() error {
+
+	b, err := ioutil.ReadFile("/opt/prometheus/.env")
+	if err != nil {
+		return err
+	}
+
+	err = replaceYamlSetting(b)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
