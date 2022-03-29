@@ -235,7 +235,6 @@ func verifyInputFormat(in, format string) bool {
 		} else {
 			// pass
 		}
-		fmt.Println(in)
 		re := regexp.MustCompile(`^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6}\/?$`)
 		if re.MatchString(in) {
 			return true
@@ -244,6 +243,76 @@ func verifyInputFormat(in, format string) bool {
 		panic("Input format is not supported. Please check")
 	}
 	return false
+}
+
+// TODO: Find out what is the deal for the space in value
+// TODO: Fix additonal lines for result
+func replaceYamlSettings(b []byte, setting YamlSetting) (string, error) {
+	var (
+		pattern  = setting.Pattern  // regex pattern. e.g. `(PROJECT_BASE_URL=).*`
+		value    = setting.NewValue // New values. e.g. "$1abc"
+		newLines []string
+		result   string // result content of the file
+		matched  bool   // Match exactly once only
+	)
+	_ = value
+	content := strings.ReplaceAll(string(b), "\r\n", "\n") // For windows
+	lines := strings.Split(content, "\n")
+
+	// Compile regex
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", fmt.Errorf("Invaid regex. Pattern (%s). %w", pattern, err)
+	}
+
+	// For each line, check with the pattern
+	for _, line := range lines {
+
+		// Check if match, then replace
+		if !matched && re.MatchString(line) { // only once
+			new := re.ReplaceAllString(line, value)
+			new = strings.ReplaceAll(new, " ", "")
+			newLines = append(newLines, new)
+			matched = true
+		} else {
+			newLines = append(newLines, line)
+		}
+
+	}
+	// If no matched, return error
+	if matched == false {
+		return "", fmt.Errorf("No matching pattern for [%s]. Please check", pattern)
+	}
+
+	// Join back the lines
+	result = strings.Join(newLines, "\n")
+
+	return result, nil
+}
+
+func overwriteFile(filepath string, content string) error {
+	f, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	_, err = w.WriteString(content)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+
+	return nil
+}
+
+func getAppFilePath(base, relative string) (string, error) {
+	path := filepath.Join(base, relative)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("File not exists. Please check. %w", err)
+	}
+	return path, nil
 }
 
 // PrettyPrint to print struct in a readable way
