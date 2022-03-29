@@ -334,20 +334,22 @@ func PrettyPrint(i interface{}) string {
 	return string(s)
 }
 
-func restartTraefik(appDir string) error {
+func stopTraefik(appDir string) error {
 	// docker-compose stop traefik
-	// docker-compose up -d
-	stopCmd := exec.Command("sudo", "docker-compose", "stop", "traefik")
-	stopCmd.Dir = appDir
-	out, err := stopCmd.Output()
+	cmd := exec.Command("sudo", "docker-compose", "stop", "traefik")
+	cmd.Dir = appDir
+	out, err := cmd.Output()
 	if err != nil {
 		return err
 	}
 	fmt.Println(out)
-
-	upCmd := exec.Command("sudo", "docker-compose", "up", "-d")
-	upCmd.Dir = appDir
-	out, err = upCmd.Output()
+	return nil
+}
+func dockerUp(appDir string) error {
+	// docker-compose up -d
+	cmd := exec.Command("sudo", "docker-compose", "up", "-d")
+	cmd.Dir = appDir
+	out, err := cmd.Output()
 	if err != nil {
 		return err
 	}

@@ -47,7 +47,12 @@ func SetURL(app, url string) error {
 	}
 
 	fmt.Println("Stopping traefik...")
-	err = restartTraefik(appPath)
+	err = stopTraefik(appPath)
+	if err != nil {
+		return err
+	}
+
+	err = dockerUp(appPath)
 	if err != nil {
 		return err
 	}
