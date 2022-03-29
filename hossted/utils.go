@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
@@ -342,6 +343,7 @@ func stopTraefik(appDir string) error {
 	if err != nil {
 		return err
 	}
+	time.Sleep(8 * time.Second)
 	fmt.Println(out)
 	return nil
 }
@@ -353,6 +355,7 @@ func dockerUp(appDir string) error {
 	if err != nil {
 		return err
 	}
+	time.Sleep(8 * time.Second)
 	fmt.Println(out)
 	return nil
 }
