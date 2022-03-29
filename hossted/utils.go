@@ -347,7 +347,7 @@ func restartTraefik(appDir string) error {
 
 	upCmd := exec.Command("sudo", "docker-compose", "up", "-d")
 	upCmd.Dir = appDir
-	out, err = stopCmd.Output()
+	out, err = upCmd.Output()
 	if err != nil {
 		return err
 	}
