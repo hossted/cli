@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
@@ -13,12 +14,13 @@ import (
 
 // For development only
 func Dev() error {
-	err := testReplace()
+	err := testSed()
 	if err != nil {
 		return err
 	}
 
 	return nil
+
 }
 
 // For development only
@@ -94,23 +96,14 @@ func testCommand() error {
 	return nil
 }
 
-func testReplace() error {
-
-	b, err := ioutil.ReadFile("/opt/prometheus/.env")
+func testSed() error {
+	test := "s/(PROJECT_BASE_URL=)(.*)/\\1some/"
+	cmd := exec.Command("sed", "-i", "-E", test, "/tmp/ddd.txt")
+	out, err := cmd.Output()
 	if err != nil {
 		return err
 	}
 
-	setting := YamlSetting{
-		Pattern:  `(PROJECT_BASE_URL=).*$`,
-		NewValue: "$1 abc",
-	}
-
-	res, err := replaceYamlSettings(b, setting)
-	if err != nil {
-		return err
-	}
-	fmt.Println(res)
-
+	fmt.Println(out)
 	return nil
 }
