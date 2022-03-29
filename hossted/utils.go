@@ -333,3 +333,24 @@ func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
 	return string(s)
 }
+
+func restartTraefik(appDir string) error {
+	// docker-compose stop traefik
+	// docker-compose up -d
+	stopCmd := exec.Command("sudo", "docker-compose", "stop", "traefik")
+	stopCmd.Dir = appDir
+	out, err := stopCmd.Output()
+	if err != nil {
+		return err
+	}
+	fmt.Println(out)
+
+	upCmd := exec.Command("sudo", "docker-compose", "up", "-d")
+	upCmd.Dir = appDir
+	out, err = stopCmd.Output()
+	if err != nil {
+		return err
+	}
+	fmt.Println(out)
+	return nil
+}

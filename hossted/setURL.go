@@ -46,7 +46,13 @@ func SetURL(app, url string) error {
 		return err
 	}
 
-	fmt.Printf("Updated config file - %s\n", appPath)
+	fmt.Println("Stopping traefik...")
+	err = restartTraefik(appPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Service Restarted - %s\n", app)
 
 	return nil
 
