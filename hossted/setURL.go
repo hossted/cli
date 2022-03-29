@@ -2,11 +2,12 @@ package hossted
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os/exec"
 )
 
 // SetURL set the url for different apps
 // TODO: check whether the function is generic for different apps. Divide to different cases if not.
+// TODO: check error for sed command
 // TODO: restart app
 func SetURL(app, url string) error {
 	command := "url"
@@ -36,27 +37,15 @@ func SetURL(app, url string) error {
 		return err
 	}
 
-	// Read file, and replace url
-	b, err := ioutil.ReadFile(appPath)
+	// Use sed to change the url
+	// TODO: check if the line really exists in the file first
+	text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", url)
+	cmd := exec.Command("sudo", "sed", "-i", "-E", text, appPath)
+	_, err = cmd.Output()
 	if err != nil {
 		return err
 	}
 
-	setting := YamlSetting{
-		Pattern:  `(PROJECT_BASE_URL=).*$`,
-		NewValue: fmt.Sprintf("$1 %s", url), // New additional space for subgroup match
-	}
-
-	newContent, err := replaceYamlSettings(b, setting)
-	if err != nil {
-		return err
-	}
-
-	// Write back result
-	err = overwriteFile(appPath, newContent)
-	if err != nil {
-		return err
-	}
 	fmt.Printf("Updated config file - %s\n", appPath)
 
 	return nil

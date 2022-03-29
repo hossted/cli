@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -305,6 +306,18 @@ func overwriteFile(filepath string, content string) error {
 	w.Flush()
 
 	return nil
+}
+
+// readProtected read the file content with sudo right
+func readProtected(filepath string) ([]byte, error) {
+
+	cmd := exec.Command("sudo", "cat", filepath)
+	out, err := cmd.Output()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return out, nil
 }
 
 func getAppFilePath(base, relative string) (string, error) {
