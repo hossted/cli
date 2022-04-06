@@ -46,6 +46,7 @@ func SetURL(app, url string) error {
 		return err
 	}
 
+	fmt.Printf("App Path: %s\n", appPath)
 	fmt.Println("Stopping traefik...")
 	err = stopTraefik(appPath)
 	if err != nil {
