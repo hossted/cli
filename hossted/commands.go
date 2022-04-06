@@ -8,9 +8,9 @@ import (
 )
 
 // Generall available commands, for all apps
-var GACOMMAND = `
+var GAVAILABLE = `
 apps:
-  - app: General
+  - app: general
     commands: [url, auth]
     values: [example.com, false]
 `
