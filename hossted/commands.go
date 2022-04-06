@@ -32,6 +32,10 @@ apps:
     commands: [url, auth]
     values: [example.com, false]
 
+  - app: wph
+    commands: [url, auth]
+    values: [example.com, false]
+
   - app: demo
     commands: [abc, def]
     values: [abc, def]
