@@ -354,7 +354,7 @@ func dockerUp(appDir string) error {
 	return nil
 }
 
-// Shell calls the shell command
+// Shell calls the bash shell command in a particular directory
 func Shell(appDir, command string) (error, string, string) {
 	const ShellToUse = "bash"
 	var stdout bytes.Buffer

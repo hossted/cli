@@ -7,8 +7,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Generall available commands, for all apps
+var GACOMMAND = `
+apps:
+  - app: General
+    commands: [url, auth]
+    values: [example.com, false]
+`
+
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
 // need to append the values here
+// TODO: Add general command
 var AVAILABLE = `
 apps:
   - app: prometheus
@@ -16,6 +25,10 @@ apps:
     values: [example.com, false]
 
   - app: airflow
+    commands: [url, auth]
+    values: [example.com, false]
+
+  - app: wordpress
     commands: [url, auth]
     values: [example.com, false]
 
