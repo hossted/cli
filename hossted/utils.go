@@ -2,6 +2,7 @@ package hossted
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -348,14 +349,24 @@ func stopTraefik(appDir string) error {
 	return nil
 }
 func dockerUp(appDir string) error {
-	// docker-compose up -d
-	cmd := exec.Command("sudo", "docker-compose", "up", "-d")
-	cmd.Dir = appDir
-	out, err := cmd.Output()
+	command := "docker-compose up -d"
+	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
 	}
-	time.Sleep(8 * time.Second)
-	fmt.Println(out)
+	fmt.Println(stderr)
 	return nil
+}
+
+// Shell calls the shell command
+func Shell(appDir, command string) (error, string, string) {
+	const ShellToUse = "bash"
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command(ShellToUse, "-c", command)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Dir = appDir
+	err := cmd.Run()
+	return err, stdout.String(), stderr.String()
 }
