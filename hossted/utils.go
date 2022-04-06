@@ -15,7 +15,6 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
@@ -337,15 +336,12 @@ func PrettyPrint(i interface{}) string {
 }
 
 func stopTraefik(appDir string) error {
-	// docker-compose stop traefik
-	cmd := exec.Command("sudo", "docker-compose", "stop", "traefik")
-	cmd.Dir = appDir
-	out, err := cmd.Output()
+	command := "docker-compose stop traefik"
+	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
 	}
-	time.Sleep(8 * time.Second)
-	fmt.Println(out)
+	fmt.Println(stderr)
 	return nil
 }
 func dockerUp(appDir string) error {
