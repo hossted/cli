@@ -35,9 +35,9 @@ func HttpOpen(input string) error {
 		return err
 	}
 
+	// Some sed commands
 	fmt.Println("Some sed statement")
 
-	fmt.Printf("App Path: %s\n", path)
 	err = stopTraefik(path)
 	if err != nil {
 		return err
