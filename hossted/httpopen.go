@@ -39,9 +39,9 @@ func HttpOpen(input string) error {
 	// sed commands
 	commands := []string{
 		"sudo sed -i '/tauth.basicauth.usersfile/d' '/opt/gitbucket/docker-compose.yml'",
-		"sed -i -e 's/tauth,//g' '/opt/gitbucket/docker-compose.yml'",
-		"sed -i '/.middlewares=tauth/d' '/opt/gitbucket/docker-compose.yml'",
-		"sed -i '/installation you may remove/d' '/etc/motd'",
+		"sudo sed -i -e 's/tauth,//g' '/opt/gitbucket/docker-compose.yml'",
+		"sudo sed -i '/.middlewares=tauth/d' '/opt/gitbucket/docker-compose.yml'",
+		"sudo sed -i '/installation you may remove/d' '/etc/motd'",
 	}
 	err, _, stderr := Shell(appDir, commands)
 	if err != nil {
