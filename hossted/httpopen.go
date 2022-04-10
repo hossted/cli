@@ -18,12 +18,38 @@ func HttpOpen(input string) error {
 		return err
 	}
 
+	// Check command
 	err = CheckCommands(app.AppName, "httpopen")
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(app.AppName))
+	// Get appPath
+	appConfig, err := config.GetAppConfig(app.AppName)
+	if err != nil {
+		return err
+	}
+	appPath, err := getAppFilePath(appConfig.AppPath, ".env")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Some sed statement")
+	fmt.Println(app.AppName)
+
+	fmt.Printf("App Path: %s\n", appPath)
+	fmt.Println("Stopping traefik...")
+	err = stopTraefik(appPath)
+	if err != nil {
+		return err
+	}
+
+	err = dockerUp(appPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Service Restarted - %s\n", app)
 
 	return nil
 }
