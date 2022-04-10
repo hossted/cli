@@ -29,7 +29,7 @@ func HttpOpen(input string) error {
 	if err != nil {
 		return err
 	}
-	appPath, err := getAppFilePath(appConfig.AppPath, ".env")
+	appPath := appConfig.AppPath
 	if err != nil {
 		return err
 	}
