@@ -377,7 +377,7 @@ func Shell(appDir string, commands []string) (error, string, string) {
 		cmd.Dir = appDir
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("Can not call Shell Command. %w\n", err), strings.Join(sout, "\n"), strings.Join(serr, "\n")
+			return fmt.Errorf("Can not call Shell Command [%s]. %w\n", command, err), strings.Join(sout, "\n"), strings.Join(serr, "\n")
 		}
 
 		// Append stdout and stderr, if any
@@ -394,6 +394,7 @@ func Shell(appDir string, commands []string) (error, string, string) {
 
 // trimOuput remove the last (double line breaks) from the string
 // usually use before printing out stderr
+// TODO: Test why not working
 func trimOutput(in string) string {
 	s := strings.Replace(in, "\n\n", "\n", -1)
 	return s
