@@ -60,7 +60,7 @@ func HttpOpen(input string) error {
 	fmt.Println("Removed /opt/gitbucket/letsencrypt/.htpass")
 	err, _, stderr = Shell(appDir, rmCommands)
 	if err != nil {
-		return err
+		fmt.Println("/opt/gitbucket/letsencrypt/.htpass does not exists. Probably being removed earlier. %s", err.Error())
 	}
 	if strings.TrimSpace(stderr) != "" {
 		fmt.Println(stderr)
