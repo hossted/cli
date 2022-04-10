@@ -63,7 +63,12 @@ func ListCommands() error {
 			fmt.Println(app)
 			fmt.Println("------------")
 		}
-		fmt.Printf("hossted set %s %s %s\n", c.Command, c.App, c.Value)
+		if strings.TrimSpace(c.CommandGroup) != "" { // Have command group, e.g. set
+			// e.g hossted set url <appname> example.com
+			fmt.Printf("hossted %s %s %s %s\n", c.CommandGroup, c.Command, c.App, c.Value)
+		} else {
+			fmt.Printf("hossted %s %s %s\n", c.Command, c.App, c.Value)
+		}
 	}
 	fmt.Println("")
 

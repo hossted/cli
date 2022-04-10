@@ -45,16 +45,18 @@ type AvailableCommand struct {
 // The length of Commands and Values is expected to be the same, to give additional
 // information or examples to users, on to call the command
 type App struct {
-	App      string   `yaml:"app"`
-	Commands []string `yaml:"commands"`
-	Values   []string `yaml:"values"`
+	App          string   `yaml:"app"`
+	CommandGroup string   `yaml:"group"`
+	Commands     []string `yaml:"commands"`
+	Values       []string `yaml:"values"`
 }
 
 // Command is the individual command, with the app and example values information
 type Command struct {
-	App     string
-	Command string
-	Value   string
+	App          string
+	CommandGroup string
+	Command      string
+	Value        string
 }
 
 // AvailableCommandMap saves the map for available commands
