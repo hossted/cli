@@ -5,36 +5,36 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
 
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "[r] Register your application with the hossted ecosystem",
+	Long: `
+The hossted register commands asks for your email and organization name
+and registers you with the hossted platfrom
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("register called")
+The hossted platform provides secure and hardened docker images and provides
+best practices such as tracking updates , monitoring, centralized logging ,
+backups and much more.
+`,
+	Aliases: []string{"r"},
+	Example: `
+  hossted register
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		err := hossted.RegisterUsers()
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(registerCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// registerCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// registerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

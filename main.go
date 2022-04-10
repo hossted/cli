@@ -1,10 +1,9 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package main
 
-import "github.com/spf13/hossted/cmd"
+import "github.com/hossted/cli/cmd"
 
 func main() {
 	cmd.Execute()
