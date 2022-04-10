@@ -17,7 +17,7 @@ var httpopenCmd = &cobra.Command{
 	Aliases: []string{"h"},
 	Example: `
   hossted httpopen <app_name> (e.g. hossted httpopen gitbucket)
-  hossted h gitbucket
+  hossted h <app_name>
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
