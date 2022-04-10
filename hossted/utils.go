@@ -338,7 +338,7 @@ func PrettyPrint(i interface{}) string {
 func stopTraefik(appDir string) error {
 	fmt.Println("Stopping traefik...")
 
-	command := "sudo docker-compose stop traefik"
+	command := []string{"sudo docker-compose stop traefik"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
@@ -350,7 +350,7 @@ func stopTraefik(appDir string) error {
 func dockerUp(appDir string) error {
 	fmt.Println("Restarting service...")
 
-	command := "sudo docker-compose up -d"
+	command := []string{"sudo docker-compose up -d"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
@@ -360,14 +360,34 @@ func dockerUp(appDir string) error {
 }
 
 // Shell calls the bash shell command in a particular directory
-func Shell(appDir, command string) (error, string, string) {
+func Shell(appDir string, commands []string) (error, string, string) {
+
 	const ShellToUse = "bash"
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.Command(ShellToUse, "-c", command)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Dir = appDir
-	err := cmd.Run()
-	return err, stdout.String(), stderr.String()
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+		sout   []string // List of stdout in string format
+		serr   []string // List of stderr in string format
+	)
+
+	for _, command := range commands {
+		cmd := exec.Command(ShellToUse, "-c", command)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		cmd.Dir = appDir
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("Can not call Shell Command. %w\n", err), strings.Join(sout, "\n"), strings.Join(serr, "\n")
+		}
+
+		// Append stdout and stderr, if any
+		if strings.TrimSpace(stdout.String()) == "" {
+			sout = append(sout, stdout.String())
+		}
+		if strings.TrimSpace(stdout.String()) == "" {
+			serr = append(serr, stderr.String())
+		}
+	}
+
+	return nil, strings.Join(sout, "\n"), strings.Join(serr, "\n")
 }
