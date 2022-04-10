@@ -18,6 +18,11 @@ func HttpOpen(input string) error {
 		return err
 	}
 
+	err = CheckCommands(app.AppName, "httpopen")
+	if err != nil {
+		return err
+	}
+
 	fmt.Println(string(app.AppName))
 
 	return nil
