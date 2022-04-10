@@ -2,6 +2,7 @@ package hossted
 
 import (
 	"fmt"
+	"strings"
 )
 
 // HttpOpen allows the http access to the frontend
@@ -29,21 +30,34 @@ func HttpOpen(input string) error {
 	if err != nil {
 		return err
 	}
-	name := appConfig.AppName // app name
-	path := appConfig.AppPath // app path. e.g. /opt/gitbucket
+	name := appConfig.AppName   // app name
+	appDir := appConfig.AppPath // app directory. e.g. /opt/gitbucket
 	if err != nil {
 		return err
 	}
 
-	// Some sed commands
-	fmt.Println("Some sed statement")
+	// sed commands
+	commands := []string{
+		"sudo sed -i '/tauth.basicauth.usersfile/d' '/opt/gitbucket/docker-compose.yml'",
+		"sed -i -e 's/tauth,//g' '/opt/gitbucket/docker-compose.yml'",
+		"sed -i '/.middlewares=tauth/d' '/opt/gitbucket/docker-compose.yml'",
+		"sed -i '/installation you may remove/d' '/etc/motd'",
+	}
+	err, _, stderr := Shell(appDir, commands)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(stderr) != "" {
+		fmt.Println(stderr)
+	}
 
-	err = stopTraefik(path)
+	// Stop Traefik and restart service
+	err = stopTraefik(appDir)
 	if err != nil {
 		return err
 	}
 
-	err = dockerUp(path)
+	err = dockerUp(appDir)
 	if err != nil {
 		return err
 	}
