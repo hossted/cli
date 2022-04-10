@@ -343,7 +343,7 @@ func stopTraefik(appDir string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(stderr)
+	fmt.Println(trimOutput(stderr))
 	fmt.Println("traefik stopeed")
 	return nil
 }
@@ -355,7 +355,7 @@ func dockerUp(appDir string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(stderr)
+	fmt.Println(trimOutput(stderr))
 	return nil
 }
 
@@ -390,4 +390,11 @@ func Shell(appDir string, commands []string) (error, string, string) {
 	}
 
 	return nil, strings.Join(sout, "\n"), strings.Join(serr, "\n")
+}
+
+// trimOuput remove the last (double line breaks) from the string
+// usually use before printing out stderr
+func trimOutput(in string) string {
+	s := strings.Replace(in, "\n\n", "\n", -1)
+	return s
 }
