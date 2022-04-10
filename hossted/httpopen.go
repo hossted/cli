@@ -43,8 +43,22 @@ func HttpOpen(input string) error {
 		"sudo sed -i '/.middlewares=tauth/d' '/opt/gitbucket/docker-compose.yml'",
 		"sudo sed -i '/installation you may remove/d' '/etc/motd'",
 	}
+
 	fmt.Println("Change settings...")
 	err, _, stderr := Shell(appDir, commands)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(stderr) != "" {
+		fmt.Println(stderr)
+	}
+
+	// Remove letsencrypt
+	rmCommands := []string{
+		"sudo rm '/opt/gitbucket/letsencrypt/.htpass'",
+	}
+	fmt.Println("Removed /opt/gitbucket/letsencrypt/.htpass")
+	err, _, stderr = Shell(appDir, rmCommands)
 	if err != nil {
 		return err
 	}
