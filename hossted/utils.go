@@ -336,33 +336,66 @@ func PrettyPrint(i interface{}) string {
 }
 
 func stopTraefik(appDir string) error {
-	command := "sudo docker-compose stop traefik"
+	fmt.Println("Stopping traefik...")
+
+	command := []string{"sudo docker-compose stop traefik"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
 	}
-	fmt.Println(stderr)
+	fmt.Println(trimOutput(stderr))
+	fmt.Println("traefik stopeed")
 	return nil
 }
 func dockerUp(appDir string) error {
-	command := "sudo docker-compose up -d"
+	fmt.Println("Restarting service...")
+
+	command := []string{"sudo docker-compose up -d"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
 	}
-	fmt.Println(stderr)
+	fmt.Println(trimOutput(stderr))
 	return nil
 }
 
 // Shell calls the bash shell command in a particular directory
-func Shell(appDir, command string) (error, string, string) {
+func Shell(appDir string, commands []string) (error, string, string) {
+
 	const ShellToUse = "bash"
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.Command(ShellToUse, "-c", command)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Dir = appDir
-	err := cmd.Run()
-	return err, stdout.String(), stderr.String()
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+		sout   []string // List of stdout in string format
+		serr   []string // List of stderr in string format
+	)
+
+	for _, command := range commands {
+		cmd := exec.Command(ShellToUse, "-c", command)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		cmd.Dir = appDir
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("Can not call Shell Command [%s]. %w\n", command, err), strings.Join(sout, "\n"), strings.Join(serr, "\n")
+		}
+
+		// Append stdout and stderr, if any
+		if strings.TrimSpace(stdout.String()) == "" {
+			sout = append(sout, stdout.String())
+		}
+		if strings.TrimSpace(stdout.String()) == "" {
+			serr = append(serr, stderr.String())
+		}
+	}
+
+	return nil, strings.Join(sout, "\n"), strings.Join(serr, "\n")
+}
+
+// trimOuput remove the last (double line breaks) from the string
+// usually use before printing out stderr
+// TODO: Test why not working
+func trimOutput(in string) string {
+	s := strings.Replace(in, "\n\n", "\n", -1)
+	return s
 }

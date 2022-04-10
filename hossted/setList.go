@@ -44,8 +44,8 @@ func ListCommands() error {
 		}
 	}
 
-	if len(vmAppsMap) == 0 {
-		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\n")
+	if len(validCommands) == 0 {
+		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\nAnd contact admin to make sure the application is supported.")
 	}
 
 	// Sort
@@ -63,7 +63,12 @@ func ListCommands() error {
 			fmt.Println(app)
 			fmt.Println("------------")
 		}
-		fmt.Printf("hossted set %s %s %s\n", c.Command, c.App, c.Value)
+		if strings.TrimSpace(c.CommandGroup) != "" { // Have command group, e.g. set
+			// e.g hossted set url <appname> example.com
+			fmt.Printf("hossted %s %s %s %s\n", c.CommandGroup, c.Command, c.App, c.Value)
+		} else {
+			fmt.Printf("hossted %s %s %s\n", c.Command, c.App, c.Value)
+		}
 	}
 	fmt.Println("")
 

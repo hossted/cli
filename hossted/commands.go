@@ -18,25 +18,36 @@ apps:
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
 // need to append the values here
 // TODO: Add general command
+// TODO: Handle logic for command group
 var AVAILABLE = `
 apps:
   - app: prometheus
+    group: set
     commands: [url, auth]
     values: [example.com, false]
 
   - app: airflow
+    group: set
     commands: [url, auth]
     values: [example.com, false]
 
   - app: wordpress
+    group: set
     commands: [url, auth]
     values: [example.com, false]
 
   - app: wph
+    group: set
     commands: [url, auth]
     values: [example.com, false]
 
+  - app: gitbucket
+    group:
+    commands: [httpopen]
+    values: [""]
+
   - app: demo
+    group:
     commands: [abc, def]
     values: [abc, def]
 `
@@ -85,6 +96,7 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 	// k as app, v as commands
 	for _, app := range available.Apps {
 		appName := app.App
+		cg := app.CommandGroup
 
 		if len(app.Commands) != len(app.Values) {
 			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
@@ -92,9 +104,10 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 		for i, _ := range app.Commands {
 			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.url
 			c := Command{
-				App:     appName,
-				Command: app.Commands[i],
-				Value:   app.Values[i],
+				App:          appName,
+				CommandGroup: cg,
+				Command:      app.Commands[i],
+				Value:        app.Values[i],
 			}
 			m[name] = c
 		}

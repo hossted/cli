@@ -27,33 +27,35 @@ func SetURL(app, url string) error {
 		return fmt.Errorf("Invalid url input. Expecting domain name (e.g. example.com).\nInput - %s\n", url)
 	}
 
-	// Get .env file
+	// Get .env file and appDir
 	appConfig, err := config.GetAppConfig(app)
 	if err != nil {
 		return err
 	}
-	appPath, err := getAppFilePath(appConfig.AppPath, ".env")
+	appDir := appConfig.AppPath
+	envPath, err := getAppFilePath(appConfig.AppPath, ".env")
 	if err != nil {
 		return err
 	}
 
 	// Use sed to change the url
 	// TODO: check if the line really exists in the file first
+	fmt.Println("Changeing settings...")
 	text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", url)
-	cmd := exec.Command("sudo", "sed", "-i", "-E", text, appPath)
+	cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
 	_, err = cmd.Output()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("App Path: %s\n", appPath)
+	// Try command
 	fmt.Println("Stopping traefik...")
-	err = stopTraefik(appPath)
+	err = stopTraefik(appDir)
 	if err != nil {
 		return err
 	}
 
-	err = dockerUp(appPath)
+	err = dockerUp(appDir)
 	if err != nil {
 		return err
 	}
