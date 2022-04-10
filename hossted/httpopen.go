@@ -29,27 +29,26 @@ func HttpOpen(input string) error {
 	if err != nil {
 		return err
 	}
-	appPath := appConfig.AppPath
+	name := appConfig.AppName // app name
+	path := appConfig.AppPath // app path. e.g. /opt/gitbucket
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Some sed statement")
-	fmt.Println(app.AppName)
 
-	fmt.Printf("App Path: %s\n", appPath)
-	fmt.Println("Stopping traefik...")
-	err = stopTraefik(appPath)
+	fmt.Printf("App Path: %s\n", path)
+	err = stopTraefik(path)
 	if err != nil {
 		return err
 	}
 
-	err = dockerUp(appPath)
+	err = dockerUp(path)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Service Restarted - %s\n", app)
+	fmt.Printf("Service Restarted - %s\n", name)
 
 	return nil
 }
