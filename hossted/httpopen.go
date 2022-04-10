@@ -43,6 +43,7 @@ func HttpOpen(input string) error {
 		"sudo sed -i '/.middlewares=tauth/d' '/opt/gitbucket/docker-compose.yml'",
 		"sudo sed -i '/installation you may remove/d' '/etc/motd'",
 	}
+	fmt.Println("Change settings...")
 	err, _, stderr := Shell(appDir, commands)
 	if err != nil {
 		return err
