@@ -26,7 +26,7 @@ var setDomainCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if len(args) < 2 {
-			fmt.Println("Not enough arguments. Please blah blah.")
+			fmt.Printf("Not enough arguments. Expecting <AppName> <Domain>\nPlease checking the input params. %v\n\n", args)
 			cmd.Help()
 			os.Exit(0)
 		}
