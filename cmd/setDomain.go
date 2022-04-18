@@ -16,8 +16,8 @@ import (
 // hossted set url <AppName> example.com
 var setDomainCmd = &cobra.Command{
 	Use:     "domain",
-	Short:   "[d] Set URL endpoints of the provided application",
-	Long:    "[d] Set URL endpoints of the provided application",
+	Short:   "[d] Set the domain of the provided application",
+	Long:    "[d] Set the domain of the provided application",
 	Aliases: []string{"d"},
 	Example: `
   hossted set domain <AppName> example.com

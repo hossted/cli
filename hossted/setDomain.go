@@ -21,7 +21,7 @@ func SetDomain(app, domain string) error {
 		return fmt.Errorf("\n\n%w", err)
 	}
 
-	check := verifyInputFormat(domain, "url")
+	check := verifyInputFormat(domain, "domain")
 	if !check {
 		return fmt.Errorf("Invalid domain input. Expecting domain name (e.g. example.com).\nInput - %s\n", domain)
 	}
