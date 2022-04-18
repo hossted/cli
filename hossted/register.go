@@ -76,7 +76,7 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		// currently disabling env support - LK
-		EndPoint:     "https://app.dev.hossted.com/api/register",
+		EndPoint:     "https://app.hossted.com/api/register",
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
