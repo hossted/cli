@@ -325,8 +325,6 @@ func readProtected(filepath string) ([]byte, error) {
 // TODO: Remove last line break
 func writeProtected(path string, b []byte) error {
 
-	path = "/tmp/ddddd.txt"
-
 	// Check if the file exists first
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", path, err)
