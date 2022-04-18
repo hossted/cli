@@ -227,7 +227,7 @@ func updateEndpointEnv(endpoint, env string) string {
 func verifyInputFormat(in, format string) bool {
 
 	// Reference: https://stackoverflow.com/questions/10306690/what-is-a-regular-expression-which-will-match-a-valid-domain-name-without-a-subd
-	if format == "url" {
+	if format == "domain" {
 
 		// Replace https and http
 		if strings.HasPrefix(in, "https://") {

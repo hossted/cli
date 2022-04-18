@@ -18,7 +18,7 @@ func Test_verifyInputFormat(t *testing.T) {
 			name: "Simple test one",
 			args: args{
 				in:     "example.com",
-				format: "url",
+				format: "domain",
 			},
 			want: true,
 		},
@@ -26,7 +26,7 @@ func Test_verifyInputFormat(t *testing.T) {
 			name: "Simple test two",
 			args: args{
 				in:     "https://www.example.com",
-				format: "url",
+				format: "domain",
 			},
 			want: true,
 		},
@@ -34,7 +34,7 @@ func Test_verifyInputFormat(t *testing.T) {
 			name: "Simple test three",
 			args: args{
 				in:     "http://www.example.com",
-				format: "url",
+				format: "domain",
 			},
 			want: true,
 		},
@@ -42,7 +42,7 @@ func Test_verifyInputFormat(t *testing.T) {
 			name: "Simple test four",
 			args: args{
 				in:     "https://www.example.com/",
-				format: "url",
+				format: "domain",
 			},
 			want: true,
 		},
@@ -50,7 +50,7 @@ func Test_verifyInputFormat(t *testing.T) {
 			name: "Simple test five",
 			args: args{
 				in:     "abccc",
-				format: "url",
+				format: "domain",
 			},
 			want: false,
 		},
