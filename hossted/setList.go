@@ -30,7 +30,7 @@ func ListCommands() error {
 	}
 
 	// Get all available apps/commands
-	m, err := getCommandsMap(AVAILABLE)
+	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
 	if err != nil {
 		return err
 	}

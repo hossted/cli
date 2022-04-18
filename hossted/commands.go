@@ -11,6 +11,7 @@ import (
 var GAVAILABLE = `
 apps:
   - app: general
+    group: set
     commands: [remote-support]
     values: [true]
 `
@@ -60,6 +61,7 @@ func CheckCommands(app, command string) error {
 	if err != nil {
 		return err
 	}
+
 	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
 	if _, ok := m[key]; ok {
