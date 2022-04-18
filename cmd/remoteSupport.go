@@ -20,7 +20,7 @@ var remoteSupportCmd = &cobra.Command{
   hossted set remote-support false
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.SetRemoteAccess(true)
+		err := hossted.SetRemoteAccess(false)
 		if err != nil {
 			return err
 		}

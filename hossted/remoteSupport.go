@@ -11,9 +11,8 @@ var AUTHORIZED_KEY_PATH = "/root/.ssh/authorized_keys"
 func SetRemoteAccess(flag bool) error {
 	filepath := AUTHORIZED_KEY_PATH
 	_ = filepath
-	filepath = "/tmp/dddd.txt"
 
-	lines, err := changeRemoteAccess(false)
+	lines, err := changeRemoteAccess(flag)
 	if err != nil {
 		return err
 	}
@@ -24,6 +23,7 @@ func SetRemoteAccess(flag bool) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Updated authorized key - %s\n", filepath)
 
 	return nil
 }
@@ -54,8 +54,10 @@ func changeRemoteAccess(flag bool) ([]string, error) {
 				hosstedKey = fmt.Sprintf("# %s", hosstedKey)
 				content = append(content, hosstedKey)
 			}
+		} else {
+			content = append(content, l)
 		}
-		content = append(content, l)
+
 	}
 	return content, nil
 }

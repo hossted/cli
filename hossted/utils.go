@@ -323,20 +323,28 @@ func readProtected(filepath string) ([]byte, error) {
 }
 
 // writeProtected write the file content with sudo right
-func writeProtected(filepath string, b []byte) error {
+// TODO: Remove last line break
+func writeProtected(path string, b []byte) error {
+
+	path = "/tmp/ddddd.txt"
 
 	// Check if the file exists first
-	if _, err := os.Stat(filepath); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", filepath, err)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", path, err)
 	}
 
-	// cmd := exec.Command("sudo", "cat", filepath)
-	// cmd := exec.Command("cat", filepath)
-	// out, err := cmd.Output()
-	// if err != nil {
-	// 	return fmt.Errorf("Protected file not exists. Please check - %s.\n%w\n", filepath, err)
-	// }
-	// fmt.Println(out)
+	// Write to file
+	content := string(b)
+	baseDir := filepath.Dir(path)
+	commands := []string{
+		fmt.Sprintf("echo \"%s\" > %s", content, path),
+	}
+
+	err, _, stderr := Shell(baseDir, commands)
+	if err != nil {
+		return err
+	}
+	_ = stderr
 
 	return nil
 }
