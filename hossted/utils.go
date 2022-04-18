@@ -316,10 +316,29 @@ func readProtected(filepath string) ([]byte, error) {
 	cmd := exec.Command("cat", filepath)
 	out, err := cmd.Output()
 	if err != nil {
-		return []byte{}, fmt.Errorf("Protected file not exists. Please check - %s.\n%w\n", filepath, err)
+		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
 	}
 
 	return out, nil
+}
+
+// writeProtected write the file content with sudo right
+func writeProtected(filepath string, b []byte) error {
+
+	// Check if the file exists first
+	if _, err := os.Stat(filepath); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", filepath, err)
+	}
+
+	// cmd := exec.Command("sudo", "cat", filepath)
+	// cmd := exec.Command("cat", filepath)
+	// out, err := cmd.Output()
+	// if err != nil {
+	// 	return fmt.Errorf("Protected file not exists. Please check - %s.\n%w\n", filepath, err)
+	// }
+	// fmt.Println(out)
+
+	return nil
 }
 
 func getAppFilePath(base, relative string) (string, error) {
