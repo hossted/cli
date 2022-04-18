@@ -3,6 +3,7 @@ package hossted
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -35,6 +36,18 @@ func ListCommands() error {
 		return err
 	}
 
+	// Print general commands
+	var generalCommands []Command
+	for k, v := range m { // k: app.command, v: Command{}
+		if strings.Contains(k, "general") {
+			generalCommands = append(generalCommands, v)
+		}
+	}
+	err = printCommands(generalCommands)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	// Check matching commands
 	var validCommands []Command
 	for k, v := range m { // k: app.command, v: Command{}
@@ -52,25 +65,10 @@ func ListCommands() error {
 	sort.Slice(validCommands, func(i, j int) bool {
 		return validCommands[i].App < validCommands[j].App
 	})
-
-	// List the available commands (vm + predefined)
-	var prev string // For formatting only. Group same apps together.
-	for _, c := range validCommands {
-		app := c.App
-		if prev != app {
-			prev = app
-			fmt.Println("")
-			fmt.Println(app)
-			fmt.Println("------------")
-		}
-		if strings.TrimSpace(c.CommandGroup) != "" { // Have command group, e.g. set
-			// e.g hossted set url <appname> example.com
-			fmt.Printf("hossted %s %s %s %s\n", c.CommandGroup, c.Command, c.App, c.Value)
-		} else {
-			fmt.Printf("hossted %s %s %s\n", c.Command, c.App, c.Value)
-		}
+	err = printCommands(validCommands)
+	if err != nil {
+		fmt.Println(err)
 	}
-	fmt.Println("")
 
 	return nil
 }
@@ -82,4 +80,38 @@ func getAppNameFromKey(key string) string {
 		app = s[0] // Get the app/first part from the key
 	}
 	return app
+}
+
+// printCommands prints the list of available commands (general, app, etc,..) to the console
+// to provide additional information to users on the available commands on the vm
+func printCommands(commands []Command) error {
+
+	if len(commands) == 0 {
+		return errors.New("No available commands. Please check with administrator.")
+	}
+
+	// List the available commands (vm + predefined)
+	var prev string // For formatting only. Group same apps together.
+	for _, c := range commands {
+		app := c.App
+		if prev != app {
+			prev = app
+			fmt.Println("")
+			fmt.Println(app)
+			fmt.Println("------------")
+		}
+		// Handle general commands
+		if c.App == "general" {
+			c.App = ""
+		}
+
+		msg := fmt.Sprintf("hossted %s %s %s %s\n", c.CommandGroup, c.Command, c.App, c.Value)
+
+		// Replace multiple spaces to one
+		space := regexp.MustCompile(`\s+`)
+		s := space.ReplaceAllString(msg, " ")
+		fmt.Println(s)
+	}
+	fmt.Println("")
+	return nil
 }
