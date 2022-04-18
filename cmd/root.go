@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	VERSION = "dev" // Update during build time
+	VERSION     = "dev" // Update during build time
+	ENVIRONMENT = "dev" // Update during build time
 )
 
 // rootCmd represents the base command when called without any subcommands
