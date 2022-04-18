@@ -315,10 +315,30 @@ func readProtected(filepath string) ([]byte, error) {
 	cmd := exec.Command("sudo", "cat", filepath)
 	out, err := cmd.Output()
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
 	}
 
 	return out, nil
+}
+
+// writeProtected write the file content with sudo right
+// TODO: Remove last line break
+func writeProtected(path string, b []byte) error {
+
+	// Check if the file exists first
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", path, err)
+	}
+
+	// Write to file
+	content := string(b)
+	cmd := exec.Command("sudo", "bash", "-c", fmt.Sprintf("echo '%s' > '%s'", content, path))
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getAppFilePath(base, relative string) (string, error) {
