@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - [Lock/Unlock master key](https://github.com/hossted/cli/issues/17)
+  - (TBA)
 - [Multi Environment Support](https://github.com/hossted/cli/issues/21)
+  - (TBA)
 
 ### Changed
 - [Set Domain](https://github.com/hossted/cli/issues/7)
