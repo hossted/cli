@@ -5,8 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,11 @@ var remoteSupportCmd = &cobra.Command{
   hossted set remote-support false
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("remote support called")
+		err := hossted.SetRemoteAccess(true)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 }

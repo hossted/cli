@@ -312,10 +312,11 @@ func overwriteFile(filepath string, content string) error {
 // readProtected read the file content with sudo right
 func readProtected(filepath string) ([]byte, error) {
 
-	cmd := exec.Command("sudo", "cat", filepath)
+	// cmd := exec.Command("sudo", "cat", filepath)
+	cmd := exec.Command("cat", filepath)
 	out, err := cmd.Output()
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("Protected file not exists. Please check - %s.\n%w\n", filepath, err)
 	}
 
 	return out, nil
