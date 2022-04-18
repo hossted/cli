@@ -55,7 +55,10 @@ func changeRemoteAccess(flag bool) ([]string, error) {
 				content = append(content, hosstedKey)
 			}
 		} else {
-			content = append(content, l)
+			// only append non empty line
+			if strings.TrimSpace(l) != "" {
+				content = append(content, l)
+			}
 		}
 
 	}
