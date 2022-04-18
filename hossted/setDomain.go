@@ -5,12 +5,11 @@ import (
 	"os/exec"
 )
 
-// SetURL set the url for different apps
+// SetDomain set the domain for different apps
 // TODO: check whether the function is generic for different apps. Divide to different cases if not.
 // TODO: check error for sed command
-// TODO: restart app
-func SetURL(app, url string) error {
-	command := "url"
+func SetDomain(app, domain string) error {
+	command := "domain"
 
 	config, err := GetConfig()
 	if err != nil {
@@ -22,9 +21,9 @@ func SetURL(app, url string) error {
 		return fmt.Errorf("\n\n%w", err)
 	}
 
-	check := verifyInputFormat(url, "url")
+	check := verifyInputFormat(domain, "url")
 	if !check {
-		return fmt.Errorf("Invalid url input. Expecting domain name (e.g. example.com).\nInput - %s\n", url)
+		return fmt.Errorf("Invalid domain input. Expecting domain name (e.g. example.com).\nInput - %s\n", domain)
 	}
 
 	// Get .env file and appDir
@@ -38,10 +37,10 @@ func SetURL(app, url string) error {
 		return err
 	}
 
-	// Use sed to change the url
+	// Use sed to change the domain
 	// TODO: check if the line really exists in the file first
 	fmt.Println("Changeing settings...")
-	text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", url)
+	text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", domain)
 	cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
 	_, err = cmd.Output()
 	if err != nil {

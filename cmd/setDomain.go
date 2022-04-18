@@ -12,16 +12,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// setURLCmd represents the setUrlCmd command
+// setDomainCmd represents the setUrlCmd command
 // hossted set url <AppName> example.com
-var setURLCmd = &cobra.Command{
-	Use:     "url",
-	Short:   "[u] Set URL endpoints of the provided application",
-	Long:    "[u] Set URL endpoints of the provided application",
-	Aliases: []string{"u"},
+var setDomainCmd = &cobra.Command{
+	Use:     "domain",
+	Short:   "[d] Set URL endpoints of the provided application",
+	Long:    "[d] Set URL endpoints of the provided application",
+	Aliases: []string{"d"},
 	Example: `
-  hossted set url <AppName> example.com
-  hossted set url prometheus example.com
+  hossted set domain <AppName> example.com
+  hossted set domain prometheus example.com
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -32,9 +32,9 @@ var setURLCmd = &cobra.Command{
 		}
 
 		app := args[0]
-		url := args[1]
+		domain := args[1]
 
-		err := hossted.SetURL(app, url)
+		err := hossted.SetDomain(app, domain)
 		if err != nil {
 			return err
 		}
@@ -44,5 +44,5 @@ var setURLCmd = &cobra.Command{
 }
 
 func init() {
-	setCmd.AddCommand(setURLCmd)
+	setCmd.AddCommand(setDomainCmd)
 }
