@@ -5,6 +5,10 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +24,24 @@ var remoteSupportCmd = &cobra.Command{
   hossted set remote-support false
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.SetRemoteAccess(false)
+
+		if len(args) < 1 {
+			cmd.Help()
+			os.Exit(0)
+		}
+
+		// Parse input
+		var flag bool
+		input := strings.ToLower(args[0])
+		if input == "true" {
+			flag = true
+		} else if input == "false" {
+			flag = false
+		} else {
+			return fmt.Errorf("Only true/false is supported. Input - %s\n", input)
+		}
+
+		err := hossted.SetRemoteAccess(flag)
 		if err != nil {
 			return err
 		}
