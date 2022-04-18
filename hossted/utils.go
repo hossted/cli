@@ -312,8 +312,7 @@ func overwriteFile(filepath string, content string) error {
 // readProtected read the file content with sudo right
 func readProtected(filepath string) ([]byte, error) {
 
-	// cmd := exec.Command("sudo", "cat", filepath)
-	cmd := exec.Command("cat", filepath)
+	cmd := exec.Command("sudo", "cat", filepath)
 	out, err := cmd.Output()
 	if err != nil {
 		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
@@ -337,7 +336,7 @@ func writeProtected(path string, b []byte) error {
 	content := string(b)
 	baseDir := filepath.Dir(path)
 	commands := []string{
-		fmt.Sprintf("echo \"%s\" > %s", content, path),
+		fmt.Sprintf("sudo echo \"%s\" > %s", content, path),
 	}
 
 	err, _, stderr := Shell(baseDir, commands)
