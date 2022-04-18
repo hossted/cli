@@ -22,7 +22,7 @@ var (
 // Also it will get the uuid of the machine, and environment from $HOSSTED_ENV.
 // It will then send an request to the API server, to get the JWT sessin token.
 // TODO: Use the original values as default.
-func RegisterUsers() error {
+func RegisterUsers(env string) error {
 
 	config, _ := GetConfig() // Ignore error
 
@@ -30,7 +30,7 @@ func RegisterUsers() error {
 	email, _ := emailPrompt()
 
 	// Get uuid, env. Env default to be dev, if env varible
-	env := GetHosstedEnv()
+	env = GetHosstedEnv(env)
 	uuid, err := GetHosstedUUID(config.UUIDPath)
 	if err != nil {
 		return err
@@ -75,8 +75,7 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
-		// currently disabling env support - LK
-		EndPoint:     "https://app.hossted.com/api/register",
+		EndPoint:     "https://app.__ENV__hossted.com/api/register",
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
