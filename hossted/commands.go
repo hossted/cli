@@ -11,7 +11,7 @@ import (
 var GAVAILABLE = `
 apps:
   - app: general
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 `
 
@@ -23,22 +23,22 @@ var AVAILABLE = `
 apps:
   - app: prometheus
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: airflow
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: wordpress
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: wph
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: gitbucket
@@ -61,7 +61,7 @@ func CheckCommands(app, command string) error {
 	if err != nil {
 		return err
 	}
-	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.url
+	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
 	if _, ok := m[key]; ok {
 		// happy path. app.command is available
@@ -79,7 +79,7 @@ func CheckCommands(app, command string) error {
 func getCommandsMap(input string) (AvailableCommandMap, error) {
 
 	// Available commands map, kv as map[appName.command] -> available commands, []Command
-	// e.g. map["prometheus.url"] -> []Command[{prometheus url example.com}]
+	// e.g. map["prometheus.domain"] -> []Command[{prometheus domain example.com}]
 	var (
 		m         AvailableCommandMap // result available map
 		available AvailableCommand    // For parsing yaml
@@ -102,7 +102,7 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
 		}
 		for i, _ := range app.Commands {
-			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.url
+			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.domain
 			c := Command{
 				App:          appName,
 				CommandGroup: cg,
