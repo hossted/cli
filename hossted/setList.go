@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// ListCommands lists the available services on the virtual machine
+// ListCommands lists the available services and general commands on the virtual machine.
 // The available application is defined under the file /opt/linoovate/run/uuid.txt.
 // Also it would depends on whether the "action" is predefined as available of the certain app.
 func ListCommands() error {
