@@ -332,8 +332,6 @@ func writeProtected(path string, b []byte) error {
 
 	// Write to file
 	content := string(b)
-	abc := fmt.Sprintf("echo '%s' > '%s'", content, path)
-	fmt.Println(abc)
 	cmd := exec.Command("sudo", "bash", "-c", fmt.Sprintf("echo '%s' > '%s'", content, path))
 	_, err := cmd.Output()
 	if err != nil {
