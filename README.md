@@ -33,6 +33,7 @@ The hossted cli - built to interact with a hossted container
 | httpopen  | hossted httpopen \<AppName\>               | httpopen appname                                                           |
 | logs      | hossted logs \<AppName\>                   | View Applicatin logs                                                       |
 | ps        | hossted ps \<AppName\>                     | docker-compose ps of the application                                       |
+| version   | hossted version                            | Get the version of the hossted CLI program                                 |
 |           |                                            |                                                                            |
 | ip        | -                                          | (TBC) Get external and internal ip addresses                               |
 | dashboard | -                                          | (TBC) Open browser with dashboard                                          |
