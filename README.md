@@ -31,7 +31,7 @@ The hossted cli - built to interact with a hossted container
 ## software.txt
   `software.txt` under `/opt/linnovate/run/software.txt` should be in this format to get the available applications
   ```
-  Linnovate-<CloudProvider>-<app>
+  Linnovate-<CloudProvider>-<Application>
   ```
 
   __Example__
