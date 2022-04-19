@@ -123,10 +123,10 @@ func WriteConfig(w io.Writer, config Config) error {
 	return nil
 }
 
-// GetHosstedEnv gets the value of the env variable HOSSTED_ENV. Support dev/prod only.
+// GetHosstedEnv determines which env. Support dev/prod only.
 // If it is not set, default as dev
-func GetHosstedEnv() string {
-	env := strings.TrimSpace(os.Getenv("HOSSTED_ENV"))
+func GetHosstedEnv(env string) string {
+
 	switch env {
 	case "dev":
 		env = "dev"
@@ -136,7 +136,7 @@ func GetHosstedEnv() string {
 		// fmt.Printf("Environment variable (HOSSTED_ENV) is not set.\nUsing dev instead.\n")
 		env = "dev"
 	default:
-		fmt.Printf("Only dev/prod is supported for (HOSSTED_ENV).\nUsing dev instead.\n")
+		fmt.Printf("Only dev/prod is supported for env.\nUsing dev instead.\n")
 		env = "dev"
 	}
 	return env
@@ -219,7 +219,13 @@ func GetAppInfo() ([]ConfigApplication, error) {
 // updateEndpointEnv replace the place holder with the environment specified
 // TODO: Review later. Now only use prod link.
 func updateEndpointEnv(endpoint, env string) string {
-	endpoint = strings.ReplaceAll(endpoint, "__ENV__", env)
+	if env == "prod" {
+		// prod: https://app.hossted.com/api/register
+		endpoint = strings.ReplaceAll(endpoint, "__ENV__", "")
+	} else if env == "dev" {
+		// dev: https://app.dev.hossted.com/api/register
+		endpoint = strings.ReplaceAll(endpoint, "__ENV__", "dev.")
+	}
 	return endpoint
 }
 
@@ -227,7 +233,7 @@ func updateEndpointEnv(endpoint, env string) string {
 func verifyInputFormat(in, format string) bool {
 
 	// Reference: https://stackoverflow.com/questions/10306690/what-is-a-regular-expression-which-will-match-a-valid-domain-name-without-a-subd
-	if format == "url" {
+	if format == "domain" {
 
 		// Replace https and http
 		if strings.HasPrefix(in, "https://") {
@@ -315,10 +321,30 @@ func readProtected(filepath string) ([]byte, error) {
 	cmd := exec.Command("sudo", "cat", filepath)
 	out, err := cmd.Output()
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
 	}
 
 	return out, nil
+}
+
+// writeProtected write the file content with sudo right
+// TODO: Remove last line break
+func writeProtected(path string, b []byte) error {
+
+	// Check if the file exists first
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("Protected file does not exist. Please check - %s.\n%w\n", path, err)
+	}
+
+	// Write to file
+	content := string(b)
+	cmd := exec.Command("sudo", "bash", "-c", fmt.Sprintf("echo '%s' > '%s'", content, path))
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getAppFilePath(base, relative string) (string, error) {

@@ -12,8 +12,12 @@ func Test_getCommandsMap(t *testing.T) {
 
 	emptyResult := AvailableCommandMap{}
 
+	generalCmdEmpty := ""
+	generalCmd := ""
+	_ = generalCmd
+
 	// Test 1 - Normal Case
-	inputA := `
+	appCmdA := `
 apps:
   - app: demo
     commands: [url, auth]
@@ -32,7 +36,7 @@ apps:
 	}
 
 	// Test 2 - Mismatched length for commands and values
-	inputB := `
+	appCmdB := `
 apps:
   - app: demo
     commands: [url, auth, aaa]
@@ -40,14 +44,15 @@ apps:
 `
 
 	// Test 3 - Invalid yaml. No apps and commands
-	inputC := `
+	appCmdC := `
 app:
 
 `
 
 	// Start test
 	type args struct {
-		input string
+		generalCmd string
+		appCmd     string
 	}
 	tests := []struct {
 		name               string
@@ -59,7 +64,8 @@ app:
 		{
 			name: "Normal case",
 			args: args{
-				input: inputA,
+				generalCmd: generalCmdEmpty,
+				appCmd:     appCmdA,
 			},
 			want: mapA,
 		},
@@ -67,7 +73,8 @@ app:
 			// Error - Mismatched length for command and value
 			name: "Mismatched length",
 			args: args{
-				input: inputB,
+				generalCmd: generalCmdEmpty,
+				appCmd:     appCmdB,
 			},
 			want:               emptyResult,
 			wantErr:            true,
@@ -77,7 +84,8 @@ app:
 			// Error - invalid yaml content
 			name: "Invalid yaml",
 			args: args{
-				input: inputC,
+				generalCmd: generalCmdEmpty,
+				appCmd:     appCmdC,
 			},
 			want:               emptyResult,
 			wantErr:            true,
@@ -86,7 +94,7 @@ app:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getCommandsMap(tt.args.input)
+			got, err := getCommandsMap(tt.args.generalCmd, tt.args.appCmd)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getCommandsMap() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -122,6 +130,16 @@ func TestCheckCommands(t *testing.T) {
 			},
 			wantErr:            true,
 			wantErrMsgContains: "is not supported",
+		},
+		{
+			// App Command not in predefined list.
+			// Assume there are some commands defined
+			name: "General command - remote-support should be avilable",
+			args: args{
+				app:     "general",
+				command: "remote-support",
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

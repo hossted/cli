@@ -26,7 +26,7 @@ backups and much more.
   hossted register
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := hossted.RegisterUsers()
+		err := hossted.RegisterUsers(ENVIRONMENT)
 		if err != nil {
 			return err
 		}

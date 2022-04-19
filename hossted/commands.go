@@ -11,34 +11,34 @@ import (
 var GAVAILABLE = `
 apps:
   - app: general
-    commands: [url, auth]
-    values: [example.com, false]
+    group: set
+    commands: [remote-support]
+    values: [true]
 `
 
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
 // need to append the values here
-// TODO: Add general command
 // TODO: Handle logic for command group
 var AVAILABLE = `
 apps:
   - app: prometheus
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: airflow
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: wordpress
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: wph
     group: set
-    commands: [url, auth]
+    commands: [domain, auth]
     values: [example.com, false]
 
   - app: gitbucket
@@ -56,12 +56,13 @@ apps:
 // Return error if the provided values are not in the pre-defined list
 func CheckCommands(app, command string) error {
 
-	// Get the map of available apps and commands
-	m, err := getCommandsMap(AVAILABLE)
+	// Get the map of available apps and general commands
+	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
 	if err != nil {
 		return err
 	}
-	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.url
+
+	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
 	if _, ok := m[key]; ok {
 		// happy path. app.command is available
@@ -76,25 +77,37 @@ func CheckCommands(app, command string) error {
 
 // getCommandsMap gets a mapping for available apps and commands mapping
 // input as the yaml formatted available commands
-func getCommandsMap(input string) (AvailableCommandMap, error) {
+// TODO: Add general ones as well in error checking
+func getCommandsMap(generalCmd, appCmd string) (AvailableCommandMap, error) {
 
 	// Available commands map, kv as map[appName.command] -> available commands, []Command
-	// e.g. map["prometheus.url"] -> []Command[{prometheus url example.com}]
+	// e.g. map["prometheus.domain"] -> []Command[{prometheus domain example.com}]
 	var (
-		m         AvailableCommandMap // result available map
-		available AvailableCommand    // For parsing yaml
+		m                AvailableCommandMap // result available map
+		availableApp     AvailableCommand    // For parsing yaml for app commands
+		availableGeneral AvailableCommand    // For parsing yaml for general commands
 	)
 	m = make(AvailableCommandMap)
-	err := yaml.Unmarshal([]byte(input), &available)
+
+	// Parse app specific commands
+	err := yaml.Unmarshal([]byte(generalCmd), &availableGeneral)
 	if err != nil {
-		return m, fmt.Errorf("Can not parse avilable commands yaml. %w", err)
+		return m, fmt.Errorf("Can not parse general commands yaml. %w", err)
 	}
-	if len(available.Apps) == 0 {
+
+	// Parse app specific commands
+	err = yaml.Unmarshal([]byte(appCmd), &availableApp)
+	if err != nil {
+		return m, fmt.Errorf("Can not parse available app commands yaml. %w", err)
+	}
+
+	// TODO: Add general ones as well
+	if len(availableApp.Apps) == 0 {
 		return m, errors.New("No available apps and commands. Please check.")
 	}
 
-	// k as app, v as commands
-	for _, app := range available.Apps {
+	// k as app, v as commands - General
+	for _, app := range availableGeneral.Apps {
 		appName := app.App
 		cg := app.CommandGroup
 
@@ -102,7 +115,27 @@ func getCommandsMap(input string) (AvailableCommandMap, error) {
 			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
 		}
 		for i, _ := range app.Commands {
-			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.url
+			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. general.remote-support
+			c := Command{
+				App:          appName,
+				CommandGroup: cg,
+				Command:      app.Commands[i],
+				Value:        app.Values[i],
+			}
+			m[name] = c
+		}
+	}
+
+	// k as app, v as commands - App
+	for _, app := range availableApp.Apps {
+		appName := app.App
+		cg := app.CommandGroup
+
+		if len(app.Commands) != len(app.Values) {
+			return m, errors.New("Length of commands does not equal to the length of sample values.\n Please check the available command yaml.")
+		}
+		for i, _ := range app.Commands {
+			name := fmt.Sprintf("%s.%s", appName, app.Commands[i]) // e.g. prometheus.domain
 			c := Command{
 				App:          appName,
 				CommandGroup: cg,

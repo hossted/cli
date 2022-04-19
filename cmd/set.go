@@ -19,8 +19,9 @@ var setCmd = &cobra.Command{
 	Example: `
   hossted set list
   hossted set auth <AppName> true
-  hossted set url <AppName> example.com
+  hossted set domain <AppName> example.com
   hossted set ssl <AppName> sign
+  hossted set remote-support true
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
