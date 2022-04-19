@@ -1,19 +1,26 @@
+
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+
+- [cli](#cli)
+- [Command](#command)
+- [Pre-requisite](#pre-requisite)
+    - [uuid](#uuid)
+    - [software.txt](#softwaretxt)
+    - [sudo access](#sudo-access)
+- [Installation](#installation)
+    - [Binary](#binary)
+    - [Source](#source)
+    - [Manual](#manual)
+        - [Prod](#prod)
+        - [Dev](#dev)
+- [Usage](#usage)
+
+<!-- markdown-toc end -->
+
 # cli
 The hossted cli - built to interact with a hossted container
-
-# Table of Content
-- [# Command](# Command)
-- [# Pre-requisite](# Pre-requisite)
-- [## uuid](## uuid)
-- [## software.txt](## software.txt)
-- [## sudo access](## sudo access)
-- [# Installation](# Installation)
-- [## Binary](## Binary)
-- [## Source](## Source)
-- [## Manual](## Manual)
-- [#### Prod](#### Prod)
-- [#### Dev](#### Dev)
-- [# Usage](# Usage)
+<br/>
 
 # Command
 | Command   | Command Example                            | Descriptions                                                               |
