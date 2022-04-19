@@ -5,7 +5,7 @@ The hossted cli - built to interact with a hossted container
 
 #  Command
 | Command   | Command Example                            | Descriptions                                                               |
-|-----------+--------------------------------------------+----------------------------------------------------------------------------|
+|-----------|--------------------------------------------|----------------------------------------------------------------------------|
 | register  | hossted register                           | Register email and organization                                            |
 | set       |                                            | Change application settings                                                |
 |           | hossted set list                           | List all the commands of the available applications                        |
@@ -14,7 +14,7 @@ The hossted cli - built to interact with a hossted container
 |           | hossted set ssl \<AppName\> sign           | -                                                                          |
 |           | hossted set remote-support true            | To enable or disable remote ssh access with our maintanece and support key |
 | httpopen  | hossted httpopen \<AppName\>               | httpopen appname                                                           |
-|-----------+--------------------------------------------+----------------------------------------------------------------------------|
+|           |                                            |                                                                            |
 | list      |                                            | List hossted apps on node                                                  |
 | support   |                                            | Open support tickets                                                       |
 | ip        |                                            | Get external and internal ip addresses                                     |
