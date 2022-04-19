@@ -21,15 +21,28 @@ The hossted cli - built to interact with a hossted container
 
 <br/><br/>
 
-# Pre-requiste
+# Pre-requisite
 ## uuid
   uuid being saved under `/opt/linnovate/run/uuid.txt`
   ```
   <uuid>
   ```
 
+## software.txt
+  `software.txt` under `/opt/linnovate/run/software.txt` should be in this format to get the available applications
+  ```
+  Linnovate-<CloudProvider>-<app>
+  ```
+
+  __Example__
+  ```
+  Linnovate-AWS-gitbucket
+  ```
+
 ## sudo access
 - user should have **sudo access** for most of the change setting commands, docker commands, etc.. to work.
+
+<br/><br/>
 
 # Installation
 ## Binary
