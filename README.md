@@ -1,8 +1,9 @@
+# hossted cli
+The hossted cli - built to interact with a hossted container
+<br/>
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-**Table of Contents**
-
-- [cli](#cli)
+# Table of Contents
 - [Command](#command)
 - [Pre-requisite](#pre-requisite)
     - [uuid](#uuid)
@@ -18,9 +19,6 @@
 
 <!-- markdown-toc end -->
 
-# cli
-The hossted cli - built to interact with a hossted container
-<br/>
 
 # Command
 | Command   | Command Example                            | Descriptions                                                               |
