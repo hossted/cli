@@ -15,8 +15,8 @@ var followFlag bool
 var logsCmd = &cobra.Command{
 	Use:     "logs",
 	Aliases: []string{"l"},
-	Short:   "[l] View Applicatin logs",
-	Long:    `[l] View Applicatin logs`,
+	Short:   "[l] View Application logs",
+	Long:    `[l] View Application logs`,
 	Example: `
   hossted logs
   hossted logs <app_name> (e.g. hossted ps wikijs)
