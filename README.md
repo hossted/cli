@@ -20,28 +20,39 @@ The hossted cli - built to interact with a hossted container
 | ip        | -                                          | (TBC) Get external and internal ip addresses                               |
 | dashboard | -                                          | (TBC) Open browser with dashboard                                          |
 
-### Binary
+# Pre-requiste
+## uuid
+  uuid being saved under `/opt/linnovate/run/uuid.txt`
+  ```
+  <uuid>
+  ```
+
+## sudo access
+- user should have **sudo access** to for most of the change setting, docker commands, etc..
+
+# Installation
+## Binary
 Generally it is not a good idea to download the binary file directly from anywhere on the web. But if you do not have Go environment setup, you can download the compiled file here.
 
-| Operating System | Binary                    |
-|------------------|---------------------------|
-| Linux (64-bit)   | [Here](bin/linux/hossted) |
-| Dev (64-bit)     | [Here](bin/osx/hossted)   |
+| Operating System | Branch | Binary                                                           |
+|------------------|--------|------------------------------------------------------------------|
+| Linux (64-bit)   | Main   | [Here](https://github.com/hossted/cli/raw/dev/bin/linux/hossted) |
+| Dev (64-bit)     | Dev    | [Here](https://github.com/hossted/cli/raw/dev/bin/dev/hossted)   |
 
 
-### Source
+## Source
 Or you can just install it with `go install` from the source
-
 ```
 git clone https://github.com/hossted/cli.git
 cd cli
 go install .
 ```
-# Pre-requiste
-  uuid being saved under `/opt/linnovate/run/uuid.txt`
-  ```
-  <uuid>
-  ```
+
+
+## Manual
+blah blah
+
+
 
 
 # Usage
