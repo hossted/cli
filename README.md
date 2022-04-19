@@ -1,8 +1,6 @@
 # cli
 The hossted cli - built to interact with a hossted container
 
-
-
 #  Command
 | Command   | Command Example                            | Descriptions                                                               |
 |-----------|--------------------------------------------|----------------------------------------------------------------------------|
@@ -20,6 +18,9 @@ The hossted cli - built to interact with a hossted container
 | ip        | -                                          | (TBC) Get external and internal ip addresses                               |
 | dashboard | -                                          | (TBC) Open browser with dashboard                                          |
 
+
+<br/><br/>
+
 # Pre-requiste
 ## uuid
   uuid being saved under `/opt/linnovate/run/uuid.txt`
@@ -28,17 +29,18 @@ The hossted cli - built to interact with a hossted container
   ```
 
 ## sudo access
-- user should have **sudo access** to for most of the change setting, docker commands, etc..
+- user should have **sudo access** for most of the change setting commands, docker commands, etc.. to work.
 
 # Installation
 ## Binary
 Generally it is not a good idea to download the binary file directly from anywhere on the web. But if you do not have Go environment setup, you can download the compiled file here.
 
-| Operating System | Branch | Binary                                                           |
-|------------------|--------|------------------------------------------------------------------|
-| Linux (64-bit)   | Main   | [Here](https://github.com/hossted/cli/raw/dev/bin/linux/hossted) |
-| Dev (64-bit)     | Dev    | [Here](https://github.com/hossted/cli/raw/dev/bin/dev/hossted)   |
+| Operating System    | Branch | Binary                                                           |
+|---------------------|--------|------------------------------------------------------------------|
+| Linux Prod (64-bit) | Main   | [Here](https://github.com/hossted/cli/raw/main/bin/linux/hossted) |
+| Linux Dev (64-bit)  | Dev    | [Here](https://github.com/hossted/cli/raw/dev/bin/dev/hossted)   |
 
+<br/>
 
 ## Source
 Or you can just install it with `go install` from the source
@@ -48,12 +50,29 @@ cd cli
 go install .
 ```
 
+<br/>
 
 ## Manual
-blah blah
+
+#### Prod
+```bash
+wget https://github.com/hossted/cli/raw/main/bin/linux/hossted
+chmod 755 hossted
+sudo cp ./hossted /usr/local/bin
+```
+
+<br/>
+
+#### Dev
+```bash
+wget https://github.com/hossted/cli/raw/dev/bin/dev/hossted
+mv hossted hossted-dev
+chmod 755 hossted-dev
+sudo cp ./hossted-dev /usr/local/bin
+```
 
 
-
+<br/><br/>
 
 # Usage
 0. Generate help on the commands with `-h` or `--help`<br/>
@@ -73,8 +92,12 @@ blah blah
 2. Config file is saved under `~/.hossted/config.yaml`
    ```yaml
    email: abc@hossted.com
-   organization: hossted
    userToken:
-   sessionToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjcxLCJpYXQiOjE2NDY1NTE5MTgsImV4cCI6MTY0NjYzODMxOH0.jgweC-by2l7ksJ9NZUtjgIqvpu27ls7NZEsZgKrmkGA
+   sessionToken: eyJhbGdaOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjIzLCJpYXQiOjE2NDY4NDIxOTAsImV4cCI6MTY0NjkyODU5MH0.JMUCLFMHLznZ7Dc0uNFhFFS0J-LqoB_mAehnMFFwgfs
    uuidPath: /opt/linnovate/run/uuid.txt
+   applications:
+       - appName: prometheus
+         appPath: /opt/prometheus
+       - appName: demoapp
+         appPath: /opt/demoapp
    ```
