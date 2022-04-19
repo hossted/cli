@@ -1,7 +1,21 @@
 # cli
 The hossted cli - built to interact with a hossted container
 
-#  Command
+# Table of Content
+- [[#  Command][#  Command]]
+- [[# Pre-requisite][# Pre-requisite]]
+- [[## uuid][## uuid]]
+- [[## software.txt][## software.txt]]
+- [[## sudo access][## sudo access]]
+- [[# Installation][# Installation]]
+- [[## Binary][## Binary]]
+- [[## Source][## Source]]
+- [[## Manual][## Manual]]
+- [[#### Prod][#### Prod]]
+- [[#### Dev][#### Dev]]
+- [[# Usage][# Usage]]
+
+# Command
 | Command   | Command Example                            | Descriptions                                                               |
 |-----------|--------------------------------------------|----------------------------------------------------------------------------|
 | register  | hossted register                           | Register email and organization                                            |
