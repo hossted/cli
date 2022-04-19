@@ -15,6 +15,7 @@ The hossted cli - built to interact with a hossted container
     - [Manual](#manual)
         - [Prod](#prod)
         - [Dev](#dev)
+- [Version](#version)
 - [Usage](#usage)
 
 <!-- markdown-toc end -->
@@ -31,7 +32,7 @@ The hossted cli - built to interact with a hossted container
 |           | hossted set ssl \<AppName\> sign           | (TBC)                                                                      |
 |           | hossted set remote-support true            | To enable or disable remote ssh access with our maintanece and support key |
 | httpopen  | hossted httpopen \<AppName\>               | httpopen appname                                                           |
-| logs      | hossted logs \<AppName\>                   | View Applicatin logs                                                       |
+| logs      | hossted logs \<AppName\>                   | View Application logs                                                      |
 | ps        | hossted ps \<AppName\>                     | docker-compose ps of the application                                       |
 | version   | hossted version                            | Get the version of the hossted CLI program                                 |
 |           |                                            |                                                                            |
@@ -104,6 +105,18 @@ chmod 755 hossted-dev
 sudo cp ./hossted-dev /usr/local/bin
 ```
 
+# Version
+Get the version with following command
+```
+hossted version
+```
+
+__Result__
+```
+# or more recent
+hossted version v0.1.5.
+Built on 2022-04-10 (24b8619)
+```
 
 <br/><br/>
 
