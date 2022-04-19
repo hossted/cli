@@ -4,29 +4,35 @@ The hossted cli - built to interact with a hossted container
 
 
 #  Command
-| Command   | SubCommand | Descriptions                           | Remarks |
-|-----------|------------|----------------------------------------|---------|
-| register  |            | Register email and organization        |         |
-| list      |            | List hossted apps on node              |         |
-| support   |            | Open support tickets                   |         |
-| ip        |            | Get external and internal ip addresses |         |
-| dashboard |            | Open browser with dashboard            |         |
-|           |            |                                        |         |
-| logs      |            | Read docker-compose logs               |         |
-| ps        |            | docker-compose ps                      |         |
-| support   |            | Open support tickers                   |         |
-| htopen    |            | Remove httpauth from CLI               |         |
-| url       |            | Set front-end URL                      |         |
-| ssl       | signed     | Change to custom signed SSL            |         |
+| Command   | SubCommand                               | Descriptions                           | Remarks |
+|-----------|------------------------------------------|----------------------------------------|---------|
+| register  | hossted register                         | Register email and organization        |         |
+| set       |                                          | Change application settings            |         |
+|           | hossted set list                         |                                        |         |
+|           | hossted set auth <AppName> true          |                                        |         |
+|           | hossted set domain <AppName> example.com |                                        |         |
+|           | hossted set ssl <AppName> sign           |                                        |         |
+|           | hossted set remote-support true          |                                        |         |
+|           |                                          |                                        |         |
+| list      |                                          | List hossted apps on node              |         |
+| support   |                                          | Open support tickets                   |         |
+| ip        |                                          | Get external and internal ip addresses |         |
+| dashboard |                                          | Open browser with dashboard            |         |
+|           |                                          |                                        |         |
+| logs      |                                          | Read docker-compose logs               |         |
+| ps        |                                          | docker-compose ps                      |         |
+| support   |                                          | Open support tickers                   |         |
+| htopen    |                                          | Remove httpauth from CLI               |         |
+| url       |                                          | Set front-end URL                      |         |
+| ssl       | signed                                   | Change to custom signed SSL            |         |
 
 ### Binary
 Generally it is not a good idea to download the binary file directly from anywhere on the web. But if you do not have Go environment setup, you can download the compiled file here.
 
-| Operating System | Binary                          |
-|------------------|---------------------------------|
-| Windows          | [Here](bin/windows/hossted.exe) |
-| Linux (64-bit)   | [Here](bin/linux/hossted)       |
-| Macs (64-bit)    | [Here](bin/osx/hossted)         |
+| Operating System | Binary                    |
+|------------------|---------------------------|
+| Linux (64-bit)   | [Here](bin/linux/hossted) |
+| Dev (64-bit)     | [Here](bin/osx/hossted)   |
 
 
 ### Source
