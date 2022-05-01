@@ -18,3 +18,17 @@ func (c *Config) GetAppConfig(in string) (ConfigApplication, error) {
 	}
 	return ca, nil
 }
+
+// GetDefaultApp gets the default app from the config file. If there is only an single app
+// from the config, return it as default app. otherwise return error
+func (c *Config) GetDefaultApp() (string, error) {
+	var app string
+
+	if len(c.Applications) == 1 {
+		app = c.Applications[0].AppName
+	} else {
+
+	}
+
+	return app, nil
+}
