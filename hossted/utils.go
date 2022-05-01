@@ -54,11 +54,12 @@ func GetConfig() (Config, error) {
 		return config, err
 	}
 
-	// Check if all the fields are set
+	// Check if all the fields are set.
+	// Ticket: Removed checking for Issue #20.
 	// TODO: Check which field is missing. May be add UserToken back for checking
-	if config.Email == "" {
-		return config, errors.New("One of the fields [Email] is null.\nPlease call `hossted register` first.\n")
-	}
+	// if config.Email == "" {
+	// 	return config, errors.New("One of the fields [Email] is null.\nPlease call `hossted register` first.\n")
+	// }
 
 	return config, nil
 }
