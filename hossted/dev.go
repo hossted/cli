@@ -14,10 +14,17 @@ import (
 
 // For development only
 func Dev() error {
-	err := testSed()
+	config, err := GetConfig()
+	if err != nil {
+		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
+	}
+	pwd := GetCurrentDirectory()
+
+	app, err := config.GetDefaultApp(pwd)
 	if err != nil {
 		return err
 	}
+	fmt.Println(app)
 
 	return nil
 
