@@ -207,13 +207,6 @@ func GetAppInfo() ([]ConfigApplication, error) {
 	}
 	apps = append(apps, app)
 
-	// TODO: Demo purpose. Remove later
-	demo := ConfigApplication{
-		AppName: "demoapp",
-		AppPath: "/tmp/demoapp",
-	}
-	apps = append(apps, demo)
-
 	return apps, nil
 }
 
