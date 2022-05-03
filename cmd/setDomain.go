@@ -21,6 +21,7 @@ var setDomainCmd = &cobra.Command{
 	Long:    "[d] Set the domain of the provided application",
 	Aliases: []string{"d"},
 	Example: `
+  hossted set domain example.com
   hossted set domain <AppName> example.com
   hossted set domain prometheus example.com
 `,
