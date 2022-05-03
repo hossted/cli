@@ -11,7 +11,7 @@ func HttpOpen(input string) error {
 
 	config, err := GetConfig()
 	if err != nil {
-		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
+		return fmt.Errorf("Something is wrong with get config.\n%w", err)
 	}
 
 	app, err = appPrompt(config.Applications, input)
