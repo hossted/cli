@@ -207,13 +207,6 @@ func GetAppInfo() ([]ConfigApplication, error) {
 	}
 	apps = append(apps, app)
 
-	// TODO: Demo purpose. Remove later
-	demo := ConfigApplication{
-		AppName: "demoapp",
-		AppPath: "/tmp/demoapp",
-	}
-	apps = append(apps, demo)
-
 	return apps, nil
 }
 
@@ -417,6 +410,16 @@ func Shell(appDir string, commands []string) (error, string, string) {
 	}
 
 	return nil, strings.Join(sout, "\n"), strings.Join(serr, "\n")
+}
+
+// Wrapper for getting current directory
+func GetCurrentDirectory() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Can not get current directory.")
+		return ""
+	}
+	return pwd
 }
 
 // trimOuput remove the last (double line breaks) from the string
