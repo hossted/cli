@@ -54,11 +54,12 @@ func GetConfig() (Config, error) {
 		return config, err
 	}
 
-	// Check if all the fields are set
+	// Check if all the fields are set.
+	// Ticket: Removed checking for Issue #20.
 	// TODO: Check which field is missing. May be add UserToken back for checking
-	if config.Email == "" {
-		return config, errors.New("One of the fields [Email] is null.\nPlease call `hossted register` first.\n")
-	}
+	// if config.Email == "" {
+	// 	return config, errors.New("One of the fields [Email] is null.\nPlease call `hossted register` first.\n")
+	// }
 
 	return config, nil
 }
@@ -205,13 +206,6 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		AppPath: appPath,
 	}
 	apps = append(apps, app)
-
-	// TODO: Demo purpose. Remove later
-	demo := ConfigApplication{
-		AppName: "demoapp",
-		AppPath: "/tmp/demoapp",
-	}
-	apps = append(apps, demo)
 
 	return apps, nil
 }
@@ -416,6 +410,16 @@ func Shell(appDir string, commands []string) (error, string, string) {
 	}
 
 	return nil, strings.Join(sout, "\n"), strings.Join(serr, "\n")
+}
+
+// Wrapper for getting current directory
+func GetCurrentDirectory() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Can not get current directory.")
+		return ""
+	}
+	return pwd
 }
 
 // trimOuput remove the last (double line breaks) from the string
