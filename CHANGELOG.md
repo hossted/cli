@@ -4,7 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased/dev] - 2022-04-19
+## [0.1.7] - 2022-05-04
+### Added
+
+- [Allow unregistered access](https://github.com/hossted/cli/issues/20)
+  - Currently user need to run **hossted register** before any commands, will release this restriction.
+
+- [use default app when appName is missing](https://github.com/hossted/cli/issues/25)
+  - If only one app in the vm, use that as a default app
+  - If it's under the app directory, use it as default app
+
+### Planned
+- [Multi environment support](https://github.com/hossted/cli/issues/21)
+  - Study to add a new flag **--continuous**, and disable the master key when user press Ctrl-C again.
+
+
+## [0.1.6] - 2022-04-19
 
 ### Added
 
@@ -18,13 +33,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [Set Domain](https://github.com/hossted/cli/issues/7)
   - Change set URL to set domain
-
-### Planned
-- [Allow unregistered access](https://github.com/hossted/cli/issues/20)
-  - Currently user need to run **hossted register** before any commands, will release this restriction.
-
-- [Multi environment support](https://github.com/hossted/cli/issues/21)
-  - Study to add a new flag **--continuous**, and disable the master key when user press Ctrl-C again.
 
 
 ## [0.1.5] - 2022-04-06
