@@ -14,7 +14,7 @@ func GetAppLogs(input string, followFlag bool) error {
 	config, err := GetConfig()
 	if err != nil {
 		// fmt.Printf("Please call the command `hossted register` first.")
-		fmt.Printf("Something is wrong with get config.\n%w", err)
+		fmt.Errorf("Something is wrong with get config.\n%w", err)
 		os.Exit(0)
 	}
 
