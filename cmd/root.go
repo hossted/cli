@@ -108,7 +108,6 @@ func checkConfigFilePath() (string, error) {
 
 		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
 
-		return "", err
 	} else {
 		// Normal case
 		// Do nothing. config.yaml exists
