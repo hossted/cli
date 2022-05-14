@@ -10,8 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - [New text when user runs "hossted" with no command](https://github.com/hossted/cli/issues/28)
   - Changed greeting message
 
+- [Change register fail message when a user already registered the machine](https://github.com/hossted/cli/issues/27)
+  - Update error message if the email already registered
+
 ### Bug fixed
 - Bug fix: Error prompt for No available app commands for unregistered user.
+
+
 
 ## [0.1.7] - 2022-05-04
 ### Added

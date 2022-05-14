@@ -95,8 +95,15 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 
 	// Check if the sessionToken is null
 	if strings.TrimSpace(response.JWT) == "" {
-		fmt.Printf("Empty Session Token. Some kind of error occoured - %s.\n", resp)
-		os.Exit(0)
+		if strings.Contains(response.Message, "already been registered") {
+
+			fmt.Printf("\nInstance is already registered to another owner. Please contact support@hossted.com if you'd like to add a user.\n\n")
+			os.Exit(0)
+
+		} else {
+			fmt.Printf("Empty Session Token. Some kind of error occoured - %s.\n", resp)
+			os.Exit(0)
+		}
 	}
 
 	return response, nil
