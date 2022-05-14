@@ -23,13 +23,12 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	rootCmd = &cobra.Command{
+	greetings = fmt.Sprintf("\nHossted CLI %s - for help please contact us at support@hossted.com\n\n", VERSION)
+	rootCmd   = &cobra.Command{
 		Use:     "hossted",
 		Version: VERSION,
-		Short:   "A brief description of your application.",
-		Long: `
-A brief description of your application
-`,
+		Short:   greetings,
+		Long:    greetings,
 	}
 )
 

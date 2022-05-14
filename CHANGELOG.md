@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.1.8] - TBC
 ### Added
+
+- [New text when user runs "hossted" with no command](https://github.com/hossted/cli/issues/28)
+  - Changed greeting message
+
+### Bug fixed
 - Bug fix: Error prompt for No available app commands for unregistered user.
-
-
 
 ## [0.1.7] - 2022-05-04
 ### Added
