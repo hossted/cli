@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - [Change register fail message when a user already registered the machine](https://github.com/hossted/cli/issues/27)
   - Update error message if the email already registered
 
+- [implement hossted set auth appName false](https://github.com/hossted/cli/issues/15)
+  - Change httpopen to set auth false
+  - only gitbucket is supported now
+  - deprecate old httpopen command
+
+
 ### Bug fixed
 - Bug fix: Error prompt for No available app commands for unregistered user.
 
