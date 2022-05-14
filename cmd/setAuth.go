@@ -61,7 +61,6 @@ var setAuthCmd = &cobra.Command{
 			return fmt.Errorf("No input application.")
 		}
 
-		// err := hossted.HttpOpen(app)
 		err = hossted.SetAuth(app, flag)
 		if err != nil {
 			return err
