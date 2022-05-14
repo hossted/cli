@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,11 @@ var httpopenCmd = &cobra.Command{
   hossted h <app_name>
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
+		// deprecated. Changed to set auth false
+		if true {
+			return errors.New("\n  hossted httpopen is deprecated. Please use hossted set auth false instead.\n")
+		}
 
 		// Check if the user provides the apps name manually
 		var app string

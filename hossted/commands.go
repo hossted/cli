@@ -14,6 +14,11 @@ apps:
     group: set
     commands: [remote-support]
     values: [true]
+
+  - app: general
+    group: set
+    commands: [auth]
+    values: [false]
 `
 
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
@@ -23,28 +28,28 @@ var AVAILABLE = `
 apps:
   - app: prometheus
     group: set
-    commands: [domain, auth]
-    values: [example.com, false]
+    commands: [domain]
+    values: [example.com]
 
   - app: airflow
     group: set
-    commands: [domain, auth]
-    values: [example.com, false]
+    commands: [domain]
+    values: [example.com]
 
   - app: wordpress
     group: set
-    commands: [domain, auth]
-    values: [example.com, false]
+    commands: [domain]
+    values: [example.com]
 
   - app: wph
     group: set
-    commands: [domain, auth]
-    values: [example.com, false]
+    commands: [domain]
+    values: [example.com]
 
   - app: gitbucket
-    group:
-    commands: [httpopen]
-    values: [""]
+    group: set
+    commands: [auth]
+    values: [false]
 
   - app: demo
     group:

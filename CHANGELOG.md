@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.1.8] - 2022-05-15
+### Added
+
+- [New text when user runs "hossted" with no command](https://github.com/hossted/cli/issues/28)
+  - Changed greeting message
+
+- [Change register fail message when a user already registered the machine](https://github.com/hossted/cli/issues/27)
+  - Update error message if the email already registered
+
+- [implement hossted set auth appName false](https://github.com/hossted/cli/issues/15)
+  - Change httpopen to set auth false
+  - only gitbucket is supported now
+  - deprecate old httpopen command
+
+
+### Bug fixed
+- Bug fix: Error prompt for No available app commands for unregistered user.
+
+
+
 ## [0.1.7] - 2022-05-04
 ### Added
 
@@ -13,10 +33,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - [use default app when appName is missing](https://github.com/hossted/cli/issues/25)
   - If only one app in the vm, use that as a default app
   - If it's under the app directory, use it as default app
-
-### Planned
-- [Multi environment support](https://github.com/hossted/cli/issues/21)
-  - Study to add a new flag **--continuous**, and disable the master key when user press Ctrl-C again.
 
 
 ## [0.1.6] - 2022-04-19
@@ -42,3 +58,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 (TBA)
+
+
+A
+## Planned/Backlog
+- [Multi environment support](https://github.com/hossted/cli/issues/21)
+  - Study to add a new flag **--continuous**, and disable the master key when user press Ctrl-C again.
