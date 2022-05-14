@@ -47,9 +47,9 @@ apps:
     values: [example.com]
 
   - app: gitbucket
-    group:
-    commands: [httpopen]
-    values: [""]
+    group: set
+    commands: [auth]
+    values: [false]
 
   - app: demo
     group:
