@@ -422,6 +422,23 @@ func GetCurrentDirectory() string {
 	return pwd
 }
 
+// ConvertBool converts the string input to boolean, return error if the input is not true/false
+func ConvertBool(in string) (bool, error) {
+
+	var flag bool
+	in = strings.ToLower(in)
+
+	if in == "true" {
+		flag = true
+	} else if in == "false" {
+		flag = false
+	} else {
+		return flag, fmt.Errorf("Only true/false is supported. Input - %s\n", in)
+	}
+
+	return flag, nil
+}
+
 // trimOuput remove the last (double line breaks) from the string
 // usually use before printing out stderr
 // TODO: Test why not working
