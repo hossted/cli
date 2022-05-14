@@ -29,6 +29,7 @@ var setAuthCmd = &cobra.Command{
 		var (
 			app  string
 			flag bool
+			err  error
 		)
 
 		if len(args) < 1 {
@@ -37,7 +38,8 @@ var setAuthCmd = &cobra.Command{
 		}
 
 		if len(args) == 1 { // set auth true
-			flag, err := hossted.ConvertBool(args[0])
+
+			flag, err = hossted.ConvertBool(args[0])
 			if err != nil {
 				return err
 			}
@@ -50,14 +52,19 @@ var setAuthCmd = &cobra.Command{
 			pwd := hossted.GetCurrentDirectory()
 			app, _ = config.GetDefaultApp(pwd)
 
-		} else if len(args) == 2 {
+		} else if len(args) == 2 { // set auth appname true
 			app = args[0]
-			flag = args[1]
+			flag, err = hossted.ConvertBool(args[0])
+			if err != nil {
+				return err
+			}
 		}
 		if strings.TrimSpace(app) == "" {
 			return fmt.Errorf("No input application.")
 		}
-		err := hossted.HttpOpen(app)
+
+		// err := hossted.HttpOpen(app)
+		err = hossted.SetAuth(app, flag)
 		if err != nil {
 			return err
 		}
