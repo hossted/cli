@@ -10,7 +10,7 @@ import (
 func SetAuth(app string, flag bool) error {
 
 	if flag == true {
-		return errors.New("Not Implemented for the command set auth true")
+		return errors.New("\n  Not Implemented for the command set auth true.\n")
 	}
 
 	config, err := GetConfig()
