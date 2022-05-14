@@ -97,7 +97,8 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 	if strings.TrimSpace(response.JWT) == "" {
 		if strings.Contains(response.Message, "already been registered") {
 
-			fmt.Printf("Instance is already registered to another owner. Please contact support@hossted.com if you'd like to add a user.\n\n")
+			fmt.Printf("\nInstance is already registered to another owner. Please contact support@hossted.com if you'd like to add a user.\n\n")
+			os.Exit(0)
 
 		} else {
 			fmt.Printf("Empty Session Token. Some kind of error occoured - %s.\n", resp)
