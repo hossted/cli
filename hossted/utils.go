@@ -433,7 +433,7 @@ func ConvertBool(in string) (bool, error) {
 	} else if in == "false" {
 		flag = false
 	} else {
-		return flag, fmt.Errorf("Only true/false is supported. Input - %s\n", input)
+		return flag, fmt.Errorf("Only true/false is supported. Input - %s\n", in)
 	}
 
 	return flag, nil

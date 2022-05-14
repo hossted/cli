@@ -5,8 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/hossted/cli/hossted"
@@ -32,12 +32,10 @@ var setAuthCmd = &cobra.Command{
 			err  error
 		)
 
-		if len(args) < 1 {
-			cmd.Help()
-			os.Exit(0)
-		}
+		if len(args) == 0 {
+			return errors.New("\n  Empty Arguments.\n")
 
-		if len(args) == 1 { // set auth true
+		} else if len(args) == 1 { // set auth true
 
 			flag, err = hossted.ConvertBool(args[0])
 			if err != nil {
@@ -54,7 +52,7 @@ var setAuthCmd = &cobra.Command{
 
 		} else if len(args) == 2 { // set auth appname true
 			app = args[0]
-			flag, err = hossted.ConvertBool(args[0])
+			flag, err = hossted.ConvertBool(args[1])
 			if err != nil {
 				return err
 			}
