@@ -14,21 +14,20 @@ import (
 
 // For development only
 func Dev() error {
-	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
-	_ = m
+	m, err := getGACommandsMap(GAVAILABLE)
 	if err != nil {
 		return err
 	}
 
-	app := "gitbucket"
+	// app := "gitbucket"
 
 	// Check command
-	err = CheckCommands(app, "auth")
-	if err != nil {
-		return err
-	}
+	// err = CheckCommands(app, "auth")
+	// if err != nil {
+	// 	return err
+	// }
 
-	// fmt.Println(PrettyPrint(m))
+	fmt.Println(PrettyPrint(m))
 
 	return nil
 

@@ -83,6 +83,27 @@ func CheckCommands(app, command string) error {
 	return nil
 }
 
+// getGACommandsMap gets the general available (i.e. commands available for all apps).
+// And return a list of commands that is independent of application
+func getGACommandsMap(generalCmd string) (map[string]bool, error) { //e.g.map["auth"] -> true)
+
+	var availableGeneral AvailableCommand // For parsing yaml for general commands
+	m := make(map[string]bool)            // Result of ga apps
+
+	// Parse app specific commands
+	err := yaml.Unmarshal([]byte(generalCmd), &availableGeneral)
+	if err != nil {
+		return m, fmt.Errorf("Can not parse general commands yaml. %w", err)
+	}
+	for _, app := range availableGeneral.Apps {
+		for _, command := range app.Commands {
+			m[command] = true
+		}
+	}
+
+	return m, nil
+}
+
 // getCommandsMap gets a mapping for available apps and commands mapping
 // input as the yaml formatted available commands
 // TODO: Add general ones as well in error checking
