@@ -14,17 +14,21 @@ import (
 
 // For development only
 func Dev() error {
-	config, err := GetConfig()
-	if err != nil {
-		return fmt.Errorf("Please call the command `hossted register` first.\n%w", err)
-	}
-	pwd := GetCurrentDirectory()
-
-	app, err := config.GetDefaultApp(pwd)
+	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
+	_ = m
 	if err != nil {
 		return err
 	}
-	fmt.Println(app)
+
+	app := "gitbucket"
+
+	// Check command
+	err = CheckCommands(app, "auth")
+	if err != nil {
+		return err
+	}
+
+	// fmt.Println(PrettyPrint(m))
 
 	return nil
 

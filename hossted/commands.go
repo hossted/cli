@@ -18,7 +18,7 @@ apps:
   - app: general
     group: set
     commands: [auth]
-    values: [false]
+    values: [<AppName> false]
 `
 
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
@@ -69,6 +69,9 @@ func CheckCommands(app, command string) error {
 
 	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
+	// General available commands
+
+	// App specific
 	if _, ok := m[key]; ok {
 		// happy path. app.command is available
 		return nil
