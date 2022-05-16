@@ -46,10 +46,10 @@ apps:
     commands: [domain]
     values: [example.com]
 
-  - app: gitbucket
-    group: set
-    commands: [auth]
-    values: [false]
+  # - app: gitbucket
+  #   group: set
+  #   commands: [auth]
+  #   values: [false]
 
   - app: demo
     group:
@@ -107,7 +107,7 @@ func getCommandsMap(generalCmd, appCmd string) (AvailableCommandMap, error) {
 	}
 
 	// TODO: Add general ones as well
-	if len(availableApp.Apps) == 0 {
+	if (len(availableApp.Apps) == 0) && (len(availableGeneral.Apps) == 0) {
 		return m, errors.New("No available apps and commands. Please check.")
 	}
 
