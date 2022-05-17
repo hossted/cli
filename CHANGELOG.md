@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.1.8] - 2022-05-15
+## [0.1.9] - 2022-05-17
+### Added
+
+- [Remove gitbucket hardcoding](https://github.com/hossted/cli/issues/33)
+  - Change set auth false from app-specific command to general available command. the command should be available to apps besides gitbucket.
+  - NOT included the set auth true command (#32)
+  - NOT included the general available for set domain command, still only available to specific app (prometheus, airflow, wordpress), unless specified otherwise.
+
+
+## [0.1.8] - 2022-05-14
 ### Added
 
 - [New text when user runs "hossted" with no command](https://github.com/hossted/cli/issues/28)
