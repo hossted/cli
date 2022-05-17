@@ -132,12 +132,18 @@ func TestCheckCommands(t *testing.T) {
 			wantErrMsgContains: "is not supported",
 		},
 		{
-			// App Command not in predefined list.
-			// Assume there are some commands defined
-			name: "General command - remote-support should be avilable",
+			name: "General command - remote-support should be available",
 			args: args{
 				app:     "general",
 				command: "remote-support",
+			},
+			wantErr: false,
+		},
+		{
+			name: "General command - auth should be available",
+			args: args{
+				app:     "random", // with some random app
+				command: "auth",
 			},
 			wantErr: false,
 		},

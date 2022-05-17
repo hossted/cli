@@ -18,7 +18,7 @@ apps:
   - app: general
     group: set
     commands: [auth]
-    values: [false]
+    values: [<AppName> false]
 `
 
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
@@ -46,10 +46,10 @@ apps:
     commands: [domain]
     values: [example.com]
 
-  - app: gitbucket
-    group: set
-    commands: [auth]
-    values: [false]
+  # - app: gitbucket
+  #   group: set
+  #   commands: [auth]
+  #   values: [false]
 
   - app: demo
     group:
@@ -61,15 +61,25 @@ apps:
 // Return error if the provided values are not in the pre-defined list
 func CheckCommands(app, command string) error {
 
+	// Check General available commands first
+	gaMap, err := getGACommandsMap(GAVAILABLE)
+	if err != nil {
+		return err
+	}
+	if _, ok := gaMap[command]; ok { // e.g. auth
+		return nil // early return if the command is in GA list
+	}
+
 	// Get the map of available apps and general commands
-	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
+	appMap, err := getCommandsMap(GAVAILABLE, AVAILABLE)
 	if err != nil {
 		return err
 	}
 
 	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
-	if _, ok := m[key]; ok {
+	// App specific
+	if _, ok := appMap[key]; ok {
 		// happy path. app.command is available
 		return nil
 	} else {
@@ -78,6 +88,28 @@ func CheckCommands(app, command string) error {
 	}
 
 	return nil
+}
+
+// getGACommandsMap gets the general available (i.e. commands available for all apps).
+// And return a list of commands that is independent of application
+// TODO: add CommandGroup for checking?? e.g. instead of checking "auth", check "set.auth" instead
+func getGACommandsMap(generalCmd string) (map[string]bool, error) { //e.g.map["auth"] -> true)
+
+	var availableGeneral AvailableCommand // For parsing yaml for general commands
+	m := make(map[string]bool)            // Result of ga apps
+
+	// Parse app specific commands
+	err := yaml.Unmarshal([]byte(generalCmd), &availableGeneral)
+	if err != nil {
+		return m, fmt.Errorf("Can not parse general commands yaml. %w", err)
+	}
+	for _, app := range availableGeneral.Apps {
+		for _, command := range app.Commands {
+			m[command] = true
+		}
+	}
+
+	return m, nil
 }
 
 // getCommandsMap gets a mapping for available apps and commands mapping
@@ -107,7 +139,7 @@ func getCommandsMap(generalCmd, appCmd string) (AvailableCommandMap, error) {
 	}
 
 	// TODO: Add general ones as well
-	if len(availableApp.Apps) == 0 {
+	if (len(availableApp.Apps) == 0) && (len(availableGeneral.Apps) == 0) {
 		return m, errors.New("No available apps and commands. Please check.")
 	}
 

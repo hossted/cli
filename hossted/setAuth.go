@@ -54,13 +54,14 @@ func SetAuth(app string, flag bool) error {
 	}
 
 	// Remove letsencrypt
+	htpassPath := fmt.Sprintf("/opt/%s/letsencrypt/.htpass", name)
 	rmCommands := []string{
-		"sudo rm '/opt/gitbucket/letsencrypt/.htpass'",
+		fmt.Sprintf("sudo rm '%s'", htpassPath),
 	}
-	fmt.Println("Removed /opt/gitbucket/letsencrypt/.htpass")
+	fmt.Println(fmt.Sprintf("Removed %s", htpassPath))
 	err, _, stderr = Shell(appDir, rmCommands)
 	if err != nil {
-		fmt.Println("/opt/gitbucket/letsencrypt/.htpass does not exists.\nProbably being removed earlier.\n", err.Error())
+		fmt.Println(fmt.Sprintf("%s does not exists.\nProbably being removed earlier.\n", htpassPath), err.Error())
 	}
 	if strings.TrimSpace(stderr) != "" {
 		fmt.Println(stderr)
