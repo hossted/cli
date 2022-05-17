@@ -61,18 +61,25 @@ apps:
 // Return error if the provided values are not in the pre-defined list
 func CheckCommands(app, command string) error {
 
+	// Check General available commands first
+	gaMap, err := getGACommandsMap(GAVAILABLE)
+	if err != nil {
+		return err
+	}
+	if _, ok := gaMap[command]; ok { // e.g. auth
+		return nil // early return if the command is in GA list
+	}
+
 	// Get the map of available apps and general commands
-	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
+	appMap, err := getCommandsMap(GAVAILABLE, AVAILABLE)
 	if err != nil {
 		return err
 	}
 
 	key := fmt.Sprintf("%s.%s", app, command) // e.g. promethus.domain
 
-	// General available commands
-
 	// App specific
-	if _, ok := m[key]; ok {
+	if _, ok := appMap[key]; ok {
 		// happy path. app.command is available
 		return nil
 	} else {
@@ -85,6 +92,7 @@ func CheckCommands(app, command string) error {
 
 // getGACommandsMap gets the general available (i.e. commands available for all apps).
 // And return a list of commands that is independent of application
+// TODO: add CommandGroup for checking?? e.g. instead of checking "auth", check "set.auth" instead
 func getGACommandsMap(generalCmd string) (map[string]bool, error) { //e.g.map["auth"] -> true)
 
 	var availableGeneral AvailableCommand // For parsing yaml for general commands
