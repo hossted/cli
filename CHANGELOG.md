@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.2.1] - 2022-05-18
+### Added
+
+- [Remove httpopen](https://github.com/hossted/cli/issues/34)
+  - Removed deprecated command httpopen (changed to set auth false)
+  - Removed old and development related file
+
+- [Change register fail message when a user already registered the machine](https://github.com/hossted/cli/issues/27)
+
+
 ## [0.1.9] - 2022-05-17
 ### Added
 
