@@ -31,7 +31,6 @@ The hossted cli - built to interact with a hossted container
 |           | hossted set domain \<AppName\> example.com | Set the domain of the provided application                                 |
 |           | hossted set ssl \<AppName\> sign           | (TBC)                                                                      |
 |           | hossted set remote-support true            | To enable or disable remote ssh access with our maintanece and support key |
-| httpopen  | hossted httpopen \<AppName\>               | (Deprecated) httpopen appname                                                           |
 | logs      | hossted logs \<AppName\>                   | View Application logs                                                      |
 | ps        | hossted ps \<AppName\>                     | docker-compose ps of the application                                       |
 | version   | hossted version                            | Get the version of the hossted CLI program                                 |
