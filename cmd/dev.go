@@ -44,7 +44,7 @@ abcde
 hello world
      - "traefik.http.middlewares.tauth.basicauth.usersfile=letsencrypt/.htpass"
      - "traefik.http.routers.$PROJECT_NAME.middlewares=tauth"`)
-	pattern := []string{`.*tdauth\.basicauth\.usersfile.*`}
+	pattern := []string{`.*tauth\.basicauth\.usersfile.*`}
 	flag := true
 	matchOnce := false
 	strict := false
@@ -86,6 +86,7 @@ func ToggleCommentLinesByRegex(s *string, patterns []string, flag bool, matchOnc
 				return "", errors.New(fmt.Sprintf("Patten not found - %s", re))
 			} else {
 				// TODO: handle non-strict mode, only return error if there is one
+				return "", errors.New("Not implemented. Please check.")
 			}
 		} else {
 			fmt.Sprintf("matched - %s", re)
@@ -93,7 +94,7 @@ func ToggleCommentLinesByRegex(s *string, patterns []string, flag bool, matchOnc
 
 		if matchOnce {
 			// pass for now
-
+			return "", errors.New("Not implemented. Please check.")
 		} else {
 			*s = re.ReplaceAllString(*s, "")
 		}
