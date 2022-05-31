@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -33,22 +33,41 @@ to quickly create a Cobra application.`,
 
 func dev() error {
 
-	cmd := exec.Command("cat", "/tmp/test.txt")
-	out, err := cmd.Output()
+	// cmd := exec.Command("cat", "/tmp/test.txt")
+	// out, err := cmd.Output()
+	// if err != nil {
+	// 	return err
+	// }
+	s := string(`
+abcde
+hello world
+     - "traefik.http.middlewares.tauth.basicauth.usersfile=letsencrypt/.htpass"
+     - "traefik.http.routers.$PROJECT_NAME.middlewares=tauth"
+`)
+	pattern := []string{"tauth.basicauth.usersfile"}
+	flag := true
+	matchOnce := true
+	strict := false
+
+	res, err := ToggleCommentLinesByRegex(s, pattern, flag, matchOnce, strict)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(out))
+
+	fmt.Println(res)
 
 	return nil
 }
 
 // ToggleCommentLinesByRegex comments/uncomment out lines by a list of regular expressions
 // patterns as a list of regular expresson to be checked.
-// toggle specifies whether it is comment/uncomment of all the lines
+// flag specifies whether it is comment/uncomment of all the lines. true as comment out
 // matchOnce specifies the pattern will stop at first match, or match the whole files
 // strict mode will returns error as soon as the pattern is not found in the input string
-func ToggleCommentLinesByRegex(s string, patterns []string, toggle string, matchOnce bool, strict bool) (string, error) {
+func ToggleCommentLinesByRegex(s string, patterns []string, flag bool, matchOnce bool, strict bool) (string, error) {
+
+	// Split lines
+	lines := strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 
 	return "", nil
 }
