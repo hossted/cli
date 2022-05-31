@@ -5,8 +5,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/spf13/cobra"
 )
@@ -42,14 +43,13 @@ func dev() error {
 abcde
 hello world
      - "traefik.http.middlewares.tauth.basicauth.usersfile=letsencrypt/.htpass"
-     - "traefik.http.routers.$PROJECT_NAME.middlewares=tauth"
-`)
-	pattern := []string{"tauth.basicauth.usersfile"}
+     - "traefik.http.routers.$PROJECT_NAME.middlewares=tauth"`)
+	pattern := []string{`.*tdauth\.basicauth\.usersfile.*`}
 	flag := true
-	matchOnce := true
+	matchOnce := false
 	strict := false
 
-	res, err := ToggleCommentLinesByRegex(s, pattern, flag, matchOnce, strict)
+	res, err := ToggleCommentLinesByRegex(&s, pattern, flag, matchOnce, strict)
 	if err != nil {
 		return err
 	}
@@ -64,10 +64,42 @@ hello world
 // flag specifies whether it is comment/uncomment of all the lines. true as comment out
 // matchOnce specifies the pattern will stop at first match, or match the whole files
 // strict mode will returns error as soon as the pattern is not found in the input string
-func ToggleCommentLinesByRegex(s string, patterns []string, flag bool, matchOnce bool, strict bool) (string, error) {
+func ToggleCommentLinesByRegex(s *string, patterns []string, flag bool, matchOnce bool, strict bool) (string, error) {
 
-	// Split lines
-	lines := strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
+	// Compile regex
+	var rePatterns []*regexp.Regexp // List of regexp pattern
+	for _, p := range patterns {
+		pat, err := regexp.Compile(p)
+		if err != nil {
+			return "", err
+		}
+		rePatterns = append(rePatterns, pat)
+	}
+
+	// For each pattern, match with the string
+	for _, re := range rePatterns {
+		_ = re
+		matches := re.FindAllString(*s, -1)
+
+		if len(matches) == 0 { // No matching pattern
+			if strict { // For strict mode, return as soon as we dont find a matching line
+				return "", errors.New(fmt.Sprintf("Patten not found - %s", re))
+			} else {
+				// TODO: handle non-strict mode, only return error if there is one
+			}
+		} else {
+			fmt.Sprintf("matched - %s", re)
+		}
+
+		if matchOnce {
+			// pass for now
+
+		} else {
+			*s = re.ReplaceAllString(*s, "")
+		}
+
+	}
+	fmt.Println(*s)
 
 	return "", nil
 }
