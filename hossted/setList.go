@@ -26,9 +26,6 @@ func ListCommands() error {
 	for _, app := range apps {
 		vmAppsMap[app.AppName] = true
 	}
-	if len(vmAppsMap) == 0 {
-		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\n")
-	}
 
 	// Get all available apps/commands
 	m, err := getCommandsMap(GAVAILABLE, AVAILABLE)
@@ -43,10 +40,6 @@ func ListCommands() error {
 			generalCommands = append(generalCommands, v)
 		}
 	}
-	err = printCommands(generalCommands)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	// Check matching commands
 	var validCommands []Command
@@ -57,17 +50,23 @@ func ListCommands() error {
 		}
 	}
 
-	if len(validCommands) == 0 {
-		return errors.New("No available app commands. Please check the file /opt/linnovate/run/uuid.txt.\nAnd contact admin to make sure the application is supported.")
-	}
-
 	// Sort
 	sort.Slice(validCommands, func(i, j int) bool {
 		return validCommands[i].App < validCommands[j].App
 	})
-	err = printCommands(validCommands)
-	if err != nil {
-		fmt.Println(err)
+
+	// Check
+	allCommands := append(generalCommands, validCommands...)
+	if len(allCommands) == 0 {
+		return errors.New("No available commands. Please check with administrator.")
+	}
+
+	// Print the commands if available
+	if len(generalCommands) > 0 {
+		_ = printCommands(generalCommands)
+	}
+	if len(validCommands) > 0 {
+		_ = printCommands(validCommands)
 	}
 
 	return nil

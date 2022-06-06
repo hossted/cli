@@ -19,6 +19,11 @@ apps:
     group: set
     commands: [auth]
     values: [<AppName> false]
+
+  - app: general
+    group: set
+    commands: [domain]
+    values: [<AppName> example.com]
 `
 
 // Available commands in yaml format. If a new set of apps/commands needs to be supported,
@@ -26,31 +31,6 @@ apps:
 // TODO: Handle logic for command group
 var AVAILABLE = `
 apps:
-  - app: prometheus
-    group: set
-    commands: [domain]
-    values: [example.com]
-
-  - app: airflow
-    group: set
-    commands: [domain]
-    values: [example.com]
-
-  - app: wordpress
-    group: set
-    commands: [domain]
-    values: [example.com]
-
-  - app: wph
-    group: set
-    commands: [domain]
-    values: [example.com]
-
-  # - app: gitbucket
-  #   group: set
-  #   commands: [auth]
-  #   values: [false]
-
   - app: demo
     group:
     commands: [abc, def]
@@ -133,10 +113,7 @@ func getCommandsMap(generalCmd, appCmd string) (AvailableCommandMap, error) {
 	}
 
 	// Parse app specific commands
-	err = yaml.Unmarshal([]byte(appCmd), &availableApp)
-	if err != nil {
-		return m, fmt.Errorf("Can not parse available app commands yaml. %w", err)
-	}
+	_ = yaml.Unmarshal([]byte(appCmd), &availableApp)
 
 	// TODO: Add general ones as well
 	if (len(availableApp.Apps) == 0) && (len(availableGeneral.Apps) == 0) {
