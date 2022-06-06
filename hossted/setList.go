@@ -42,6 +42,7 @@ func ListCommands() error {
 	}
 
 	// Check matching commands
+	// TODO: Check if this is still vaild after moving almost all commands to General Available (#39)
 	var validCommands []Command
 	for k, v := range m { // k: app.command, v: Command{}
 		app := getAppNameFromKey(k)
