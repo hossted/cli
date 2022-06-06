@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -44,7 +45,11 @@ abcde
 hello world
      - "traefik.http.middlewares.tauth.basicauth.usersfile=letsencrypt/.htpass"
      - "traefik.http.routers.$PROJECT_NAME.middlewares=tauth"`)
-	pattern := []string{`.*tauth\.basicauth\.usersfile.*`}
+
+	pattern := []string{
+		`.*tauth\.basicauth\.usersfile.*`,
+		`.*middlewares=tauth.*`,
+	}
 	flag := true
 	matchOnce := false
 	strict := false
@@ -96,6 +101,11 @@ func ToggleCommentLinesByRegex(s *string, patterns []string, flag bool, matchOnc
 			// pass for now
 			return "", errors.New("Not implemented. Please check.")
 		} else {
+			// match all matching lines
+			for _, line := range matches {
+				newline := toggleComment(line, flag)
+				_ = newline
+			}
 			*s = re.ReplaceAllString(*s, "")
 		}
 
@@ -103,6 +113,42 @@ func ToggleCommentLinesByRegex(s *string, patterns []string, flag bool, matchOnc
 	fmt.Println(*s)
 
 	return "", nil
+}
+
+// toggleComment toggles to comment/uncommented a line
+// flag true as commenting the line
+func toggleComment(line string, flag bool) string {
+	var (
+		trimmedLine string // For condition checking only
+		newline     string // result string
+	)
+	trimmedLine = strings.TrimSpace(line)
+	leadingChar := trimmedLine[0:1]
+
+	if flag { // To Comment
+
+		if leadingChar == "#" {
+			return line
+		} else {
+			// Check first character of original line, whether it's a space
+			if line[0:1] == " " {
+				newline = "#" + line[1:]
+			} else {
+				newline = "#" + line
+			}
+
+		}
+
+	} else { // To Uncomment
+
+		if leadingChar != "#" {
+			return line
+		} else {
+			newline = strings.Replace(line, "#", " ", 1)
+		}
+	}
+
+	return newline
 }
 
 func init() {
