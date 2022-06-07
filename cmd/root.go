@@ -50,6 +50,32 @@ func init() {
 	// Set greetings
 	greetings := fmt.Sprintf(`
 Hossted CLI %s - for help please contact us at support@hossted.com
+
+Usage:
+  hossted [command]
+
+Available Commands:
+
+  |-------------------------------+-------------------------+------------------------------------------------------|
+  | Commands                      | Alias                   | Descriptions                                         |
+  |-------------------------------+-------------------------+------------------------------------------------------|
+  | register                      | hossted r               | Register your application with the hossted ecosystem |
+  | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                     |
+  | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team |
+  | set domain <domain>           | hossted s d example.com | Set a custom domain                                  |
+  | help                          | hossted help            | Help about any command                               |
+  | logs                          | hossted log             | View Application logs                                |
+  | ps                            | hossted ps              | docker-compose ps of the application                 |
+  | version                       | hossted version         | Get the version of the hossted CLI program           |
+  |-------------------------------+-------------------------+------------------------------------------------------|
+
+Flags:
+  -h, --help      help for hossted
+  -t, --toggle    Help message for toggle
+  -v, --version   version for hossted
+
+Use "hossted [command] --help" for more information about a command.
+
 `, VERSION)
 	rootCmd.SetHelpTemplate(greetings)
 }
