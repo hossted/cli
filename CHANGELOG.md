@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.2.2] - 2022-06-07
+### Added
+
+- [Make set domain generally available](https://github.com/hossted/cli/issues/39)
+  - SetDomain was an app-specific command, changed to available for all
+
+- [Changes to default / help text](https://github.com/hossted/cli/issues/37)
+  - Change default help text as custom text to customize the ordering of important commands or subcommands
+
+
 ## [0.2.1] - 2022-05-18
 ### Added
 
