@@ -23,12 +23,9 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	greetings = fmt.Sprintf("\nHossted CLI %s - for help please contact us at support@hossted.com\n\n", VERSION)
-	rootCmd   = &cobra.Command{
+	rootCmd = &cobra.Command{
 		Use:     "hossted",
 		Version: VERSION,
-		Short:   greetings,
-		Long:    greetings,
 	}
 )
 
@@ -49,6 +46,12 @@ func init() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	// Set greetings
+	greetings := fmt.Sprintf(`
+Hossted CLI %s - for help please contact us at support@hossted.com
+`, VERSION)
+	rootCmd.SetHelpTemplate(greetings)
 }
 
 func initConfig() {
