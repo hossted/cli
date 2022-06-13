@@ -57,7 +57,7 @@ Usage:
 Available Commands:
 
   |-------------------------------+-------------------------+------------------------------------------------------|
-  | Commands                      | Alias                   | Descriptions                                         |
+  | Commands                      | Alias                   | Description                                          |
   |-------------------------------+-------------------------+------------------------------------------------------|
   | register                      | hossted r               | Register your application with the hossted ecosystem |
   | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                     |

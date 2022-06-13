@@ -39,7 +39,7 @@ func SetDomain(app, domain string) error {
 
 	// Use sed to change the domain
 	// TODO: check if the line really exists in the file first
-	fmt.Println("Changeing settings...")
+	fmt.Println("Changing settings...")
 	text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", domain)
 	cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
 	_, err = cmd.Output()
@@ -68,5 +68,25 @@ func SetDomain(app, domain string) error {
 // ChangeMOTD changes the content of the MOTD file, to match the set domain changes
 func ChangeMOTD(domain string) error {
 
+	filepath := "/etc/motd"
+	// Read from /root/.ssh/authorized_keys, and split to lines
+	b, err := readSth(filepath)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
+
 	return nil
+}
+
+// readSth read the file content with sudo right
+func readSth(filepath string) ([]byte, error) {
+
+	cmd := exec.Command("cat", filepath)
+	out, err := cmd.Output()
+	if err != nil {
+		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
+	}
+
+	return out, nil
 }
