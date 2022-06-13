@@ -69,6 +69,7 @@ func SetDomain(app, domain string) error {
 }
 
 // ChangeMOTD changes the content of the MOTD file, to match the set domain changes
+// TODO: print status
 // TODO: Allow domain to be something other than .com by changing the regex patten
 func ChangeMOTD(domain string) error {
 
@@ -97,7 +98,6 @@ func ChangeMOTD(domain string) error {
 	}
 
 	// Write back to file
-	fmt.Println(content)
 	err = writeProtected(filepath, []byte(content))
 	if err != nil {
 		return err
