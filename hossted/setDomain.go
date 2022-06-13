@@ -3,6 +3,7 @@ package hossted
 import (
 	"fmt"
 	"os/exec"
+	"regexp"
 )
 
 // SetDomain set the domain for different apps
@@ -66,15 +67,25 @@ func SetDomain(app, domain string) error {
 }
 
 // ChangeMOTD changes the content of the MOTD file, to match the set domain changes
+// TODO: Allow domain to be something other than .com by changing the regex patten
 func ChangeMOTD(domain string) error {
 
 	filepath := "/etc/motd"
-	// Read from /root/.ssh/authorized_keys, and split to lines
 	b, err := readSth(filepath)
+	if err != nil {
+		return fmt.Errorf("Can't read the /etc/motd file. Please check - %s and contact administrator.\n%w\n", filepath, err)
+	}
+	content := string(b)
+
+	// Currently only .com is supported. Looking for line like
+	// Your ^[[01;32mgitbucket^[[0m is available under ^[[01;34m http://3.215.23.221.c.hossted.com ^[[0m
+	re, err := regexp.Compile(`.*available under (.*https?:\/\/.*\.com).*`)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+
+	matches := re.FindAllStringSubmatch(content, -1)
+	fmt.Println(matches)
 
 	return nil
 }
