@@ -64,3 +64,9 @@ func SetDomain(app, domain string) error {
 	return nil
 
 }
+
+// ChangeMOTD changes the content of the MOTD file, to match the set domain changes
+func ChangeMOTD(domain string) error {
+
+	return nil
+}
