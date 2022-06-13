@@ -1,7 +1,7 @@
 package hossted
 
 func Dev() error {
-	err := ChangeMOTD("example.com")
+	err := ChangeMOTD("dev.com")
 	if err != nil {
 		return err
 	}

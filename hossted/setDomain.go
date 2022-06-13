@@ -1,9 +1,11 @@
 package hossted
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 // SetDomain set the domain for different apps
@@ -71,7 +73,7 @@ func SetDomain(app, domain string) error {
 func ChangeMOTD(domain string) error {
 
 	filepath := "/etc/motd"
-	b, err := readSth(filepath)
+	b, err := readProtected(filepath)
 	if err != nil {
 		return fmt.Errorf("Can't read the /etc/motd file. Please check - %s and contact administrator.\n%w\n", filepath, err)
 	}
@@ -79,25 +81,27 @@ func ChangeMOTD(domain string) error {
 
 	// Currently only .com is supported. Looking for line like
 	// Your ^[[01;32mgitbucket^[[0m is available under ^[[01;34m http://3.215.23.221.c.hossted.com ^[[0m
-	re, err := regexp.Compile(`.*available under (.*https?:\/\/.*\.com).*`)
+	re, err := regexp.Compile(`(.*available under\s*.*https?:\/\/)(.*\.com)(.*)`)
 	if err != nil {
 		return err
 	}
 
 	matches := re.FindAllStringSubmatch(content, -1)
-	fmt.Println(matches)
-
-	return nil
-}
-
-// readSth read the file content with sudo right
-func readSth(filepath string) ([]byte, error) {
-
-	cmd := exec.Command("cat", filepath)
-	out, err := cmd.Output()
-	if err != nil {
-		return []byte{}, fmt.Errorf("Protected file does not exists. Please check - %s.\n%w\n", filepath, err)
+	if len(matches) > 0 {
+		if len(matches[0]) == 4 {
+			new := matches[0][1] + domain + matches[0][3]
+			content = strings.Replace(content, matches[0][0], new, 1) // Replace the containing new with new string
+		}
+	} else {
+		return errors.New("No matching pattern in /etc/motd. Please check.\n")
 	}
 
-	return out, nil
+	// Write back to file
+	fmt.Println(content)
+	err = writeProtected(filepath, []byte(content))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
