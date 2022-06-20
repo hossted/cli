@@ -310,6 +310,7 @@ func overwriteFile(filepath string, content string) error {
 }
 
 // readProtected read the file content with sudo right
+// TODO: Add sudo flag
 func readProtected(filepath string) ([]byte, error) {
 
 	cmd := exec.Command("sudo", "cat", filepath)
@@ -322,6 +323,7 @@ func readProtected(filepath string) ([]byte, error) {
 }
 
 // writeProtected write the file content with sudo right
+// TODO: Add sudo flag
 // TODO: Remove last line break
 func writeProtected(path string, b []byte) error {
 
