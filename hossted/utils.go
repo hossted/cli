@@ -159,7 +159,8 @@ func GetHosstedUUID(path string) (string, error) {
 	return uuid, nil
 }
 
-// GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
+// GetAppInfo gets the application related information from predefined path
+// /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt
 // Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
 // TODO Assume single application for now
 // TODO Remove dummy app (for dropdown select demo)
@@ -169,7 +170,9 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		appPath string // Application folder, e.g. /opt/wikijs
 		apps    []ConfigApplication
 	)
-	path, err := GetSoftwarePath() // Predefined path. Assume single line
+
+	// Predefined path. Assume single line in /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt
+	path, err := GetSoftwarePath()
 	if err != nil {
 		return apps, err
 	}
