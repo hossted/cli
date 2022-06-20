@@ -152,6 +152,10 @@ func checkConfigFilePath() (string, error) {
 	}
 
 	// Assume Single Application for now
+	config.UUIDPath, err = hossted.GetUUIDPath()
+	if err != nil {
+		return "", err
+	}
 	config.Applications = apps
 
 	// Just write back to the config file, new fields should be written as well

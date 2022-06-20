@@ -169,7 +169,11 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		appPath string // Application folder, e.g. /opt/wikijs
 		apps    []ConfigApplication
 	)
-	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
+	path, err := GetSoftwarePath() // Predefined path. Assume single line
+	if err != nil {
+		return apps, err
+	}
+
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return apps, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
@@ -449,10 +453,10 @@ func trimOutput(in string) string {
 	return s
 }
 
-// getSoftwarePath gets the software related path, it could either be
+// GetSoftwarePath gets the software related path, it could either be
 // /opt/hossted/run/software.txt (Preferred) or /opt/linnovate/run/software.txt
 // If neither of that exists, return error
-func getSoftwarePath() (string, error) {
+func GetSoftwarePath() (string, error) {
 	path := "/opt/hossted/run/software.txt"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// pass
@@ -463,6 +467,25 @@ func getSoftwarePath() (string, error) {
 	path = "/opt/linnovate/run/software.txt"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+	} else {
+		return path, nil
+	}
+
+	return path, nil
+}
+
+// GetUUIDPath is similar to GetSoftwarePath
+func GetUUIDPath() (string, error) {
+	path := "/opt/hossted/run/uuid.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// pass
+	} else {
+		return path, nil
+	}
+	// Try another path
+	path = "/opt/linnovate/run/uuid.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/uuid.txt or /opt/linnovate/run/uuid.txt. Please check.\n%w\n", err)
 	} else {
 		return path, nil
 	}
