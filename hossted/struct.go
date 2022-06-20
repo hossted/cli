@@ -11,7 +11,7 @@ type Config struct {
 }
 
 // ConfigApplication is the applications installled in the vm.
-// Currently it will look up the values from /opt/linnovate/run/software.txt
+// Currently it will look up the values from /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt
 // Supporting multiple values for future enhancement.
 type ConfigApplication struct {
 	AppName string `yaml:"appName"`

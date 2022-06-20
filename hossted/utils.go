@@ -448,3 +448,24 @@ func trimOutput(in string) string {
 	s := strings.Replace(in, "\n\n", "\n", -1)
 	return s
 }
+
+// getSoftwarePath gets the software related path, it could either be
+// /opt/hossted/run/software.txt (Preferred) or /opt/linnovate/run/software.txt
+// If neither of that exists, return error
+func getSoftwarePath() (string, error) {
+	path := "/opt/hossted/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// pass
+	} else {
+		return path, nil
+	}
+	// Try another path
+	path = "/opt/linnovate/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+	} else {
+		return path, nil
+	}
+
+	return path, nil
+}
