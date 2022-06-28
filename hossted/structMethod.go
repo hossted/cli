@@ -76,13 +76,6 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	var version int                     // Parse docker compose version
 	var err error
 
-	_ = m
-	_ = patternA
-	_ = patternB
-	_ = numA
-	_ = numB
-	_ = version
-
 	lines := strings.Split(string(data), "\n")
 	for i, line := range lines {
 		_ = i
@@ -140,24 +133,17 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	var (
 		apps  []DockerApp // Normal apps
 		wapps []DockerApp // Wrapped apps
-
 	)
 
 	secondSpacing := m[SPACING] // mapping with 2 leading spaces
 	nApps := len(secondSpacing) // all apps, regardless of normal apps or wrapped apps. More specifically, no of lines of 2 leading spaces
 	nLine := len(lines)         // total no of lines in the docker file. used as stopping criteria.
-	_ = nApps
-	_ = nLine
-	_ = apps
-	_ = wapps
 
 	for i := 0; i < nApps; i++ {
 		var (
 			start int
 			end   int
 		)
-
-		fmt.Println("------")
 
 		if i < nApps-1 {
 			start = secondSpacing[i].LineNum
@@ -195,9 +181,16 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 
 	}
 
-	fmt.Println(PrettyPrint(apps))
-	fmt.Println("---------------------")
-	fmt.Println(PrettyPrint(wapps))
+	// Construct docker struct
+	head := lines[0 : numA+1] // up to the line '### HOSSTED APP'
+	bottom := lines[numC:nLine]
+	*d = DockerStruct{
+		Head:        head,
+		Version:     version,
+		Apps:        apps,
+		WrappedApps: wapps,
+		Bottom:      bottom,
+	}
 
 	return nil
 }

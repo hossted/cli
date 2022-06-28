@@ -75,7 +75,7 @@ type YamlSetting struct {
 // TBA
 type DockerStruct struct {
 	Head        []string
-	Version     string
+	Version     int
 	Apps        []DockerApp
 	WrappedApps []DockerApp
 	Bottom      []string

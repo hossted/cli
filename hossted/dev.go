@@ -21,5 +21,7 @@ func Dev() error {
 		return err
 	}
 
+	fmt.Println(PrettyPrint(ds))
+
 	return nil
 }
