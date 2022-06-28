@@ -62,6 +62,7 @@ func (c *Config) GetDefaultApp(pwd string) (string, error) {
 func (d *DockerStruct) Unmarshal(data []byte) error {
 
 	// Set up and define variables
+	SPACING := 2                      // hardcoded constant for parsing DockerApp
 	m := make(map[int][]DockerLine)   // mapping of leading space, with a list of lines
 	patternA := "### HOSSTED APP"     // Predefined pattern A
 	patternB := "### HOSSTED WRAPPER" // Predefined pattern B
@@ -86,12 +87,27 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			Line:    line,
 		}
 
+		// Capture Pattern Lines
+		if (numA == 0) && (trimmedLine == patternA) {
+			numA = i
+		}
+		if (numB == 0) && (trimmedLine == patternB) {
+			numB = i
+		}
+
+		// Build mapping
+		if val, ok := m[ls]; ok {
+			m[ls] = append(val, s)
+		} else {
+			m[ls] = []DockerLine{s}
+		}
+		_ = SPACING
 		_ = trimmedLine
 		_ = ls
 		_ = s
 
 	}
-
+	fmt.Println(PrettyPrint(m))
 	return nil
 }
 
