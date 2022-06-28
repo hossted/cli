@@ -106,23 +106,41 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		} else {
 			m[ls] = []DockerLine{s}
 		}
-		_ = SPACING
-		_ = trimmedLine
-		_ = ls
-		_ = s
-
-		// Parse apps
-		var apps []DockerApp  // Normal apps
-		var wapps []DockerApp // Wrapped apps
-
-		nApps := len(m[2])
-		// nLine := len(lines)
-		_ = nApps
-		_ = apps
-		_ = wapps
-
 	}
-	fmt.Println(PrettyPrint(m))
+
+	// Parse apps
+	var apps []DockerApp  // Normal apps
+	var wapps []DockerApp // Wrapped apps
+
+	secondSpacing := m[SPACING] // mapping with 2 leading spaces
+	nApps := len(secondSpacing)
+	nLine := len(lines)
+	_ = nApps
+	_ = nLine
+	_ = apps
+	_ = wapps
+
+	for i := 0; i < nApps; i++ {
+		var (
+			start int
+			end   int
+		)
+		_ = start
+		_ = end
+
+		if i < nApps-1 {
+			start = secondSpacing[i].LineNum
+			end = secondSpacing[i+1].LineNum - 1
+			fmt.Printf("If: %d - (%d, %d)\n", i, start, end)
+
+		} else {
+			start = secondSpacing[i].LineNum
+			end = nLine
+			fmt.Printf("Else: %d - (%d, %d)\n", i, start, end)
+		}
+	}
+
+	// fmt.Println(PrettyPrint(m))
 	return nil
 }
 
