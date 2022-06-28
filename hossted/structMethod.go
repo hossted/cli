@@ -66,8 +66,10 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	m := make(map[int][]DockerLine)   // mapping of leading space, with a list of lines
 	patternA := "### HOSSTED APP"     // Predefined pattern A
 	patternB := "### HOSSTED WRAPPER" // Predefined pattern B
+	patternC := "### HOSSTED APP END" // Predefined pattern C
 	numA := 0                         // Line num of pattern A
 	numB := 0                         // Line num of pattern B
+	numC := 0                         // Line num of pattern B
 
 	_ = m
 	_ = patternA
@@ -94,6 +96,9 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		if (numB == 0) && (trimmedLine == patternB) {
 			numB = i
 		}
+		if (numC == 0) && (trimmedLine == patternC) {
+			numC = i
+		}
 
 		// Build mapping
 		if val, ok := m[ls]; ok {
@@ -105,6 +110,16 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		_ = trimmedLine
 		_ = ls
 		_ = s
+
+		// Parse apps
+		var apps []DockerApp  // Normal apps
+		var wapps []DockerApp // Wrapped apps
+
+		nApps := len(m[2])
+		// nLine := len(lines)
+		_ = nApps
+		_ = apps
+		_ = wapps
 
 	}
 	fmt.Println(PrettyPrint(m))

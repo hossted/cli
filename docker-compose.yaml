@@ -38,7 +38,7 @@ services:
       - postgresql:/var/lib/postgresql
       - postgresql_data:/var/lib/postgresql/data
 
-#  HOSSTED WRAPPER
+# HOSSTED WRAPPER
   traefik:
     extends:
       file: hossted/hossted-traefik.yml
@@ -51,6 +51,7 @@ services:
     extends:
       file: hossted/hossted-maintenance-page.yml
       service: hossted-maintenance-page
+# HOSSTED WRAPPER END
 
 volumes:
   postgresql:
