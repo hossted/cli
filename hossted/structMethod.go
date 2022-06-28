@@ -135,6 +135,7 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	if (numA >= numB) || (numB >= numC) || (numA >= numC) {
 		return errors.New("The specific hossted docker file pattern lines are not in specific orders in the docker file.\nPlease check with administrator.\n")
 	}
+
 	// Parse apps
 	var (
 		apps  []DockerApp // Normal apps
@@ -143,7 +144,6 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	)
 
 	secondSpacing := m[SPACING] // mapping with 2 leading spaces
-
 	nApps := len(secondSpacing)
 	nLine := len(lines)
 	_ = nApps
@@ -156,8 +156,8 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			start int
 			end   int
 		)
-		_ = start
-		_ = end
+
+		fmt.Println("------")
 
 		if i < nApps-1 {
 			start = secondSpacing[i].LineNum
@@ -169,6 +169,15 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			end = nLine
 			fmt.Printf("Else: %d - (%d, %d)\n", i, start, end)
 		}
+
+		appName := strings.TrimSpace(lines[start]) // app name
+		content := lines[start:end]                // app content
+		app := DockerApp{
+			Name:    appName,
+			Content: content,
+		}
+		apps = append(apps, app)
+		fmt.Println(PrettyPrint(app))
 
 	}
 

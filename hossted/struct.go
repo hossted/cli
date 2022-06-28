@@ -84,7 +84,7 @@ type DockerStruct struct {
 // TBA
 type DockerApp struct {
 	Name    string
-	Content string
+	Content []string
 }
 
 // TBA
