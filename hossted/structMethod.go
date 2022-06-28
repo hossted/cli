@@ -144,8 +144,8 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	)
 
 	secondSpacing := m[SPACING] // mapping with 2 leading spaces
-	nApps := len(secondSpacing)
-	nLine := len(lines)
+	nApps := len(secondSpacing) // all apps, regardless of normal apps or wrapped apps. More specifically, no of lines of 2 leading spaces
+	nLine := len(lines)         // total no of lines in the docker file. used as stopping criteria.
 	_ = nApps
 	_ = nLine
 	_ = apps
@@ -170,12 +170,23 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			fmt.Printf("Else: %d - (%d, %d)\n", i, start, end)
 		}
 
+		// handle ending line. Must be smaller then patternC by 1
+		if end >= numC {
+			end = numC - 1
+		}
+
+		// If start line is after patternC, finished parsing, breaking
+		if start >= numC {
+			break
+		}
+
 		appName := strings.TrimSpace(lines[start]) // app name
 		content := lines[start:end]                // app content
 		app := DockerApp{
 			Name:    appName,
 			Content: content,
 		}
+
 		apps = append(apps, app)
 		fmt.Println(PrettyPrint(app))
 
