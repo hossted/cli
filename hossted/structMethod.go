@@ -77,9 +77,26 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	lines := strings.Split(string(data), "\n")
 	for i, line := range lines {
 		_ = i
-		fmt.Println(line)
+
+		trimmedLine := strings.TrimSpace(line)
+		ls := countLeadingSpaces(line) // leading space
+
+		s := DockerLine{
+			LineNum: i,
+			Line:    line,
+		}
+
+		_ = trimmedLine
+		_ = ls
+		_ = s
 
 	}
 
 	return nil
+}
+
+// countLeadingSpaces counts the leading space in the sentence.
+// Now can not handle lines with tabs
+func countLeadingSpaces(line string) int {
+	return len(line) - len(strings.TrimLeft(line, " "))
 }
