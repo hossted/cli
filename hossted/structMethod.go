@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // GetAppConfig finds the specific Application Config with the application name
@@ -59,7 +60,26 @@ func (c *Config) GetDefaultApp(pwd string) (string, error) {
 //////////////////////////////////////////
 
 func (d *DockerStruct) Unmarshal(data []byte) error {
-	fmt.Println("Unmarshal")
+
+	// Set up and define variables
+	m := make(map[int][]DockerLine)   // mapping of leading space, with a list of lines
+	patternA := "### HOSSTED APP"     // Predefined pattern A
+	patternB := "### HOSSTED WRAPPER" // Predefined pattern B
+	numA := 0                         // Line num of pattern A
+	numB := 0                         // Line num of pattern B
+
+	_ = m
+	_ = patternA
+	_ = patternB
+	_ = numA
+	_ = numB
+
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		_ = i
+		fmt.Println(line)
+
+	}
 
 	return nil
 }
