@@ -162,12 +162,9 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		if i < nApps-1 {
 			start = secondSpacing[i].LineNum
 			end = secondSpacing[i+1].LineNum - 1
-			fmt.Printf("If: %d - (%d, %d)\n", i, start, end)
-
 		} else {
 			start = secondSpacing[i].LineNum
 			end = nLine
-			fmt.Printf("Else: %d - (%d, %d)\n", i, start, end)
 		}
 
 		// handle ending line. Must be smaller then patternC by 1
@@ -187,12 +184,21 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			Content: content,
 		}
 
-		apps = append(apps, app)
-		fmt.Println(PrettyPrint(app))
+		// Checking whether it should be in normal app or wrapped app
+		if end <= numB {
+			apps = append(apps, app)
+		} else if end <= numC {
+			wapps = append(wapps, app)
+		} else {
+			// Should not be here
+		}
 
 	}
 
-	// fmt.Println(PrettyPrint(m))
+	fmt.Println(PrettyPrint(apps))
+	fmt.Println("---------------------")
+	fmt.Println(PrettyPrint(wapps))
+
 	return nil
 }
 
