@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -72,12 +73,15 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	numA := 0                           // Line num of pattern A
 	numB := 0                           // Line num of pattern B
 	numC := 0                           // Line num of pattern B
+	var version int                     // Parse docker compose version
+	var err error
 
 	_ = m
 	_ = patternA
 	_ = patternB
 	_ = numA
 	_ = numB
+	_ = version
 
 	lines := strings.Split(string(data), "\n")
 	for i, line := range lines {
@@ -85,6 +89,16 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 
 		trimmedLine := strings.TrimSpace(line)
 		ls := countLeadingSpaces(line) // leading space
+
+		// Parse version line
+		if strings.HasPrefix(strings.ToLower(line), "version:") {
+			// matching the line with pattern version: '2'
+			v := strings.ReplaceAll(strings.ReplaceAll(line, " ", ""), "version:", "")
+			version, err = strconv.Atoi(v)
+			if err != nil {
+				version = 0
+			}
+		}
 
 		s := DockerLine{
 			LineNum: i,
@@ -102,7 +116,7 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			numC = i
 		}
 
-		// Build mapping
+		// Build mapping, with keys as no of leading space, values as list of lines
 		if val, ok := m[ls]; ok {
 			m[ls] = append(val, s)
 		} else {
@@ -122,10 +136,14 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		return errors.New("The specific hossted docker file pattern lines are not in specific orders in the docker file.\nPlease check with administrator.\n")
 	}
 	// Parse apps
-	var apps []DockerApp  // Normal apps
-	var wapps []DockerApp // Wrapped apps
+	var (
+		apps  []DockerApp // Normal apps
+		wapps []DockerApp // Wrapped apps
+
+	)
 
 	secondSpacing := m[SPACING] // mapping with 2 leading spaces
+
 	nApps := len(secondSpacing)
 	nLine := len(lines)
 	_ = nApps
@@ -151,6 +169,7 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 			end = nLine
 			fmt.Printf("Else: %d - (%d, %d)\n", i, start, end)
 		}
+
 	}
 
 	// fmt.Println(PrettyPrint(m))
