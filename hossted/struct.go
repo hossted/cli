@@ -67,3 +67,28 @@ type YamlSetting struct {
 	Pattern  string // regex
 	NewValue string // value of the new input, should be matching the number of match groups in regex
 }
+
+//////////////////////////////////////////
+// Docker compose related struct
+//////////////////////////////////////////
+
+// TBA
+type DockerStruct struct {
+	Head        []string
+	Version     string
+	Apps        []DockerApp
+	WrappedApps []DockerApp
+	Bottom      []string
+}
+
+// TBA
+type DockerApp struct {
+	Name    string
+	Content string
+}
+
+// TBA
+type DockerLine struct {
+	LineNum int
+	Line    string
+}

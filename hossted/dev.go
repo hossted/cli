@@ -5,23 +5,6 @@ import (
 	"io/ioutil"
 )
 
-type Dummy struct {
-	Head     []string
-	Version  string
-	Services []Service
-	Bottom   []string
-}
-
-type Line struct {
-	LineNum int
-	Line    string
-}
-
-type Service struct {
-	Name    string
-	Content string
-}
-
 func Dev() error {
 
 	fmt.Println("Dev")
@@ -29,7 +12,7 @@ func Dev() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+	fmt.Println(len(b))
 
 	return nil
 }
