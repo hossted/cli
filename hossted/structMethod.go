@@ -59,17 +59,19 @@ func (c *Config) GetDefaultApp(pwd string) (string, error) {
 // Docker compose related struct method
 //////////////////////////////////////////
 
+// Unmarshal blah blah
+// TODO: Add test to check error logic
 func (d *DockerStruct) Unmarshal(data []byte) error {
 
 	// Set up and define variables
-	SPACING := 2                      // hardcoded constant for parsing DockerApp
-	m := make(map[int][]DockerLine)   // mapping of leading space, with a list of lines
-	patternA := "### HOSSTED APP"     // Predefined pattern A
-	patternB := "### HOSSTED WRAPPER" // Predefined pattern B
-	patternC := "### HOSSTED APP END" // Predefined pattern C
-	numA := 0                         // Line num of pattern A
-	numB := 0                         // Line num of pattern B
-	numC := 0                         // Line num of pattern B
+	SPACING := 2                        // hardcoded constant for parsing DockerApp
+	m := make(map[int][]DockerLine)     // mapping of leading space, with a list of lines
+	patternA := "# HOSSTED APP"         // Predefined pattern A
+	patternB := "# HOSSTED WRAPPER"     // Predefined pattern B
+	patternC := "# HOSSTED WRAPPER END" // Predefined pattern C
+	numA := 0                           // Line num of pattern A
+	numB := 0                           // Line num of pattern B
+	numC := 0                           // Line num of pattern B
 
 	_ = m
 	_ = patternA
@@ -90,13 +92,13 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		}
 
 		// Capture Pattern Lines
-		if (numA == 0) && (trimmedLine == patternA) {
+		if (numA == 0) && strings.Contains(trimmedLine, patternA) {
 			numA = i
 		}
-		if (numB == 0) && (trimmedLine == patternB) {
+		if (numB == 0) && strings.Contains(trimmedLine, patternB) {
 			numB = i
 		}
-		if (numC == 0) && (trimmedLine == patternC) {
+		if (numC == 0) && strings.Contains(trimmedLine, patternC) {
 			numC = i
 		}
 
@@ -108,6 +110,17 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 		}
 	}
 
+	// Return error if any of the patterns are missing from the docker compose file
+	// TODO: Need add test for checking error logics
+	if (numA == 0) || (numB == 0) || (numC == 0) {
+		return errors.New("The specific hossted docker file pattern lines are not available in the docker file.\nPlease check with administrator.\n")
+	}
+
+	// The pattern should be in sequence. patternA (First) > patternB (Second) > patternC (Last)
+	// TODO: Need add test for checking error logics
+	if (numA >= numB) || (numB >= numC) || (numA >= numC) {
+		return errors.New("The specific hossted docker file pattern lines are not in specific orders in the docker file.\nPlease check with administrator.\n")
+	}
 	// Parse apps
 	var apps []DockerApp  // Normal apps
 	var wapps []DockerApp // Wrapped apps
