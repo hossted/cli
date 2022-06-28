@@ -159,7 +159,8 @@ func GetHosstedUUID(path string) (string, error) {
 	return uuid, nil
 }
 
-// GetAppInfo gets the application related information from predefined path /opt/linnovate/run/software.txt
+// GetAppInfo gets the application related information from predefined path
+// /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt
 // Returns the App name, and the corresponding path. e.g. Linnovate-AWS-wikijs -> wikijs
 // TODO Assume single application for now
 // TODO Remove dummy app (for dropdown select demo)
@@ -169,7 +170,13 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		appPath string // Application folder, e.g. /opt/wikijs
 		apps    []ConfigApplication
 	)
-	path := "/opt/linnovate/run/software.txt" // Predefined path. Assume single line
+
+	// Predefined path. Assume single line in /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt
+	path, err := GetSoftwarePath()
+	if err != nil {
+		return apps, err
+	}
+
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return apps, fmt.Errorf("Can not open %s. Please check.\n%w", path, err)
@@ -447,4 +454,44 @@ func ConvertBool(in string) (bool, error) {
 func trimOutput(in string) string {
 	s := strings.Replace(in, "\n\n", "\n", -1)
 	return s
+}
+
+// GetSoftwarePath gets the software related path, it could either be
+// /opt/hossted/run/software.txt (Preferred) or /opt/linnovate/run/software.txt
+// If neither of that exists, return error
+func GetSoftwarePath() (string, error) {
+	path := "/opt/hossted/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// pass
+	} else {
+		return path, nil
+	}
+	// Try another path
+	path = "/opt/linnovate/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+	} else {
+		return path, nil
+	}
+
+	return path, nil
+}
+
+// GetUUIDPath is similar to GetSoftwarePath
+func GetUUIDPath() (string, error) {
+	path := "/opt/hossted/run/uuid.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// pass
+	} else {
+		return path, nil
+	}
+	// Try another path
+	path = "/opt/linnovate/run/uuid.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/uuid.txt or /opt/linnovate/run/uuid.txt. Please check.\n%w\n", err)
+	} else {
+		return path, nil
+	}
+
+	return path, nil
 }

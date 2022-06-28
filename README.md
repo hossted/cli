@@ -43,13 +43,13 @@ The hossted cli - built to interact with a hossted container
 
 # Pre-requisite
 ## uuid
-  uuid being saved under `/opt/linnovate/run/uuid.txt`
+  uuid being saved under  `/opt/hossted/run/uuid.txt` or `/opt/linnovate/run/uuid.txt`
   ```
   <uuid>
   ```
 
 ## software.txt
-  `software.txt` being saved under `/opt/linnovate/run/software.txt`, and it should be in this format to get the available applications
+  `software.txt` being saved under `/opt/hossted/run/software.txt` or `/opt/linnovate/run/software.txt`, and it should be in this format to get the available applications
   ```
   Linnovate-<CloudProvider>-<Application>
   ```
