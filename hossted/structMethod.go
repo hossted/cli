@@ -53,3 +53,13 @@ func (c *Config) GetDefaultApp(pwd string) (string, error) {
 
 	return app, nil
 }
+
+//////////////////////////////////////////
+// Docker compose related struct method
+//////////////////////////////////////////
+
+func (d *DockerStruct) Unmarshal(data []byte) error {
+	fmt.Println("Unmarshal")
+
+	return nil
+}

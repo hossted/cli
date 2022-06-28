@@ -8,11 +8,18 @@ import (
 func Dev() error {
 
 	fmt.Println("Dev")
+
+	var ds DockerStruct // docker struct
+
 	b, err := ioutil.ReadFile("docker-compose.yaml")
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(b))
+
+	err = ds.Unmarshal([]byte(b))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
