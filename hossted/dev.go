@@ -21,7 +21,12 @@ func Dev() error {
 		return err
 	}
 
-	fmt.Println(PrettyPrint(ds))
+	// fmt.Println(PrettyPrint(ds))
+	s, err := ds.Parse()
+	if err != nil {
+		return err
+	}
+	fmt.Println(s)
 
 	return nil
 }

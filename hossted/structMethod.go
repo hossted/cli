@@ -195,6 +195,12 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	return nil
 }
 
+func (d *DockerStruct) Parse() (string, error) {
+	fmt.Println("Parse")
+
+	return "", nil
+}
+
 // countLeadingSpaces counts the leading space in the sentence.
 // Now can not handle lines with tabs
 func countLeadingSpaces(line string) int {
