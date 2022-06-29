@@ -1,5 +1,12 @@
 package hossted
 
+import "embed"
+
+var (
+	//go:embed templates
+	templates embed.FS
+)
+
 // Config is a struct to parse config.yaml file
 type Config struct {
 	Email        string              `yaml:"email"`

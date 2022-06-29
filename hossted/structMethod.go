@@ -1,11 +1,13 @@
 package hossted
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 // GetAppConfig finds the specific Application Config with the application name
@@ -195,8 +197,23 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	return nil
 }
 
-func (d *DockerStruct) Parse() (string, error) {
-	fmt.Println("Parse")
+// TODO: Implement io.Writter Write method
+func (d *DockerStruct) Write() (string, error) {
+
+	// Read the template
+	t, err := template.ParseFS(templates, "templates/docker-compose.tmpl")
+	if err != nil {
+		return "", err
+	}
+	s := ""
+	w := bytes.NewBufferString(s)
+
+	// Write to template
+	err = t.Execute(w, *d)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(w.String())
 
 	return "", nil
 }

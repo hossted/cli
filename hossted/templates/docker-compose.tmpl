@@ -1,0 +1,8 @@
+{{ range .Head }}
+{{ . }} {{ end }}
+{{ range .Apps }}{{ range .Content }}
+{{ . }} {{ end }} {{ end }}
+{{range .WrappedApps}}{{ range .Content }}
+{{ . }} {{ end }} {{ end }}
+{{range .Bottom }}
+{{ . }} {{ end }}

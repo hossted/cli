@@ -1,7 +1,6 @@
 package hossted
 
 import (
-	"embed"
 	"encoding/json"
 	"errors"
 	"os"
@@ -11,11 +10,6 @@ import (
 	"fmt"
 
 	"github.com/manifoldco/promptui"
-)
-
-var (
-	//go:embed templates
-	templates embed.FS
 )
 
 // RegisterUsers updates email, organization in the yaml file, if successful.

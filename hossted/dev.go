@@ -22,7 +22,7 @@ func Dev() error {
 	}
 
 	// fmt.Println(PrettyPrint(ds))
-	s, err := ds.Parse()
+	s, err := ds.Write()
 	if err != nil {
 		return err
 	}
