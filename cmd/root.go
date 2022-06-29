@@ -57,7 +57,7 @@ Usage:
 Available Commands:
 
   |-------------------------------+-------------------------+------------------------------------------------------|
-  | Commands                      | Alias                   | Descriptions                                         |
+  | Commands                      | Alias                   | Description                                          |
   |-------------------------------+-------------------------+------------------------------------------------------|
   | register                      | hossted r               | Register your application with the hossted ecosystem |
   | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                     |
@@ -152,6 +152,10 @@ func checkConfigFilePath() (string, error) {
 	}
 
 	// Assume Single Application for now
+	config.UUIDPath, err = hossted.GetUUIDPath()
+	if err != nil {
+		return "", err
+	}
 	config.Applications = apps
 
 	// Just write back to the config file, new fields should be written as well
