@@ -21,12 +21,12 @@ func Dev() error {
 		return err
 	}
 
-	// fmt.Println(PrettyPrint(ds))
-	s, err := ds.Write()
-	if err != nil {
-		return err
-	}
-	fmt.Println(s)
+	fmt.Println(PrettyPrint(ds))
+	// s, err := ds.Write()
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println(s)
 
 	return nil
 }

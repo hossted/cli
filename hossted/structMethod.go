@@ -134,6 +134,7 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	// Parse apps
 	var (
 		apps  []DockerApp // Normal apps
+		dapps []DockerApp // Disabled apps
 		wapps []DockerApp // Wrapped apps
 	)
 
@@ -141,6 +142,9 @@ func (d *DockerStruct) Unmarshal(data []byte) error {
 	nApps := len(secondSpacing) // all apps, regardless of normal apps or wrapped apps. More specifically, no of lines of 2 leading spaces
 	nLine := len(lines)         // total no of lines in the docker file. used as stopping criteria.
 
+	_ = dapps
+
+	// Handle Normal app
 	for i := 0; i < nApps; i++ {
 		var (
 			start int
