@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.2.4] - 2022-07-31
+### Added
+- Changed registerUser api endpoint to new instances api
+ 
 ## [0.2.3] - 2022-06-29
 ### Added
 - [After set domain, change MOTD accordingly](https://github.com/hossted/cli/issues/41)
