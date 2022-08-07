@@ -17,7 +17,7 @@ var statusCmd = &cobra.Command{
 	Use:     "status",
 	Short:   "[v] Print the status of the hossted instance variables",
 	Long:    `[v] PRint the status of the hossted instance variables`,
-	Aliases: []string{"s"},
+	Aliases: []string{"st"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath, err := hossted.GetConfigPath()
 		if err != nil {
