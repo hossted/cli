@@ -20,6 +20,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 // GetConfigPath gets the pre-defined config path. ~/.hossted/config.yaml
 func GetConfigPath() (string, error) {
 	home, err := homedir.Dir()

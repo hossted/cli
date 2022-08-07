@@ -66,6 +66,7 @@ Available Commands:
   | set domain <domain>           | hossted s d example.com | Set a custom domain                                  |
   | help                          | hossted help            | Help about any command                               |
   | logs                          | hossted log             | View application logs                                |
+  | status                        | hossted status          | View hossted status                                  |
   | ps                            | hossted ps              | docker-compose ps of the application                 |
   | version                       | hossted version         | Get the version of the hossted CLI program           |
   |-------------------------------+-------------------------+------------------------------------------------------|

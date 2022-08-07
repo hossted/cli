@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
@@ -18,11 +19,15 @@ var statusCmd = &cobra.Command{
 	Long:    `[v] PRint the status of the hossted instance variables`,
 	Aliases: []string{"s"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := hossted.GetConfig()
+		configPath, err := hossted.GetConfigPath()
 		if err != nil {
 			return err
 		}
-		fmt.Printf("email :%s\nuuid: %s", config.Email, config.HostUUID)
+
+		dat, err := os.ReadFile(configPath)
+
+		fmt.Print(string(dat))
+
 		return nil
 	},
 }

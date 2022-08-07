@@ -76,14 +76,14 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		// Old EndPoint:     "https://app.__ENV__hossted.com/api/register",
-		EndPoint: 	"https://api.__ENV__hossted.com/v1/instances/registerUser",
+		EndPoint:     "https://api.__ENV__hossted.com/v1/instances/registerUser",
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
 		SessionToken: "",
 	}
 
-	fmt.Println("Registering user. Please wait a second.")
+	fmt.Println("Registering user. Please wait a second...")
 	resp, err := req.SendRequest()
 	if err != nil {
 		return response, err
