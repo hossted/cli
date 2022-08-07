@@ -2,6 +2,7 @@ email: {{ .Email }}
 userToken: {{ .UserToken }}
 sessionToken: {{ .SessionToken }}
 uuidPath: {{ .UUIDPath }}
+hostUuid: {{ .HostUUID }}
 applications:{{ range .Applications }}
     - appName: {{ .AppName}}
       appPath: {{ .AppPath}}{{ end }}

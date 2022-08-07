@@ -7,6 +7,7 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -155,6 +156,13 @@ func checkConfigFilePath() (string, error) {
 	config.UUIDPath, err = hossted.GetUUIDPath()
 	if err != nil {
 		return "", err
+	}
+	// Populate the config with hosts UUID
+	var HostUUIDObj, readFileErr = ioutil.ReadFile(config.UUIDPath)
+	config.HostUUID = string(HostUUIDObj)
+
+	if err != nil {
+		return "", readFileErr
 	}
 	config.Applications = apps
 

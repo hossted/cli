@@ -2,11 +2,13 @@ package hossted
 
 // Config is a struct to parse config.yaml file
 type Config struct {
-	Email        string              `yaml:"email"`
-	UserToken    string              `yaml:"userToken"`
-	SessionToken string              `yaml:"sessionToken"`
-	EndPoint     string              `yaml:"endPoint"`
-	UUIDPath     string              `yaml:"uuidPath"`
+	Email        string `yaml:"email"`
+	UserToken    string `yaml:"userToken"`
+	SessionToken string `yaml:"sessionToken"`
+	EndPoint     string `yaml:"endPoint"`
+	UUIDPath     string `yaml:"uuidPath"`
+	HostUUID     string `yaml:"hostUuid"`
+
 	Applications []ConfigApplication `yaml:"applications"`
 }
 
