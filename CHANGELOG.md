@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.2.5] - 2022-08-07
+### Added t
+- Added the hossted status command
 ## [0.2.4] - 2022-07-31
 ### Added
 - Changed registerUser api endpoint to new instances api
