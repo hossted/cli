@@ -14,7 +14,6 @@ import (
 // TODO: Check all params is not null
 // TODO: Check response status
 func (h *HosstedRequest) SendRequest() (string, error) {
-
 	// Set http client
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -33,7 +32,7 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	endpoint := u.String()
 	endpoint = updateEndpointEnv(endpoint, h.Environment)
 
-	req, err := http.NewRequest("POST", endpoint, nil)
+	req, err := http.NewRequest(h.typeRequest, endpoint, nil)
 	if err != nil {
 		return "", err
 	}

@@ -27,6 +27,7 @@ type HosstedRequest struct {
 	Params       map[string]string // kv pairs for param
 	BearToken    string            // Authorization token
 	SessionToken string            // Session token. JWT
+	typeRequest		 string            // Request type, GET, POST, PUT, DELETE
 }
 
 // RegisterResponse is the return response from the register api
@@ -36,7 +37,11 @@ type RegisterResponse struct {
 	JWT        string `json:"jwt"`
 	URL        string `json:"url"`
 }
-
+// pingResponse is the return response from the register api
+type pingResponse struct {
+	StatusCode int    `json:"status"`
+	Message    string `json:"msg"`
+}
 // AvailableCommand is the predefined app/command mapping.
 // Maintained with the command.go file
 type AvailableCommand struct {

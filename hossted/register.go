@@ -81,6 +81,7 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 		Params:       params,
 		BearToken:    "Basic FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA",
 		SessionToken: "",
+		typeRequest: "POST",
 	}
 
 	fmt.Println("Registering user. Please wait a second...")

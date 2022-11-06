@@ -501,3 +501,21 @@ func GetUUIDPath() (string, error) {
 
 	return path, nil
 }
+
+func GetDockersInfo() (string, error) {
+
+	// Collect docker info
+
+	cmd := exec.Command(`sudo`, `docker`, `ps`, `--format` ,`{"docker_id":"{{ .ID }}", "image_id": "{{ .Image }}","created_at":"{{ .CreatedAt}}","ports":"{{ .Ports}}","status":"{{ .Status}}","size":"{{ .Size}}","names":"{{ .Names }}","mounts":"{{ .Mounts}}","networks":"{{ .Networks}}"}***`)
+	//cmd.Dir = app.AppPath
+
+	dockers, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+		return string(dockers),err
+	}
+	s := strings.Split(string(dockers), "***")
+	dockersjs, _ := json.Marshal(s)
+
+	return string(dockersjs), nil
+}
