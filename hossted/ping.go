@@ -15,7 +15,6 @@ import (
 // It will then send an request to the API server, to get the JWT sessin token.
 // TODO: Use the original values as default.
 func Ping(env string) error {
-	//var dockers string
 	
 	fmt.Println(env)
 	config, _ := GetConfig() // Ignore error
@@ -55,7 +54,6 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 	params := make(map[string]string)
 	params["uuid"] = uuid
 	params["dockers"] = dockers
-	fmt.Printf("params %v\n",params)
 
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
