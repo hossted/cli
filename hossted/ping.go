@@ -63,7 +63,7 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
 		SessionToken: "",
-		typeRequest:"PATCH",
+		TypeRequest:"PATCH",
 	}
 
 	fmt.Println("Docker creation Please wait a second...")

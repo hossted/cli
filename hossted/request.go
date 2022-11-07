@@ -32,7 +32,7 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	endpoint := u.String()
 	endpoint = updateEndpointEnv(endpoint, h.Environment)
 
-	req, err := http.NewRequest(h.typeRequest, endpoint, nil)
+	req, err := http.NewRequest(h.TypeRequest, endpoint, nil)
 	if err != nil {
 		return "", err
 	}

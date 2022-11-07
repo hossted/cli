@@ -505,8 +505,7 @@ func GetUUIDPath() (string, error) {
 func GetDockersInfo() (string, error) {
 
 	// Collect docker info
-	cmd := exec.Command(`sudo`, `docker`, `ps`, `--format`,`{"docker_id":"{{ .ID }}", "image_id": "{{ .Image }}","created_at":"{{ .CreatedAt}}","ports":"{{ .Ports}}","status":"{{ .Status}}","size":"{{ .Size}}","names":"{{ .Names }}","mounts":"{{ .Mounts}}","networks":"{{ .Networks}}"},`)
-	//cmd.Dir = app.AppPath
+	cmd := exec.Command(`docker`, `ps`, `--format`,`{"docker_id":"{{ .ID }}", "image_id": "{{ .Image }}","created_at":"{{ .CreatedAt}}","ports":"{{ .Ports}}","status":"{{ .Status}}","size":"{{ .Size}}","names":"{{ .Names }}","mounts":"{{ .Mounts}}","networks":"{{ .Networks}}"},`)
     fmt.Println(cmd)
 	dockersData, err := cmd.Output()
 	if err != nil {
