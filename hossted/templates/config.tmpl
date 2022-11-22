@@ -6,3 +6,4 @@ hostUuid: {{ .HostUUID }}
 applications:{{ range .Applications }}
     - appName: {{ .AppName}}
       appPath: {{ .AppPath}}{{ end }}
+update: {{ .Update }}

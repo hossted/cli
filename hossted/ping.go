@@ -3,9 +3,8 @@ package hossted
 import (
 	"encoding/json"
 	"os"
-	"strings"
 	"fmt"
-	//"os/exec"
+	"strings"
 )
 
 
@@ -17,8 +16,7 @@ import (
 func Ping(env string) error {
 	
 	fmt.Println(env)
-	config, _ := GetConfig() // Ignore error
-
+	 config, _ := GetConfig() // Ignore error
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env = GetHosstedEnv(env)
@@ -28,9 +26,12 @@ func Ping(env string) error {
 	}
 
 	//Get dockers
-	dockersJson,_ := GetDockersInfo()
-
-	// Send request
+	dockersJson,err := GetDockersInfo()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	//Send request
 	response, err := PingRequest(dockersJson, uuid, env)
 	if err != nil {
 		return err
@@ -44,8 +45,8 @@ func Ping(env string) error {
 	return nil
 }
 
-// registerRequest sends register request based on the input, env/email/organization, etc..
-// TODO: Set BearToken to env variable
+//registerRequest sends register request based on the input, env/email/organization, etc..
+//TODO: Set BearToken to env variable
 func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 
 	var response pingResponse
@@ -84,4 +85,3 @@ if response.Message!=""{
 }
 	return response, nil
 }
-

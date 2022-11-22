@@ -506,16 +506,17 @@ func GetDockersInfo() (string, error) {
 
 	// Collect docker info
 	cmd := exec.Command(`docker`, `ps`, `--format`,`{"docker_id":"{{ .ID }}", "image_id": "{{ .Image }}","created_at":"{{ .CreatedAt}}","ports":"{{ .Ports}}","status":"{{ .Status}}","size":"{{ .Size}}","names":"{{ .Names }}","mounts":"{{ .Mounts}}","networks":"{{ .Networks}}"},`)
-    fmt.Println(cmd)
 	dockersData, err := cmd.Output()
 	if err != nil {
 		fmt.Println(err.Error())
 		return string(dockersData),err
 	}
 	dockers:=string(dockersData)
+	if(len(dockers)==0){
+		return dockers,fmt.Errorf("No docker containers found")
+	}
 	dockers= dockers[:len(dockers)-2]
 	dockers= "["+dockers+"]"
-	dockers= strings.Replace(dockers, "IDT", "", -1)
 	fmt.Println("dockersjs",dockers)
 
 	return dockers, nil

@@ -8,7 +8,7 @@ type Config struct {
 	EndPoint     string `yaml:"endPoint"`
 	UUIDPath     string `yaml:"uuidPath"`
 	HostUUID     string `yaml:"hostUuid"`
-
+    Update       bool   `yaml:"update"`
 	Applications []ConfigApplication `yaml:"applications"`
 }
 
@@ -27,7 +27,7 @@ type HosstedRequest struct {
 	Params       map[string]string // kv pairs for param
 	BearToken    string            // Authorization token
 	SessionToken string            // Session token. JWT
-	TypeRequest		 string            // Request type, GET, POST, PUT, DELETE
+	TypeRequest	 string            // Request type, GET, POST, PUT, DELETE
 }
 
 // RegisterResponse is the return response from the register api
