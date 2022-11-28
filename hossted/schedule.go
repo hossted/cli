@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"time"
 	"math/rand"
+	"os"
+	"os/exec"
 )
-
 
 func Schedule(env string) error {
 	
 	fmt.Println("schedule")
+	createCronSchedule()
+	
 	config, _ := GetConfig()
 
     currentTime := time.Now()
@@ -35,3 +38,21 @@ func Schedule(env string) error {
 
 	return nil
 }
+
+func createCronSchedule() {
+    fmt.Println("createCronSchedule")
+	
+	err := os.WriteFile("cronSchedule.sh", []byte("/home/linnovate/devel/hossted/cli/bin/linux/hossted schedule 2>&1 | logger -t mycmd"), 0755)
+    if err != nil {
+        fmt.Printf("Unable to write file: %v", err)
+		return
+    }
+
+	cmd:= exec.Command(`sudo`,`mv`,`-u`,`cronSchedule.sh`, `/etc/cron.hourly`)
+	_, err = cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+		return 
+	}
+}
+

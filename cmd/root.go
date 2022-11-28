@@ -57,19 +57,21 @@ Usage:
 
 Available Commands:
 
-  |-------------------------------+-------------------------+------------------------------------------------------|
-  | Commands                      | Alias                   | Description                                          |
-  |-------------------------------+-------------------------+------------------------------------------------------|
-  | register                      | hossted r               | Register your application with the hossted ecosystem |
-  | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                     |
-  | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team |
-  | set domain <domain>           | hossted s d example.com | Set a custom domain                                  |
-  | help                          | hossted help            | Help about any command                               |
-  | logs                          | hossted log             | View application logs                                |
-  | status                        | hossted status          | View hossted status                                 |
-  | ps                            | hossted ps              | docker-compose ps of the application                 |
-  | version                       | hossted version         | Get the version of the hossted CLI program           |
-  |-------------------------------+-------------------------+------------------------------------------------------|
+  |-------------------------------+-------------------------+----------------------------------------------------------|
+  | Commands                      | Alias                   | Description                                              |
+  |-------------------------------+-------------------------+----------------------------------------------------------|
+  | register                      | hossted r               | Register your application with the hossted ecosystem     |
+  | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                         |
+  | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team     |
+  | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
+  | help                          | hossted help            | Help about any command                                   |
+  | logs                          | hossted log             | View application logs                                    |
+  | status                        | hossted status          | View hossted status                                      |
+  | ps                            | hossted ps              | docker-compose ps of the application                     |
+  | version                       | hossted version         |                                                          |
+  | ping                          | hossted ping            | Send docker ,sbom and security infor to hossted API      |
+  | updates false/true            | hossted s u false/true  | Alow to send information about the hossted app to the API|
+  |-------------------------------+-------------------------+----------------------------------------------------------|
 
 Flags:
   -h, --help      help for hossted
