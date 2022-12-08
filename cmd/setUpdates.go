@@ -46,7 +46,7 @@ var setUpdatesCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		hossted.SetUpdates(flag)
+		hossted.SetUpdates(ENVIRONMENT,flag)
 		
 	},
 }

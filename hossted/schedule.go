@@ -2,15 +2,15 @@ package hossted
 
 import (
 	"fmt"
-	"time"
+   	"time"
 	"math/rand"
 	"os"
 	"os/exec"
+
 )
 
 func Schedule(env string) error {
 	
-	fmt.Println("schedule")
 	createCronSchedule()
 	
 	config, _ := GetConfig()
@@ -18,41 +18,34 @@ func Schedule(env string) error {
     currentTime := time.Now()
     yyyy, mm, dd := currentTime.Date()
     tomorrow := time.Date(yyyy, mm, dd+1, 0, 0, 0, 0, currentTime.Location())
-    fmt.Println("tomorrow",tomorrow)
-	
 	duration := tomorrow.Sub(currentTime)
 	hours:=int(duration.Hours())
-	fmt.Printf("difference %d hours\n",hours)
 
 	hoursRand:=rand.Intn(hours)
-	fmt.Println("hoursRand",hoursRand)
-
 	
-	time.Sleep(time.Duration(hoursRand)*time.Second)
-
-	fmt.Println("config.Update",config.Update)
-	if config.Update==true{
-		fmt.Println("update")
-		Ping(env)
+	time.Sleep(time.Duration(hoursRand)*time.Second) 
+	if config.Update==true{ 
+		Ping(env) //call hossted ping-send dockers info
 	}
 
 	return nil
 }
 
+
 func createCronSchedule() {
-    fmt.Println("createCronSchedule")
+
+	var command=`crontab -l | grep -q 'hossted schedule'  && echo 'hossted schedule exists' || (crontab -l; echo "* * * * * /usr/local/bin/hossted schedule 2>&1 | logger -t mycmd") | crontab -`
 	
-	err := os.WriteFile("cronSchedule.sh", []byte("/home/linnovate/devel/hossted/cli/bin/linux/hossted schedule 2>&1 | logger -t mycmd"), 0755)
+	cmd:= exec.Command("bash", "-c", command)
+    cmd.Stdin = os.Stdin
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+    err:= cmd.Start()
     if err != nil {
-        fmt.Printf("Unable to write file: %v", err)
-		return
+      fmt.Println(err)
     }
-
-	cmd:= exec.Command(`sudo`,`mv`,`-u`,`cronSchedule.sh`, `/etc/cron.hourly`)
-	_, err = cmd.Output()
-	if err != nil {
-		fmt.Println(err.Error())
-		return 
-	}
+    err1 := cmd.Wait()
+    if err1 != nil {
+      fmt.Println(err1)
+    }
 }
-

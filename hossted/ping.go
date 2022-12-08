@@ -2,20 +2,16 @@ package hossted
 
 import (
 	"encoding/json"
-	"os"
+	//"os"
 	"fmt"
 	"strings"
 )
 
 
 
-// RegisterUsers updates email, organization in the yaml file, if successful.
-// Also it will get the uuid of the machine, and environment from $HOSSTED_ENV.
-// It will then send an request to the API server, to get the JWT sessin token.
-// TODO: Use the original values as default.
+// hossted ping - send docker ,sbom and security infor to hossted API
 func Ping(env string) error {
 	
-	fmt.Println(env)
 	 config, _ := GetConfig() // Ignore error
 
 	// Get uuid, env. Env default to be dev, if env varible
@@ -24,7 +20,6 @@ func Ping(env string) error {
 	if err != nil {
 		return err
 	}
-
 	//Get dockers
 	dockersJson,err := GetDockersInfo()
 	if err != nil {
@@ -36,17 +31,16 @@ func Ping(env string) error {
 	if err != nil {
 		return err
 	}
-    fmt.Printf("response: %v\n", response)
+    //fmt.Printf("response: %v\n", response)
 
 	 // TODO: Check response status
 	message := strings.TrimSpace(response.Message)
-    fmt.Printf("message: %s\n", message)
+    fmt.Printf("response message: %s\n", message)
 
 	return nil
 }
 
-//registerRequest sends register request based on the input, env/email/organization, etc..
-//TODO: Set BearToken to env variable
+//PingRequest sends dockers request 
 func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 
 	var response pingResponse
@@ -59,7 +53,7 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "http://localhost:3004/v1/dockers",
+		EndPoint:     "https://api.dev.hossted.com/v1/instances/dockers",// "http://localhost:3004/v1/dockers",//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
@@ -67,9 +61,10 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 		TypeRequest:"PATCH",
 	}
 
-	fmt.Println("Docker creation Please wait a second...")
+	fmt.Println("Dockers creation Please wait a second...")
 	resp, err := req.SendRequest()
 	if err != nil {
+        fmt.Println("err",err)
 		return response, err
 	}
 
@@ -79,9 +74,9 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 	}
 
 	
-if response.Message!=""{
-	fmt.Printf("\nresponse.Message: %v\n\n", response.Message)
-			os.Exit(0)
-}
+// if response.Message!=""{
+// 	fmt.Printf("\nresponse.Message: %v\n\n", response.Message)
+// 			os.Exit(0)
+// }
 	return response, nil
 }

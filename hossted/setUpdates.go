@@ -2,15 +2,11 @@ package hossted
 
 import (
 	"fmt"
-	//"os/exec"
 )
 
-func SetUpdates(flag bool) error {
-	
-	fmt.Println("updates")
+func SetUpdates(env string, flag bool) error {
 	
 	config, _ := GetConfig()
-	fmt.Println("config",config)
 
 	config.Update=flag
 
@@ -18,14 +14,9 @@ func SetUpdates(flag bool) error {
 	if err != nil {
 		return fmt.Errorf("Can not write to config file. Please check. %w", err)
 	}
-
-	fmt.Println("----")
-	// cmd := exec.Command(`hossted`, `schedule`)
-	// dataOutput, err := cmd.Output()
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// }
-	// fmt.Println("ddd",string(dataOutput))
+	
+	Schedule(env) //call hossted schedule
+	
 	return nil
 }
 

@@ -1,5 +1,10 @@
 package hossted
 
+import (
+
+	"github.com/docker/docker/api/types"
+)
+
 // Config is a struct to parse config.yaml file
 type Config struct {
 	Email        string `yaml:"email"`
@@ -40,7 +45,7 @@ type RegisterResponse struct {
 // pingResponse is the return response from the register api
 type pingResponse struct {
 	StatusCode int    `json:"status"`
-	Message    string `json:"msg"`
+	Message    string `json:"message"`
 }
 // AvailableCommand is the predefined app/command mapping.
 // Maintained with the command.go file
@@ -73,4 +78,18 @@ type AvailableCommandMap map[string]Command
 type YamlSetting struct {
 	Pattern  string // regex
 	NewValue string // value of the new input, should be matching the number of match groups in regex
+}
+
+type Docker struct {
+	ID  string `json:"docker_id"` 
+	ImageID string `json:"image_id"` 
+	CreatedAt int64 `json:"created_at"` 
+	Ports []types.Port `json:"ports"` 
+	Status string `json:"status"` 
+	//Size int64  `json:"size"`
+	Names string `json:"names"` 
+	Mounts  []types.MountPoint `json:"mounts"`
+	Networks string `json:"networks"`
+	SizeRw     int64 `json:"SizeRw"`
+	SizeRootFs int64 `json:"SizeRootFs"`
 }

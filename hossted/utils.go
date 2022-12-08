@@ -18,6 +18,11 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
+
+	"github.com/docker/docker/api/types"
+    "github.com/docker/docker/client"
+	"context"
+	"reflect"
 )
 
 func check(e error) {
@@ -504,20 +509,45 @@ func GetUUIDPath() (string, error) {
 
 func GetDockersInfo() (string, error) {
 
-	// Collect docker info
-	cmd := exec.Command(`docker`, `ps`, `--format`,`{"docker_id":"{{ .ID }}", "image_id": "{{ .Image }}","created_at":"{{ .CreatedAt}}","ports":"{{ .Ports}}","status":"{{ .Status}}","size":"{{ .Size}}","names":"{{ .Names }}","mounts":"{{ .Mounts}}","networks":"{{ .Networks}}"},`)
-	dockersData, err := cmd.Output()
+	fmt.Printf("start look for dockers\n")
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		fmt.Println(err.Error())
-		return string(dockersData),err
+		panic(err)
 	}
-	dockers:=string(dockersData)
-	if(len(dockers)==0){
-		return dockers,fmt.Errorf("No docker containers found")
-	}
-	dockers= dockers[:len(dockers)-2]
-	dockers= "["+dockers+"]"
-	fmt.Println("dockersjs",dockers)
 
-	return dockers, nil
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	if(len(containers)==0){
+		return "",fmt.Errorf("No docker containers found")
+	}
+	dockers := ""
+	var docker Docker
+	for _, container := range containers {
+		docker=Docker{
+			ID:container.ID,
+			ImageID:container.ImageID, 
+			CreatedAt:container.Created,
+		    Ports:(container.Ports),
+		    Status:container.Status, 
+		    //Size:container.Size, 
+			Names:container.Names[0], 
+			SizeRw:  container.SizeRw,
+	        SizeRootFs: container.SizeRootFs,
+		    Mounts:container.Mounts,
+			Networks:reflect.ValueOf(container.NetworkSettings.Networks).MapKeys()[0].String(),
+		}
+		dockerjson, err := json.Marshal(docker)
+		if err != nil {
+			return "",fmt.Errorf("Error occured during marshaling. Error: %s", err.Error())
+		}
+		dockers=dockers+string(dockerjson)+","
+	}
+	fmt.Printf("dockers: %s\n", dockers)
+	dockers= dockers[:len(dockers)-1]
+	dockers= "["+dockers+"]"
+	fmt.Printf("dockers: %s\n", dockers)
+
+	return string(dockers), nil
 }
