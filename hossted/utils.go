@@ -544,10 +544,9 @@ func GetDockersInfo() (string, error) {
 		}
 		dockers=dockers+string(dockerjson)+","
 	}
-	fmt.Printf("dockers: %s\n", dockers)
 	dockers= dockers[:len(dockers)-1]
 	dockers= "["+dockers+"]"
-	fmt.Printf("dockers: %s\n", dockers)
+	//fmt.Printf("dockers: %s\n", dockers)
 
 	return string(dockers), nil
 }

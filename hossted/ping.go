@@ -2,9 +2,9 @@ package hossted
 
 import (
 	"encoding/json"
-	//"os"
 	"fmt"
 	"strings"
+
 )
 
 
@@ -26,6 +26,7 @@ func Ping(env string) error {
 		fmt.Println(err)
 		return err
 	}
+
 	//Send request
 	response, err := PingRequest(dockersJson, uuid, env)
 	if err != nil {
@@ -33,7 +34,7 @@ func Ping(env string) error {
 	}
     //fmt.Printf("response: %v\n", response)
 
-	 // TODO: Check response status
+	// TODO: Check response status
 	message := strings.TrimSpace(response.Message)
     fmt.Printf("response message: %s\n", message)
 
@@ -53,7 +54,7 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.dev.hossted.com/v1/instances/dockers",// "http://localhost:3004/v1/dockers",//
+		EndPoint:     "https://api.hossted.com/v1/instances/dockers",// "https://api.dev.hossted.com/v1/instances/dockers",//"http://localhost:3004/v1/dockers",//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
@@ -74,9 +75,6 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 	}
 
 	
-// if response.Message!=""{
-// 	fmt.Printf("\nresponse.Message: %v\n\n", response.Message)
-// 			os.Exit(0)
-// }
 	return response, nil
 }
+

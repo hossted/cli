@@ -23,7 +23,7 @@ func Schedule(env string) error {
 
 	hoursRand:=rand.Intn(hours)
 	
-	time.Sleep(time.Duration(hoursRand)*time.Second) 
+	time.Sleep(time.Duration(hoursRand)*time.Hour) 
 	if config.Update==true{ 
 		Ping(env) //call hossted ping-send dockers info
 	}
@@ -34,7 +34,7 @@ func Schedule(env string) error {
 
 func createCronSchedule() {
 
-	var command=`crontab -l | grep -q 'hossted schedule'  && echo 'hossted schedule exists' || (crontab -l; echo "* * * * * /usr/local/bin/hossted schedule 2>&1 | logger -t mycmd") | crontab -`
+	var command=`crontab -l | grep -q 'hossted schedule'  && echo 'hossted schedule exists' || (crontab -l; echo "0 0 * * * /usr/local/bin/hossted schedule 2>&1 | logger -t mycmd") | crontab -`
 	
 	cmd:= exec.Command("bash", "-c", command)
     cmd.Stdin = os.Stdin
