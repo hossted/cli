@@ -19,10 +19,11 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 
-	"github.com/docker/docker/api/types"
-    "github.com/docker/docker/client"
 	"context"
 	"reflect"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 func check(e error) {
@@ -509,7 +510,7 @@ func GetUUIDPath() (string, error) {
 
 func GetDockersInfo() (string, error) {
 
-	fmt.Printf("start look for dockers\n")
+	fmt.Printf("Start look for dockers\n")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
@@ -519,33 +520,33 @@ func GetDockersInfo() (string, error) {
 	if err != nil {
 		panic(err)
 	}
-	if(len(containers)==0){
-		return "",fmt.Errorf("No docker containers found")
+	if len(containers) == 0 {
+		return "", fmt.Errorf("No docker containers found")
 	}
 	dockers := ""
 	var docker Docker
 	for _, container := range containers {
-		docker=Docker{
-			ID:container.ID,
-			ImageID:container.ImageID, 
-			CreatedAt:container.Created,
-		    Ports:(container.Ports),
-		    Status:container.Status, 
-		    //Size:container.Size, 
-			Names:container.Names[0], 
-			SizeRw:  container.SizeRw,
-	        SizeRootFs: container.SizeRootFs,
-		    Mounts:container.Mounts,
-			Networks:reflect.ValueOf(container.NetworkSettings.Networks).MapKeys()[0].String(),
+		docker = Docker{
+			ID:        container.ID,
+			ImageID:   container.ImageID,
+			CreatedAt: container.Created,
+			Ports:     (container.Ports),
+			Status:    container.Status,
+			//Size:container.Size,
+			Names:      container.Names[0],
+			SizeRw:     container.SizeRw,
+			SizeRootFs: container.SizeRootFs,
+			Mounts:     container.Mounts,
+			Networks:   reflect.ValueOf(container.NetworkSettings.Networks).MapKeys()[0].String(),
 		}
 		dockerjson, err := json.Marshal(docker)
 		if err != nil {
-			return "",fmt.Errorf("Error occured during marshaling. Error: %s", err.Error())
+			return "", fmt.Errorf("Error occured during marshaling. Error: %s", err.Error())
 		}
-		dockers=dockers+string(dockerjson)+","
+		dockers = dockers + string(dockerjson) + ","
 	}
-	dockers= dockers[:len(dockers)-1]
-	dockers= "["+dockers+"]"
+	dockers = dockers[:len(dockers)-1]
+	dockers = "[" + dockers + "]"
 	//fmt.Printf("dockers: %s\n", dockers)
 
 	return string(dockers), nil

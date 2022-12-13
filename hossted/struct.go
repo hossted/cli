@@ -1,19 +1,20 @@
 package hossted
 
 import (
+	"io"
 
 	"github.com/docker/docker/api/types"
 )
 
 // Config is a struct to parse config.yaml file
 type Config struct {
-	Email        string `yaml:"email"`
-	UserToken    string `yaml:"userToken"`
-	SessionToken string `yaml:"sessionToken"`
-	EndPoint     string `yaml:"endPoint"`
-	UUIDPath     string `yaml:"uuidPath"`
-	HostUUID     string `yaml:"hostUuid"`
-    Update       bool   `yaml:"update"`
+	Email        string              `yaml:"email"`
+	UserToken    string              `yaml:"userToken"`
+	SessionToken string              `yaml:"sessionToken"`
+	EndPoint     string              `yaml:"endPoint"`
+	UUIDPath     string              `yaml:"uuidPath"`
+	HostUUID     string              `yaml:"hostUuid"`
+	Update       bool                `yaml:"update"`
 	Applications []ConfigApplication `yaml:"applications"`
 }
 
@@ -32,7 +33,9 @@ type HosstedRequest struct {
 	Params       map[string]string // kv pairs for param
 	BearToken    string            // Authorization token
 	SessionToken string            // Session token. JWT
-	TypeRequest	 string            // Request type, GET, POST, PUT, DELETE
+	TypeRequest  string            // Request type, GET, POST, PUT, DELETE
+	ContentType  string            // Content type, application/json, multipart/form-data
+	Body         io.Reader         // Request body
 }
 
 // RegisterResponse is the return response from the register api
@@ -42,11 +45,13 @@ type RegisterResponse struct {
 	JWT        string `json:"jwt"`
 	URL        string `json:"url"`
 }
+
 // pingResponse is the return response from the register api
 type pingResponse struct {
 	StatusCode int    `json:"status"`
 	Message    string `json:"message"`
 }
+
 // AvailableCommand is the predefined app/command mapping.
 // Maintained with the command.go file
 type AvailableCommand struct {
@@ -81,15 +86,15 @@ type YamlSetting struct {
 }
 
 type Docker struct {
-	ID  string `json:"docker_id"` 
-	ImageID string `json:"image_id"` 
-	CreatedAt int64 `json:"created_at"` 
-	Ports []types.Port `json:"ports"` 
-	Status string `json:"status"` 
+	ID        string       `json:"docker_id"`
+	ImageID   string       `json:"image_id"`
+	CreatedAt int64        `json:"created_at"`
+	Ports     []types.Port `json:"ports"`
+	Status    string       `json:"status"`
 	//Size int64  `json:"size"`
-	Names string `json:"names"` 
-	Mounts  []types.MountPoint `json:"mounts"`
-	Networks string `json:"networks"`
-	SizeRw     int64 `json:"SizeRw"`
-	SizeRootFs int64 `json:"SizeRootFs"`
+	Names      string             `json:"names"`
+	Mounts     []types.MountPoint `json:"mounts"`
+	Networks   string             `json:"networks"`
+	SizeRw     int64              `json:"SizeRw"`
+	SizeRootFs int64              `json:"SizeRootFs"`
 }

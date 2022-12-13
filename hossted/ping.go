@@ -3,16 +3,17 @@ package hossted
 import (
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"strings"
+	"time"
 
+	"bytes"
 )
-
-
 
 // hossted ping - send docker ,sbom and security infor to hossted API
 func Ping(env string) error {
-	
-	 config, _ := GetConfig() // Ignore error
+
+	config, _ := GetConfig() // Ignore error
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env = GetHosstedEnv(env)
@@ -21,7 +22,7 @@ func Ping(env string) error {
 		return err
 	}
 	//Get dockers
-	dockersJson,err := GetDockersInfo()
+	dockersJson, err := GetDockersInfo()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -32,40 +33,55 @@ func Ping(env string) error {
 	if err != nil {
 		return err
 	}
-    //fmt.Printf("response: %v\n", response)
+	//fmt.Printf("response: %v\n", response)
 
 	// TODO: Check response status
 	message := strings.TrimSpace(response.Message)
-    fmt.Printf("response message: %s\n", message)
+	fmt.Printf("response message: %s\n", message)
 
 	return nil
 }
 
-//PingRequest sends dockers request 
-func PingRequest(dockers , uuid, env string) (pingResponse, error) {
+// PingRequest sends dockers request
+func PingRequest(dockers, uuid, env string) (pingResponse, error) {
 
 	var response pingResponse
+
+	now := time.Now()
+	unixNano := now.UnixNano()
+	umillisec := unixNano / 1000000
+	fileName := uuid + "-" + fmt.Sprint(umillisec)
+
+	// write dockers to body with multipart (sends as file)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile(fileName, "file")
+	part.Write([]byte(dockers))
+	writer.Close()
 
 	// Construct param map for input params
 	params := make(map[string]string)
 	params["uuid"] = uuid
-	params["dockers"] = dockers
+	params["fileName"] = fileName
+	//params["dockers"] = dockers
 
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.hossted.com/v1/instances/dockers",// "https://api.dev.hossted.com/v1/instances/dockers",//"http://localhost:3004/v1/dockers",//
+		EndPoint:     "https://api.hossted.com/v1/instances/dockers", //"https://api.dev.hossted.com/v1/instances/dockers", //"http://localhost:3004/v1/dockers", //"https://api.hossted.com/v1/instances/dockers", // ,//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
 		SessionToken: "",
-		TypeRequest:"PATCH",
+		TypeRequest:  "PATCH",
+		ContentType:  writer.FormDataContentType(),
+		Body:         body,
 	}
 
 	fmt.Println("Dockers creation Please wait a second...")
 	resp, err := req.SendRequest()
 	if err != nil {
-        fmt.Println("err",err)
+		fmt.Println("err", err)
 		return response, err
 	}
 
@@ -74,7 +90,5 @@ func PingRequest(dockers , uuid, env string) (pingResponse, error) {
 		return response, fmt.Errorf("Failed to parse JSON. %w", err)
 	}
 
-	
 	return response, nil
 }
-
