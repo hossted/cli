@@ -86,15 +86,15 @@ type YamlSetting struct {
 }
 
 type Docker struct {
-	ID        string       `json:"docker_id"`
-	ImageID   string       `json:"image_id"`
-	CreatedAt int64        `json:"created_at"`
-	Ports     []types.Port `json:"ports"`
-	Status    string       `json:"status"`
-	//Size int64  `json:"size"`
-	Names      string             `json:"names"`
-	Mounts     []types.MountPoint `json:"mounts"`
-	Networks   string             `json:"networks"`
-	SizeRw     int64              `json:"SizeRw"`
-	SizeRootFs int64              `json:"SizeRootFs"`
+	ID        string             `json:"docker_id"`
+	Image     string             `json:"image"`
+	ImageID   string             `json:"image_id"`
+	CreatedAt int64              `json:"created_at"`
+	Ports     []types.Port       `json:"ports"`
+	Status    string             `json:"status"`
+	Size      int64              `json:"size"`
+	Names     []string           `json:"names"`
+	Mounts    []types.MountPoint `json:"mounts"`
+	Networks  string             `json:"networks"`
+	Tag       string             `json:"tag"`
 }

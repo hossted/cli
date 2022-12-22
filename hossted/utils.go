@@ -511,34 +511,45 @@ func GetUUIDPath() (string, error) {
 func GetDockersInfo() (string, error) {
 
 	fmt.Printf("Start look for dockers\n")
+
+	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}
 
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
 	}
 	if len(containers) == 0 {
 		return "", fmt.Errorf("No docker containers found")
 	}
+
 	dockers := ""
 	var docker Docker
 	for _, container := range containers {
+		imageName := container.Image
+
+		image, _, err := cli.ImageInspectWithRaw(ctx, imageName)
+		if err != nil {
+			panic(err)
+		}
+
 		docker = Docker{
 			ID:        container.ID,
+			Image:     container.Image,
 			ImageID:   container.ImageID,
 			CreatedAt: container.Created,
-			Ports:     (container.Ports),
+			Ports:     container.Ports,
 			Status:    container.Status,
-			//Size:container.Size,
-			Names:      container.Names[0],
-			SizeRw:     container.SizeRw,
-			SizeRootFs: container.SizeRootFs,
-			Mounts:     container.Mounts,
-			Networks:   reflect.ValueOf(container.NetworkSettings.Networks).MapKeys()[0].String(),
+			Size:      image.Size,
+			Names:     container.Names,
+			Mounts:    container.Mounts,
+			Networks:  reflect.ValueOf(container.NetworkSettings.Networks).MapKeys()[0].String(),
+			Tag:       image.RepoTags[0],
 		}
+
 		dockerjson, err := json.Marshal(docker)
 		if err != nil {
 			return "", fmt.Errorf("Error occured during marshaling. Error: %s", err.Error())

@@ -1,13 +1,12 @@
 package hossted
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"strings"
 	"time"
-
-	"bytes"
 )
 
 // hossted ping - send docker ,sbom and security infor to hossted API
@@ -15,7 +14,7 @@ func Ping(env string) error {
 
 	config, _ := GetConfig() // Ignore error
 
-	// Get uuid, env. Env default to be dev, if env varible
+	//Get uuid, env. Env default to be dev, if env varible
 	env = GetHosstedEnv(env)
 	uuid, err := GetHosstedUUID(config.UUIDPath)
 	if err != nil {
@@ -27,7 +26,6 @@ func Ping(env string) error {
 		fmt.Println(err)
 		return err
 	}
-
 	//Send request
 	response, err := PingRequest(dockersJson, uuid, env)
 	if err != nil {
@@ -63,12 +61,11 @@ func PingRequest(dockers, uuid, env string) (pingResponse, error) {
 	params := make(map[string]string)
 	params["uuid"] = uuid
 	params["fileName"] = fileName
-	//params["dockers"] = dockers
 
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.hossted.com/v1/instances/dockers", //"https://api.dev.hossted.com/v1/instances/dockers", //"http://localhost:3004/v1/dockers", //"https://api.hossted.com/v1/instances/dockers", // ,//
+		EndPoint:     "https://api.hossted.com/v1/instances/dockers", //"https://api.stage.hossted.com/v1/instances/dockers", //"http://localhost:3004/v1/dockers", //, // ,//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
