@@ -60,10 +60,12 @@ Available Commands:
   |-------------------------------+-------------------------+----------------------------------------------------------|
   | Commands                      | Alias                   | Description                                              |
   |-------------------------------+-------------------------+----------------------------------------------------------|
-  | register                      | hossted r               | Register your application with the hossted ecosystem     |
+  | register                      | hossted r               | Connect your user and get access to the hossted dashboard|
   | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                         |
   | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team     |
   | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
+  | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
+  | init                          | hossted init            | Add your instance to the hossted API                     |
   | help                          | hossted help            | Help about any command                                   |
   | logs                          | hossted log             | View application logs                                    |
   | status                        | hossted status          | View hossted status                                      |
