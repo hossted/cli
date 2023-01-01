@@ -51,6 +51,10 @@ type pingResponse struct {
 	StatusCode int    `json:"status"`
 	Message    string `json:"message"`
 }
+type initResponse struct {
+	StatusCode int    `json:"status"`
+	Message    string `json:"message"`
+}
 
 // AvailableCommand is the predefined app/command mapping.
 // Maintained with the command.go file
@@ -97,4 +101,19 @@ type Docker struct {
 	Mounts    []types.MountPoint `json:"mounts"`
 	Networks  string             `json:"networks"`
 	Tag       string             `json:"tag"`
+}
+
+type Instance struct {
+	Uuid      string `json:"uuid,omitempty"`
+	Ip        string `json:"ip,omitempty"`
+	User      string `json:"user,omitempty"`
+	Url       string `json:"url,omitempty"`
+	Product   string `json:"product,omitempty"`
+	Cpunum    string `json:"cpunum,omitempty"`
+	Mem       string `json:"mem,omitempty"`
+	Rootsize  string `json:"rootsize,omitempty"`
+	Cloud     string `json:"cloud,omitempty"`
+	Status    string `json:"status,omitempty"`
+	Test_mode string `json:"test_mode,omitempty"`
+	Comment   string `json:"comment,omitempty"`
 }
