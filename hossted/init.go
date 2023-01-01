@@ -48,7 +48,7 @@ func InitRequest(env, authorization, image, instancejson string) (initResponse, 
 		EndPoint:     "https://api.hossted.com/v1/instances/registry", //"https://api.stage.hossted.com/v1/instances/registry", // "https://api.dev.hossted.com/v1/instances/registry", //,
 		Environment:  env,
 		Params:       params,
-		BearToken:    authorization,
+		BearToken:    "Basic " + authorization,
 		SessionToken: "",
 		TypeRequest:  "POST",
 	}
