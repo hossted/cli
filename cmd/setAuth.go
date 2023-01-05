@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -61,7 +60,7 @@ var setAuthCmd = &cobra.Command{
 			return fmt.Errorf("No input application.")
 		}
 
-		err = hossted.SetAuth(app, flag)
+		err = hossted.SetAuth(ENVIRONMENT, app, flag)
 		if err != nil {
 			return err
 		}

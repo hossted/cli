@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
@@ -11,6 +14,11 @@ var initCmd = &cobra.Command{
 	Long:    `hossted init -  Send instance hossted API`,
 	Example: `hossted init --uuid deefr455844-555-ttt6rr`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if uuid == "" {
+			fmt.Printf("\033[0;31m Error:\033[0m uuid is required.\n")
+			os.Exit(0)
+		}
 		instance := hossted.Instance{
 			Uuid:      uuid,
 			Ip:        ip,

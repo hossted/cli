@@ -35,7 +35,7 @@ func Ping(env string) error {
 
 	// TODO: Check response status
 	message := strings.TrimSpace(response.Message)
-	fmt.Printf("response message: %s\n", message)
+	fmt.Printf("%s\n", message)
 
 	return nil
 }
@@ -75,7 +75,7 @@ func PingRequest(dockers, uuid, env string) (pingResponse, error) {
 		Body:         body,
 	}
 
-	fmt.Println("Dockers creation Please wait a second...")
+	fmt.Println("dockers creation Please wait a second...")
 	resp, err := req.SendRequest()
 	if err != nil {
 		fmt.Println("err", err)

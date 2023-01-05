@@ -55,6 +55,10 @@ type initResponse struct {
 	StatusCode int    `json:"status"`
 	Message    string `json:"message"`
 }
+type activityLogResponse struct {
+	StatusCode int    `json:"status"`
+	Message    string `json:"message"`
+}
 
 // AvailableCommand is the predefined app/command mapping.
 // Maintained with the command.go file

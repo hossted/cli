@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -510,7 +512,7 @@ func GetUUIDPath() (string, error) {
 
 func GetDockersInfo() (string, error) {
 
-	fmt.Printf("Start look for dockers\n")
+	//fmt.Printf("Start look for dockers\n")
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -561,4 +563,46 @@ func GetDockersInfo() (string, error) {
 	//fmt.Printf("dockers: %s\n", dockers)
 
 	return string(dockers), nil
+}
+func sendActivityLog(env, uuid, fullCommand, options string) (activityLogResponse, error) {
+
+	var response activityLogResponse
+
+	user, err := user.Current()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	userName := user.Username
+	// Construct param map for input params
+	params := make(map[string]string)
+	params["uuid"] = uuid
+	params["command"] = fullCommand
+	params["options"] = options
+	params["user_name"] = userName
+	req := HosstedRequest{
+		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
+		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
+		EndPoint:     "https://api.hossted.com/v1/instances/activityLog", //"https://api.stage.hossted.com/v1/instances/activityLog", //"http://localhost:3004/v1/activityLog", //, // ,//"https://api.dev.hossted.com/v1/instances/activityLog", //
+		Environment:  env,
+		Params:       params,
+		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
+		SessionToken: "",
+		TypeRequest:  "PATCH",
+	}
+
+	resp, err := req.SendRequest()
+	if err != nil {
+		fmt.Println("err", err)
+		return response, err
+	}
+
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return response, fmt.Errorf("Failed to parse JSON. %w", err)
+	}
+
+	fmt.Printf("%v \n", response.Message)
+	return response, nil
+
 }

@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -41,7 +40,7 @@ var remoteSupportCmd = &cobra.Command{
 			return fmt.Errorf("Only true/false is supported. Input - %s\n", input)
 		}
 
-		err := hossted.SetRemoteAccess(flag)
+		err := hossted.SetRemoteAccess(ENVIRONMENT, flag)
 		if err != nil {
 			return err
 		}

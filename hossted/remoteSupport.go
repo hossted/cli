@@ -8,7 +8,7 @@ import (
 var AUTHORIZED_KEY_PATH = "/root/.ssh/authorized_keys"
 
 // SetRemoteAccess set the remote access by comment/uncomment the hossted public key in the ~/.ssh/authorized_keys file
-func SetRemoteAccess(flag bool) error {
+func SetRemoteAccess(env string, flag bool) error {
 	filepath := AUTHORIZED_KEY_PATH
 	_ = filepath
 
@@ -25,6 +25,18 @@ func SetRemoteAccess(flag bool) error {
 	}
 	fmt.Printf("Updated authorized key - %s\n", filepath)
 
+	// send activity log about the command
+	config, err := GetConfig()
+	if err != nil {
+		return fmt.Errorf("Something is wrong with get config.\n%w", err)
+	}
+	uuid, err := GetHosstedUUID(config.UUIDPath)
+	if err != nil {
+		return err
+	}
+	fullCommand := "hossted set remote-support " + fmt.Sprint(flag)
+	options := `{"remote-support":` + fmt.Sprint(flag) + `}`
+	sendActivityLog(env, uuid, fullCommand, options)
 	return nil
 }
 

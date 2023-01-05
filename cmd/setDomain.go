@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -51,7 +50,7 @@ var setDomainCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		err := hossted.SetDomain(app, domain)
+		err := hossted.SetDomain(ENVIRONMENT, app, domain)
 		if err != nil {
 			return err
 		}

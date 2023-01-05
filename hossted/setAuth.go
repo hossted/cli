@@ -7,7 +7,7 @@ import (
 )
 
 // SetAuth sets the authorization of the application
-func SetAuth(app string, flag bool) error {
+func SetAuth(env, app string, flag bool) error {
 
 	if flag == true {
 		return errors.New("\n  Not Implemented for the command set auth true.\n")
@@ -79,6 +79,15 @@ func SetAuth(app string, flag bool) error {
 	}
 
 	fmt.Printf("Service Restarted - %s\n", name)
+
+	//send activity log about the command
+	uuid, err := GetHosstedUUID(config.UUIDPath)
+	if err != nil {
+		return err
+	}
+	fullCommand := "hossted set auth " + fmt.Sprint(flag)
+	options := `{"auth":` + fmt.Sprint(flag) + `}`
+	sendActivityLog(env, uuid, fullCommand, options)
 
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 // SetDomain set the domain for different apps
 // TODO: check whether the function is generic for different apps. Divide to different cases if not.
 // TODO: check error for sed command
-func SetDomain(app, domain string) error {
+func SetDomain(env, app, domain string) error {
 	command := "domain"
 
 	config, err := GetConfig()
@@ -64,6 +64,14 @@ func SetDomain(app, domain string) error {
 
 	fmt.Printf("Service Restarted - %s\n", app)
 
+	//send activity log about the command
+	uuid, err := GetHosstedUUID(config.UUIDPath)
+	if err != nil {
+		return err
+	}
+	fullCommand := "hossted set domain " + fmt.Sprint(domain)
+	options := `{"domain":"` + fmt.Sprint(domain) + `"}`
+	sendActivityLog(env, uuid, fullCommand, options)
 	return nil
 
 }
