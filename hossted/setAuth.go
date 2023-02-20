@@ -87,7 +87,8 @@ func SetAuth(env, app string, flag bool) error {
 	}
 	fullCommand := "hossted set auth " + fmt.Sprint(flag)
 	options := `{"auth":` + fmt.Sprint(flag) + `}`
-	sendActivityLog(env, uuid, fullCommand, options)
+	typeActivity := "set_auth"
+	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 
 	return nil
 }

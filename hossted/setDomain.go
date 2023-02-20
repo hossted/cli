@@ -71,7 +71,8 @@ func SetDomain(env, app, domain string) error {
 	}
 	fullCommand := "hossted set domain " + fmt.Sprint(domain)
 	options := `{"domain":"` + fmt.Sprint(domain) + `"}`
-	sendActivityLog(env, uuid, fullCommand, options)
+	typeActivity := "set_domain"
+	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 	return nil
 
 }

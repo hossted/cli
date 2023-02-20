@@ -36,7 +36,8 @@ func SetRemoteAccess(env string, flag bool) error {
 	}
 	fullCommand := "hossted set remote-support " + fmt.Sprint(flag)
 	options := `{"remote-support":` + fmt.Sprint(flag) + `}`
-	sendActivityLog(env, uuid, fullCommand, options)
+	typeActivity := "set_remote"
+	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 	return nil
 }
 

@@ -564,7 +564,7 @@ func GetDockersInfo() (string, error) {
 
 	return string(dockers), nil
 }
-func sendActivityLog(env, uuid, fullCommand, options string) (activityLogResponse, error) {
+func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (activityLogResponse, error) {
 
 	var response activityLogResponse
 
@@ -580,10 +580,11 @@ func sendActivityLog(env, uuid, fullCommand, options string) (activityLogRespons
 	params["command"] = fullCommand
 	params["options"] = options
 	params["user_name"] = userName
+	params["type"] = typeActivity
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.hossted.com/v1/instances/activityLog", //"https://api.stage.hossted.com/v1/instances/activityLog", //"http://localhost:3004/v1/activityLog", //, // ,//"https://api.dev.hossted.com/v1/instances/activityLog", //
+		EndPoint:     "https://api.hossted.com/v1/instances/activityLog", //"https://api.stage.hossted.com/v1/instances/activityLog", // // ,//"https://api.dev.hossted.com/v1/instances/activityLog", //"http://localhost:3004/v1/activityLog", //,
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",

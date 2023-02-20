@@ -25,7 +25,8 @@ func SetUpdates(env string, flag bool) error {
 	}
 	fullCommand := "hossted set updates " + fmt.Sprint(flag)
 	options := `{"updates":` + fmt.Sprint(flag) + `}`
-	sendActivityLog(env, uuid, fullCommand, options)
+	typeActivity := "set_updates"
+	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 
 	return nil
 }
