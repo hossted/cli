@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 Lior Kesos lior@hossted.com
-
 */
 package cmd
 
@@ -64,7 +63,6 @@ Available Commands:
   | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                         |
   | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team     |
   | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
-  | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
   | init                          | hossted init            | Add your instance to the hossted API                     |
   | help                          | hossted help            | Help about any command                                   |
   | logs                          | hossted log             | View application logs                                    |
@@ -73,6 +71,7 @@ Available Commands:
   | version                       | hossted version         |                                                          |
   | ping                          | hossted ping            | Send docker ,sbom and security infor to hossted API      |
   | updates false/true            | hossted s u false/true  | Alow to send information about the hossted app to the API|
+  | monitoring false/true         | hossted s m false/true  | Alow to send monitoring about the hossted app to the API |
   |-------------------------------+-------------------------+----------------------------------------------------------|
 
 Flags:

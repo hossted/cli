@@ -15,6 +15,7 @@ type Config struct {
 	UUIDPath     string              `yaml:"uuidPath"`
 	HostUUID     string              `yaml:"hostUuid"`
 	Update       bool                `yaml:"update"`
+	Monitoring   bool                `yaml:"monitoring"`
 	Applications []ConfigApplication `yaml:"applications"`
 }
 
