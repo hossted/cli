@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"os"
@@ -59,6 +60,7 @@ func Scan(env string) error {
 			panic(err)
 		}
 		defer reader.Close()
+		io.Copy(io.Discard, reader)
 
 		_, err = cli.ContainerInspect(ctx, "grype")
 
