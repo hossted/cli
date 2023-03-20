@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -27,7 +26,7 @@ var scanCmd = &cobra.Command{
 		if len(args) > 1 {
 			return fmt.Errorf("Too many parameters.")
 		} else {
-			hossted.ScanApps("images")
+			hossted.Scan(ENVIRONMENT)
 		}
 
 		return nil
