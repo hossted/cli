@@ -14,13 +14,11 @@ import (
 
 // monitoringCmd represents the monitoring command
 var setMonitoringCmd = &cobra.Command{
-	Use: "monitoring",
-	Short: `[u] hossted set monitoring true - Allow to send information about dockers , 
-	sbom and required security changes to the hossted API`,
-	Long: ` [u] Allow to send information about dockers , 
-	sbom and required security changes to the hossted API 
+	Use:   "monitoring",
+	Short: `[m] hossted set monitoring true - Allow to send monitoring information about cpu, memory, network usage and logs to the hossted Dashboard.`,
+	Long: ` [m] hossted set monitoring true - Allow to send monitoring information about cpu, memory, network usage and logs to the hossted Dashboard. 
 	so it can be displayed within the hossted dashboard and recommend the course of action to secure your hossted application.`,
-	Aliases: []string{"u"},
+	Aliases: []string{"m"},
 	Example: `
   hossted set monitoring true
   hossted set monitoring false
