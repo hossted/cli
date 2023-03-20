@@ -136,9 +136,9 @@ func Scan(env string) error {
 }
 
 // ScanRequest sends security request
-func ScanRequest(imageName, fileName, containerId, env string) (pingResponse, error) {
+func ScanRequest(imageName, fileName, containerId, env string) (scanResponse, error) {
 
-	var response pingResponse
+	var response scanResponse
 
 	// Read file content
 	scan, err := ioutil.ReadFile(fmt.Sprintf("vulnerabilities/scan_%s.json", fileName))
@@ -160,7 +160,7 @@ func ScanRequest(imageName, fileName, containerId, env string) (pingResponse, er
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "http://localhost:3004/v1/security", //"https://api.hossted.com/v1/instances/dockers", //"https://api.stage.hossted.com/v1/instances/dockers", //, // ,//
+		EndPoint:     "https://api.hossted.com/v1/instances/security", //"https://api.dev.hossted.com/v1/instances/security", //"http://localhost:3004/v1/security", //"https://api.stage.hossted.com/v1/instances/security", //, // ,//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
