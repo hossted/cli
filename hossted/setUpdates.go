@@ -16,8 +16,6 @@ func SetUpdates(env string, flag bool) error {
 	}
 	fmt.Println("updates set to", flag)
 
-	Schedule(env) //call hossted schedule
-
 	//send activity log about the command
 	uuid, err := GetHosstedUUID(config.UUIDPath)
 	if err != nil {
@@ -27,6 +25,8 @@ func SetUpdates(env string, flag bool) error {
 	options := `{"updates":` + fmt.Sprint(flag) + `}`
 	typeActivity := "set_updates"
 	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
+
+	Schedule(env) //call hossted schedule
 
 	return nil
 }

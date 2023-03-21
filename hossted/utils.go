@@ -603,7 +603,7 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 		return response, fmt.Errorf("Failed to parse JSON. %w", err)
 	}
 
-	fmt.Printf("%v \n", response.Message)
+	//fmt.Printf("%v \n", response.Message)
 	return response, nil
 
 }
