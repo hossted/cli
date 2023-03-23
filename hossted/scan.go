@@ -47,8 +47,7 @@ func Scan(env string) error {
 
 		imageName := image.RepoTags[0]
 		fileName := strings.Replace(imageName, "/", "-", -1)
-		// Skip any images that don't have a name or tag
-		if imageName == "<none>:<none>" || imageName == "anchore/grype:latest" {
+		if imageName == "<none>:<none>" || strings.Contains(imageName, "anchore/grype") || strings.Contains(imageName, "grafana/agent") {
 			continue
 		}
 
@@ -166,7 +165,7 @@ func ScanRequest(imageName, fileName, containerId, env string) (scanResponse, er
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.hossted.com/v1/instances/security", //"https://api.dev.hossted.com/v1/instances/security", //"http://localhost:3004/v1/security", //"https://api.stage.hossted.com/v1/instances/security", //, // ,//
+		EndPoint:     "https://api.hossted.com/v1/instances/security", //"https://api.dev.hossted.com/v1/instances/security", //"https://api.stage.hossted.com/v1/instances/security", //, // ,//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",

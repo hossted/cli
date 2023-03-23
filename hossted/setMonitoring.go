@@ -94,7 +94,7 @@ func SetMonitoring(env string, flag bool) error {
 		if err != nil {
 			panic(err)
 		}
-		//go func() {
+
 		// Start the container
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 			panic(err)
@@ -117,7 +117,7 @@ func SetMonitoring(env string, flag bool) error {
 		}
 
 		io.Copy(io.Discard, out)
-		//}()
+
 	}
 
 	return nil

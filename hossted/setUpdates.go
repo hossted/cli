@@ -2,6 +2,9 @@ package hossted
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"time"
 )
 
 func SetUpdates(env string, flag bool) error {
@@ -26,7 +29,44 @@ func SetUpdates(env string, flag bool) error {
 	typeActivity := "set_updates"
 	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 
-	Schedule(env) //call hossted schedule
+	if flag == true {
+		createCronSchedule()
+
+	} else {
+		stopCronSchedule()
+	}
 
 	return nil
+}
+func createCronSchedule() {
+	now := time.Now().Add(60 * time.Second)
+	minute := now.Minute()
+	if now.Second() > 30 {
+		minute++
+	}
+	cronTime := fmt.Sprintf("%d %d * * *", minute, now.Hour())
+	var command string = "" + cronTime + "/usr/local/bin/hossted schedule 2>&1 | logger -t mycmd"
+	cmd := exec.Command("bash", "-c", `crontab -l | grep -q 'hossted schedule'  && echo 'hossted updates already running' || (crontab -l; echo "`+command+`") | crontab -  && echo 'Hossted will now send package, security and monitoring information to the hossted api and will appear on the hossted dashboard.'`)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	}
+	err1 := cmd.Wait()
+	if err1 != nil {
+		fmt.Println(err1)
+	}
+}
+
+func stopCronSchedule() {
+	// create a new crontab without 'hossted schedule'
+	cmd := exec.Command("bash", "-c", "crontab -l | grep -v 'hossted schedule' | crontab -")
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error stopping cron job:", err)
+		return
+	}
 }
