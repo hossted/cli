@@ -39,13 +39,21 @@ func SetUpdates(env string, flag bool) error {
 	return nil
 }
 func createCronSchedule() {
-	now := time.Now().Add(60 * time.Second)
+	now := time.Now().Add(1 * time.Minute)
 	minute := now.Minute()
 	if now.Second() > 30 {
 		minute++
 	}
-	cronTime := fmt.Sprintf("%d %d * * *", minute, now.Hour())
-	var command string = "" + cronTime + "/usr/local/bin/hossted schedule 2>&1 | logger -t mycmd"
+	hour := now.Hour()
+	if minute > 59 {
+		minute = 0
+		hour++
+	}
+	if hour > 23 {
+		hour = 0
+	}
+	cronTime := fmt.Sprintf("%d %d * * *", minute, hour)
+	var command string = "" + cronTime + " /usr/local/bin/hossted schedule 2>&1 | logger -t mycmd"
 	cmd := exec.Command("bash", "-c", `crontab -l | grep -q 'hossted schedule'  && echo 'hossted updates already running' || (crontab -l; echo "`+command+`") | crontab -  && echo 'Hossted will now send package, security and monitoring information to the hossted api and will appear on the hossted dashboard.'`)
 
 	cmd.Stdin = os.Stdin
