@@ -133,15 +133,16 @@ func Scan(env string) error {
 		if err := cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}); err != nil {
 			panic(err)
 		}
+
 		//send to ScanRequest
-		ScanRequest(imageName, fileName, currentContainer.ID, env)
+		ScanRequest(imageName, fileName, currentContainer.ID, currentContainer.ImageID, env)
 	}
 
 	return nil
 }
 
 // ScanRequest sends security request
-func ScanRequest(imageName, fileName, containerId, env string) (scanResponse, error) {
+func ScanRequest(imageName, fileName, containerId, imageID, env string) (scanResponse, error) {
 
 	var response scanResponse
 
@@ -162,10 +163,11 @@ func ScanRequest(imageName, fileName, containerId, env string) (scanResponse, er
 	params["file_name"] = fileName
 	params["image_name"] = imageName
 	params["docker_id"] = containerId
+	params["image_id"] = imageID
 	req := HosstedRequest{
 		// Endpoint env needs to replace in runtime for url parse to work. Otherwise runtime error.
 		//EndPoint:     "https://api.__ENV__hossted.com/v1/instances/dockers",
-		EndPoint:     "https://api.hossted.com/v1/instances/security", //"https://api.dev.hossted.com/v1/instances/security", //"https://api.stage.hossted.com/v1/instances/security", //, // ,//
+		EndPoint:     "https://api.hossted.com/v1/instances/security", //"http://localhost:3004/v1/security", //"https://api.hossted.com/v1/instances/security", //"https://api.dev.hossted.com/v1/instances/security", //"https://api.stage.hossted.com/v1/instances/security", //, // ,//
 		Environment:  env,
 		Params:       params,
 		BearToken:    "Basic y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8",
