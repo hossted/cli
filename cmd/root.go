@@ -72,7 +72,7 @@ Available Commands:
   | ping                          | hossted ping            | Send docker ,sbom and security infor to hossted API      |
   | updates false/true            | hossted s u false/true  | Alow to send information about the hossted app to the API|
   | monitoring false/true         | hossted s m false/true  | Alow to send monitoring about the hossted app to the API |
-  | update-cli                    | hossted update-cli      | Update hossted cli                                       |
+  | update-cli                    | hossted update-cli      | Update the hossted cli to the last version               |
   |-------------------------------+-------------------------+----------------------------------------------------------|
 
 Flags:
