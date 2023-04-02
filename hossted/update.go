@@ -1,6 +1,7 @@
 package hossted
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -47,5 +48,6 @@ func Update(env string) error {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("hossted updated successfully")
 	return nil
 }
