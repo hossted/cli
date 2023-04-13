@@ -59,20 +59,19 @@ Available Commands:
   |-------------------------------+-------------------------+----------------------------------------------------------|
   | Commands                      | Alias                   | Description                                              |
   |-------------------------------+-------------------------+----------------------------------------------------------|
-  | register                      | hossted r               | Connect your user and get access to the hossted dashboard|
-  | set auth false/true           | hossted s a false/true  | Enable / disable HTTP Basic Auth                         |
-  | set remote-support false/true | hossted s r false/true  | Enable / disable ssh access for Hossted support team     |
+  | register                      | hossted r               | Registers the Hossted application to your Hossted dashboard account|
+  | set auth false/true           | hossted s a false/true  | Enable/disable HTTP Basic Auth                           |
+  | set remote-support false/true | hossted s r false/true  | Enable/disable ssh access for Hossted support team       |
   | set domain <domain>           | hossted s d example.com | Set a custom domain                                      |
-  | init                          | hossted init            | Add your instance to the hossted API                     |
+  | init                          | hossted init            | Add your instance to the Hossted API                     |
   | help                          | hossted help            | Help about any command                                   |
   | logs                          | hossted log             | View application logs                                    |
-  | status                        | hossted status          | View hossted status                                      |
+  | status                        | hossted status          | View Hossted status                                      |
   | ps                            | hossted ps              | docker-compose ps of the application                     |
-  | version                       | hossted version         |                                                          |
-  | ping                          | hossted ping            | Send docker ,sbom and security infor to hossted API      |
-  | updates false/true            | hossted s u false/true  | Alow to send information about the hossted app to the API|
-  | monitoring false/true         | hossted s m false/true  | Alow to send monitoring about the hossted app to the API |
-  | update-cli                    | hossted update-cli      | Update the hossted cli to the last version               |
+  | version                       | hossted version         | Displays the current running version of the CLI          |
+  | updates false/true            | hossted s u false/true  | Enables the system to send env and sec information about the Hossted application to the API|
+  | monitoring false/true         | hossted s m false/true  | Enables the system to send monitoring data about the Hossted application to the API|
+  | update-cli                    | hossted update-cli      | Updates the Hossted CLI to the latest version            |
   |-------------------------------+-------------------------+----------------------------------------------------------|
 
 Flags:
