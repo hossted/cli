@@ -13,6 +13,11 @@ import (
 
 func SetMonitoring(env string, flag bool) error {
 
+	if !HasContainerRunning() {
+		fmt.Println("The application still in configuration")
+		os.Exit(0)
+	}
+
 	config, _ := GetConfig()
 
 	config.Monitoring = flag

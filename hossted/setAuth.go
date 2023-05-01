@@ -3,11 +3,17 @@ package hossted
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 )
 
 // SetAuth sets the authorization of the application
 func SetAuth(env, app string, flag bool) error {
+
+	if !HasContainerRunning() {
+		fmt.Println("The application still in configuration")
+		os.Exit(0)
+	}
 
 	if flag == true {
 		return errors.New("\n  Not Implemented for the command set auth true.\n")

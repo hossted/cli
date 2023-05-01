@@ -3,6 +3,7 @@ package hossted
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -12,6 +13,12 @@ import (
 // TODO: check whether the function is generic for different apps. Divide to different cases if not.
 // TODO: check error for sed command
 func SetDomain(env, app, domain string) error {
+
+	if !HasContainerRunning() {
+		fmt.Println("The application still in configuration")
+		os.Exit(0)
+	}
+
 	command := "domain"
 
 	config, err := GetConfig()

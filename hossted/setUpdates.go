@@ -9,6 +9,11 @@ import (
 
 func SetUpdates(env string, flag bool) error {
 
+	if !HasContainerRunning() {
+		fmt.Println("The application still in configuration")
+		os.Exit(0)
+	}
+
 	config, _ := GetConfig()
 
 	config.Update = flag

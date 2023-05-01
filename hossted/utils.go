@@ -216,8 +216,12 @@ func GetAppInfo() ([]ConfigApplication, error) {
 		return apps, fmt.Errorf("Empty appName. Please check the file - %s\n%w", path, err)
 	}
 
+	appPath, _ = GetDockerComposeDir()
+	if appPath == "" {
+		appPath = filepath.Join("/opt", appName)
+	}
+
 	// Check if path exists
-	appPath = filepath.Join("/opt", appName)
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
 		return apps, fmt.Errorf("App path does not exists - %s. Please check.\n%w", appPath, err)
 	}
@@ -606,4 +610,52 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 	//fmt.Printf("%v \n", response.Message)
 	return response, nil
 
+}
+
+// HasContainerRunning checks if there is any docker container running
+func HasContainerRunning() bool {
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		panic(err)
+	}
+
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	if len(containers) == 0 {
+		return false
+	}
+	return true
+}
+
+// GetDockerComposeDir gets the docker compose directory
+func GetDockerComposeDir() (string, error) {
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", nil
+	}
+
+	// Get a list of all running containers
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	if err != nil {
+		return "", nil
+	}
+
+	// Get the first container name from the list
+	if len(containers) == 0 {
+		return "", nil
+	}
+	containerName := containers[0].Names[0]
+	// Run docker container inspect command
+	inspect, err := cli.ContainerInspect(ctx, containerName)
+	if err != nil {
+		return "", nil
+	}
+
+	// Get label value
+	labelValue := inspect.Config.Labels["com.docker.compose.project.working_dir"]
+	return labelValue, nil
 }
