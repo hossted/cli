@@ -2,6 +2,8 @@ package hossted
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -73,23 +75,41 @@ func SetMonitoring(env string, flag bool) error {
 	}
 
 	if flag {
-		// Pull the grafana/agent:v0.32.1 image
-		reader, err := cli.ImagePull(ctx, "grafana/agent:v0.32.1", types.ImagePullOptions{})
-		if err != nil {
-			panic(err)
+
+		auth := types.AuthConfig{
+			Username: "Username",
+			Password: "Password",
 		}
-		defer reader.Close()
-		io.Copy(io.Discard, reader)
+
+		authData, err := json.Marshal(auth)
+		if err != nil {
+			return err
+		}
+
+		auths := base64.URLEncoding.EncodeToString(authData)
+		out, err := cli.ImagePull(
+			ctx,
+			"linnovate.azurecr.io/hossted/grafana-agent:latest",
+			types.ImagePullOptions{
+				RegistryAuth: auths,
+			})
+		if err != nil {
+			return fmt.Errorf("failed to pull image: %w", err)
+		}
+		defer out.Close()
+
+		_, err = io.Copy(io.Discard, out)
+		if err != nil {
+			return fmt.Errorf("failed to read image logs: %w", err)
+		}
 
 		// Create the hossted-agent container
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image:      "grafana/agent:v0.32.1",
-			Entrypoint: []string{"/bin/agent", "-config.file=/etc/agent-config/agent.yaml", "-metrics.wal-directory=/tmp/agent/wal"},
-			Env:        []string{"HOSTNAME=" + os.Getenv("PROJECT_BASE_URL")},
+			Image:      "linnovate.azurecr.io/hossted/grafana-agent:latest",
+			Entrypoint: []string{"/bin/grafana-agent", "-config.file=/etc/agent/agent.yaml", "-metrics.wal-directory=/etc/agent/data"},
 		}, &container.HostConfig{
 			Privileged: true,
 			Binds: []string{
-				"/opt/hossted/agent:/etc/agent-config",
 				"/:/rootfs:ro",
 				"/var/run:/var/run:rw",
 				"/sys:/sys:ro",
@@ -116,7 +136,7 @@ func SetMonitoring(env string, flag bool) error {
 		}
 
 		// Retrieve the container logs
-		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+		out, err = cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
 		if err != nil {
 			panic(err)
 		}
