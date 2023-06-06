@@ -48,6 +48,7 @@ func SetMonitoring(env string, flag bool) error {
 	defer cli.Close()
 
 	if flag {
+		fmt.Println("Please wait a second...")
 		//check if container exists in container list
 		containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 		if err != nil {
@@ -102,7 +103,6 @@ func SetMonitoring(env string, flag bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to read image logs: %w", err)
 		}
-
 		// Create the hossted-agent container
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image:      "linnovate.azurecr.io/hossted/grafana-agent:latest",
@@ -124,25 +124,6 @@ func SetMonitoring(env string, flag bool) error {
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 			panic(err)
 		}
-
-		// Wait for the container to finish running
-		statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-		select {
-		case err := <-errCh:
-			if err != nil {
-				panic(err)
-			}
-		case <-statusCh:
-		}
-
-		// Retrieve the container logs
-		out, err = cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
-		if err != nil {
-			panic(err)
-		}
-
-		io.Copy(io.Discard, out)
-
 	}
 
 	return nil

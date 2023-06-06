@@ -612,7 +612,7 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 }
 
-// HasContainerRunning checks if there is any docker container running
+// HasContainerRunning checks if there is a container with the name "trafik" in the list of containers
 func HasContainerRunning() bool {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -624,10 +624,14 @@ func HasContainerRunning() bool {
 	if err != nil {
 		panic(err)
 	}
-	if len(containers) == 0 {
-		return false
+
+	for _, container := range containers {
+		if strings.Contains(container.Names[0], "traefik") {
+			return true
+		}
 	}
-	return true
+
+	return false
 }
 
 // GetDockerComposeDir gets the docker compose directory
