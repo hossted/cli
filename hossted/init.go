@@ -12,7 +12,7 @@ func Init(env, authorization, image string, instance Instance) error {
 	env = GetHosstedEnv(env)
 	instancejson, _ := json.Marshal(instance)
 
-	//fmt.Println("instancejson:", string(instancejson))
+	fmt.Println("instancejson:", string(instancejson))
 	//Send request
 	response, err := InitRequest(env, authorization, image, string(instancejson))
 	if err != nil {

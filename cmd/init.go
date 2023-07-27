@@ -33,7 +33,10 @@ var initCmd = &cobra.Command{
 			Test_mode: test_mode,
 			Comment:   comment,
 		}
+		//H_REGISTER="FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
+		//H_UPDATE="y5TXKDY4kTKbFcFtz9aD1pa2irmzhoziKPnEBcA8"
 
+		authorization = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
 		hossted.Init(ENVIRONMENT, authorization, image, instance)
 	},
 }

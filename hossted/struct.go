@@ -126,3 +126,16 @@ type Instance struct {
 	Test_mode string `json:"test_mode,omitempty"`
 	Comment   string `json:"comment,omitempty"`
 }
+
+type KCluster struct {
+	Uuid      string `json:"uuid,omitempty"`
+	User      string `json:"user,omitempty"`
+	Cloud     string `json:"cloud,omitempty"`
+	Status    string `json:"status,omitempty"`
+	Test_mode string `json:"test_mode,omitempty"`
+	Comment   string `json:"comment,omitempty"`
+}
+
+type NameSpace struct {
+	Name        string             `json:"namespace"`
+}
