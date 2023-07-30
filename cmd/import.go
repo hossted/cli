@@ -41,7 +41,7 @@ var importCmd = &cobra.Command{
 			Comment:   comment,
 		}
 		authorization = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
-		hossted.Import(ENVIRONMENT,authorization,kluster)
+		hossted.Import(ENVIRONMENT, authorization, kluster)
 	},
 }
 

@@ -56,6 +56,11 @@ type initResponse struct {
 	StatusCode int    `json:"status"`
 	Message    string `json:"message"`
 }
+
+type importResponse struct {
+	StatusCode int    `json:"status"`
+	Message    string `json:"message"`
+}
 type activityLogResponse struct {
 	StatusCode int    `json:"status"`
 	Message    string `json:"message"`
