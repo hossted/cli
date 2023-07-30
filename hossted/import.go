@@ -12,22 +12,22 @@ import (
 )
 
 // hossted ping - send docker ,sbom and security infor to hossted API
-func Import(env string) error {
+func Import(env string, authorization string,  kluster KCluster ) error {
 	// Get the path to the kubeconfig file
 	kubeconfig := getKubeconfigPath()
 
 	// Create the Kubernetes client.
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
+	// Print current context
+
 
 	// List the namespaces.
 	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
