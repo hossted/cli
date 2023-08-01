@@ -134,6 +134,8 @@ type Instance struct {
 
 type KCluster struct {
 	Uuid      string `json:"uuid,omitempty"`
+	Namespaces     []string `json:"namespaces"`
+	Name      string `json:"name,omitempty"`
 	User      string `json:"user,omitempty"`
 	Cloud     string `json:"cloud,omitempty"`
 	Status    string `json:"status,omitempty"`
