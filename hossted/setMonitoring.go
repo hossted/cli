@@ -90,7 +90,7 @@ func SetMonitoring(env string, flag bool) error {
 		auths := base64.URLEncoding.EncodeToString(authData)
 		out, err := cli.ImagePull(
 			ctx,
-			"linnovate.azurecr.io/hossted/grafana-agent:latest",
+			"harbor.hossted.com/hossted/grafana-agent:latest",
 			types.ImagePullOptions{
 				RegistryAuth: auths,
 			})
@@ -103,10 +103,13 @@ func SetMonitoring(env string, flag bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to read image logs: %w", err)
 		}
+		// Set the environment variables for the container
+		envVariables := []string{"UUID=" + string(uuid)}
 		// Create the hossted-agent container
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image:      "linnovate.azurecr.io/hossted/grafana-agent:latest",
-			Entrypoint: []string{"/bin/grafana-agent", "-config.file=/etc/agent/agent.yaml", "-metrics.wal-directory=/etc/agent/data"},
+			Image:      "harbor.hossted.com/hossted/grafana-agent:latest",
+			Env:        envVariables,
+			Entrypoint: []string{"/run.sh"},
 		}, &container.HostConfig{
 			Privileged: true,
 			Binds: []string{
