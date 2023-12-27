@@ -12,14 +12,9 @@ import (
 // registerCmd represents the register command
 var activateCmd = &cobra.Command{
 	Use:   "activate",
-	Short: "[a] Activate your application with the hossted ecosystem",
+	Short: "[a] Activate your application with the hossted platform",
 	Long: `
-The hossted register commands asks for your email and organization name
-and registers you with the hossted platfrom
-
-The hossted platform provides secure and hardened docker images and provides
-best practices such as tracking updates , monitoring, centralized logging ,
-backups and much more.
+Hossted activate connects you're instance to the hossted platform and sends instance health informtation so it can be mnaged in the dashboard.
 	`,
 	Aliases: []string{"a"},
 	Example: `
