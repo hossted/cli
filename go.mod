@@ -9,6 +9,7 @@ require (
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/term v0.0.0-20221105221325-4eb28fa6025c // indirect
@@ -21,6 +22,6 @@ require (
 	golang.org/x/time v0.2.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools/v3 v3.4.0 // indirect
-	k8s.io/apimachinery v0.27.4 // indirect
+	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v0.27.4
 )
