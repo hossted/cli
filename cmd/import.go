@@ -4,6 +4,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/hossted/cli/hossted/service"
 	"github.com/spf13/cobra"
 )
@@ -14,11 +16,11 @@ var importCmd = &cobra.Command{
 	Short:   `hossted import - Import existing app and send info to hossted API`,
 	Long:    `hossted import - Import existing app and send info to hossted API`,
 	Example: `hossted import k8s`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if t == "k8s" {
+	Run: func(cmd *cobra.Command, args []string) {
+		if import_type == "k8s" {
 			err := service.ImportK8s()
 			if err != nil {
-				return err
+				fmt.Println(err)
 			}
 		}
 
@@ -40,23 +42,23 @@ var importCmd = &cobra.Command{
 				hossted.Import(ENVIRONMENT, authorization, kluster)
 
 		*/
-		return nil
+
 	},
 }
 
 var (
-	t         string
-	Uuid      string
-	User      string
-	Cloud     string
-	Status    string
-	Test_mode string
-	Comment   string
+	import_type string
+	Uuid        string
+	User        string
+	Cloud       string
+	Status      string
+	Test_mode   string
+	Comment     string
 )
 
 func init() {
 	rootCmd.AddCommand(importCmd)
-	importCmd.Flags().StringVarP(&t, "type", "t", "", "supported env type k8s|docker")
+	importCmd.Flags().StringVarP(&import_type, "type", "t", "", "supported env type k8s|docker")
 	importCmd.Flags().StringVarP(&uuid, "uuid", "", "", "")
 	importCmd.Flags().StringVarP(&ip, "ip", "", "", "")
 	importCmd.Flags().StringVarP(&user, "user", "", "", "")
