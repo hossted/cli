@@ -27,7 +27,7 @@ func RegisterUsers(env string) error {
 	config, _ := GetConfig() // Ignore error
 
 	// Prompt user for input
-	email, _ := emailPrompt()
+	email, _ := EmailPrompt()
 
 	// Get uuid, env. Env default to be dev, if env varible
 	env = GetHosstedEnv(env)
@@ -112,7 +112,7 @@ func registerRequest(email, uuid, env string) (RegisterResponse, error) {
 }
 
 // emailPrompt prompts the user for email
-func emailPrompt() (string, error) {
+func EmailPrompt() (string, error) {
 
 	// Regex for email checking
 	re := regexp.MustCompile(`\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+`)

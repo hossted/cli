@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/hossted/cli/hossted"
+	"github.com/hossted/cli/hossted/service"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ Login enables user to login into hossted platform using email address`,
 	Aliases: []string{"l"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Prompt user for input
-		err := hossted.Login()
+		err := service.Login()
 		if err != nil {
 			return err
 		}
