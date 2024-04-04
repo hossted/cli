@@ -9,13 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/hossted/cli/hossted"
 )
 
-type LoginResponse struct{
-	response
-	Token string `json:"token"`
-
+type LoginResponse struct {
+	Success bool                `json:"success"`
+	OrgIDs  []map[string]string `json:"org_ids"`
+	Message string              `json:"message"`
+	Token   string              `json:"token"`
 }
 
 func Login() error {
@@ -61,7 +63,7 @@ func postRequest(email string) error {
 
 	// Read and display the re
 	body, err := ioutil.ReadAll(resp.Body)
-	if err!=nil{
+	if err != nil {
 		return err
 	}
 	var response LoginResponse
@@ -74,11 +76,11 @@ func postRequest(email string) error {
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
-	fmt.Println("Response is",response)
+	fmt.Println("Response is", response)
 	// fmt.Println("Response:", string(response_byte))
 	// Save response in file
 	// saveResponse(email, response)
-	
+
 	return nil
 }
 

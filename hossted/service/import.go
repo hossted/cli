@@ -140,6 +140,7 @@ func registerClusterUUID(clusterUUID, clusterName, emailID string) (response, er
 
 	responseBody, err := ioutil.ReadAll(res.Body)
 
+	fmt.Println(string(responseBody))
 	var resp response
 	err = json.Unmarshal(responseBody, &resp)
 	if err != nil {
