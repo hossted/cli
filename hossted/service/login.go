@@ -21,6 +21,7 @@ func Login() error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("User %s logged in successfully", email)
 	return nil
 }
 
@@ -56,7 +57,10 @@ func postRequest(email string) error {
 		return err
 	}
 
-	saveResponse(email, body)
+	err = saveResponse(email, body)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

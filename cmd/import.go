@@ -18,7 +18,7 @@ var importCmd = &cobra.Command{
 	Example: `hossted import k8s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if import_type == "k8s" {
-			err := service.ImportK8s()
+			err := service.ActivateK8s()
 			if err != nil {
 				fmt.Println(err)
 			}

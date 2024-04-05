@@ -7,61 +7,58 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
-	"github.com/google/uuid"
 	"github.com/manifoldco/promptui"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-// OrgID represents the structure of organization IDs.
-type orgID struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-}
 
 // Response represents the structure of the JSON response.
 type response struct {
 	Success bool                `json:"success"`
 	OrgIDs  []map[string]string `json:"org_ids"`
+	Token   string              `json:"token"`
 	Message string              `json:"message"`
 }
 
-// ImportK8s imports Kubernetes clusters.
-func ImportK8s() error {
+// ActivateK8s imports Kubernetes clusters.
+func ActivateK8s() error {
 	// Prompt user for email
 	prompt := promptui.Prompt{
 		Label: "Enter your email:",
 	}
+
 	emailID, err := prompt.Run()
 	if err != nil {
 		return err
 	}
 
+	//read file
+	homeDir, err := os.UserHomeDir()
+
+	folderPath := filepath.Join(homeDir, ".hossted")
+	if err != nil {
+		return err
+	}
+
+	fileData, err := os.ReadFile(folderPath + "/" + emailID + ".json")
+	if err != nil {
+		return fmt.Errorf("User not registered, Please run hossted login to register")
+	}
+
+	var file response
+	err = json.Unmarshal(fileData, &file)
+	if err != nil {
+		return err
+	}
+
 	// Retrieve available Kubernetes contexts
-	contexts := getK8sContext()
 
-	// Prompt user to select Kubernetes context
-	promptK8s := promptui.Select{
-		Label: "Select your Kubernetes context:",
-		Items: contexts,
-	}
-	_, clusterName, err := promptK8s.Run()
-	if err != nil {
-		return err
-	}
-
-	clusterUUID := uuid.NewString()
-	// Send request to API to register cluster UUID
-	resp, err := registerClusterUUID(clusterUUID, clusterName, emailID)
-	if err != nil {
-		return err
-	}
-
-	if resp.Success {
-		if len(resp.OrgIDs) == 0 {
+	if file.Success {
+		if len(file.OrgIDs) == 0 {
 			fmt.Println("We have just sent the confirmation link to", emailID, ". Once you confirm it, you'll be able to continue the activation.")
-		} else if len(resp.OrgIDs) == 1 {
-			for orgID, email := range resp.OrgIDs[0] {
+		} else if len(file.OrgIDs) == 1 {
+			for orgID, email := range file.OrgIDs[0] {
 				prompt := promptui.Select{
 					Label: fmt.Sprintf("Are you sure you want to register this cluster with org_name %s", email),
 					Items: []string{"Yes", "No"},
@@ -71,12 +68,12 @@ func ImportK8s() error {
 					return err
 				}
 				if value == "Yes" {
-					fmt.Println("send patch request with this orgID", orgID)
+					fmt.Println("Your orgID is ", orgID)
 				} else {
 					return nil
 				}
 			}
-		} else if len(resp.OrgIDs) > 1 {
+		} else if len(file.OrgIDs) > 1 {
 			// Handle cases where len(resp.OrgIDs) > 1
 			fmt.Println("There are multiple organization IDs. Handling multiple org IDs logic here.")
 		}
@@ -84,8 +81,58 @@ func ImportK8s() error {
 		return fmt.Errorf("Cluster registration failed to hossted platform")
 	}
 
+	contexts := getK8sContext()
+
+	// // Prompt user to select Kubernetes context
+	promptK8s := promptui.Select{
+		Label: "Select your Kubernetes context:",
+		Items: contexts,
+	}
+	_, clusterName, err := promptK8s.Run()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Your cluster name is ", clusterName)
 	// fmt.Println("Email:", emailID, "| ClusterName:", clusterName, "| ClusterUUID:", clusterUUID, "| Response:", resp)
 
+	operator := promptui.Select{
+		Label: fmt.Sprintf("Do you wish to install the operator in %s", clusterName),
+		Items: []string{"Yes", "No"},
+	}
+	_, value, err := operator.Run()
+	if err != nil {
+		return err
+	}
+
+	if value == "Yes" {
+		monitoring := promptui.Select{
+			Label: fmt.Sprintf("Do you wish to enable monitoring in operator"),
+			Items: []string{"Yes", "No"},
+		}
+		_, monitoringEnable, err := monitoring.Run()
+		if err != nil {
+			return err
+		}
+
+		if monitoringEnable == "Yes" {
+			fmt.Println("Enabled Monitoring ", monitoringEnable)
+		}
+
+		cve := promptui.Select{
+			Label: fmt.Sprintf("Do you wish to enable cve scan in operator"),
+			Items: []string{"Yes", "No"},
+		}
+		_, cveEnable, err := cve.Run()
+		if err != nil {
+			return err
+		}
+
+		if cveEnable == "Yes" {
+			fmt.Println("Enabled CVE Scanning ", cveEnable)
+		}
+
+	}
 	return nil
 }
 
