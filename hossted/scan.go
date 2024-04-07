@@ -70,7 +70,7 @@ func Scan(env string) error {
 			// Container does not exist
 		} else {
 			// Container exists-stop and remove the container
-			err := cli.ContainerStop(ctx, "grype", nil)
+			err := cli.ContainerStop(ctx, "grype", container.StopOptions{})
 			if err != nil {
 				panic(err)
 			}
