@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -41,20 +42,20 @@ type response struct {
 
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s() error {
-	// Prompt user for email
-	emailID, err := promptEmail()
+
+	emailsID, err := promptEmail()
 	if err != nil {
 		return err
 	}
 
 	// getResponse from reading file in .hossted/email@id.json
-	resp, err := getResponse(emailID)
+	resp, err := getResponse()
 	if err != nil {
 		return err
 	}
 
 	// handle usecases for orgID selection
-	err = useCases(resp, emailID)
+	orgID, err := useCases(resp)
 	if err != nil {
 		return err
 	}
@@ -67,7 +68,7 @@ func ActivateK8s() error {
 
 	fmt.Println("Your cluster name is ", clusterName)
 
-	err = deployOperator(clusterName, emailID)
+	err = deployOperator(clusterName, emailsID, orgID, resp.Token)
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func promptEmail() (string, error) {
 
 }
 
-func getResponse(emailID string) (response, error) {
+func getResponse() (response, error) {
 	//read file
 	homeDir, err := os.UserHomeDir()
 
@@ -97,7 +98,7 @@ func getResponse(emailID string) (response, error) {
 		return response{}, err
 	}
 
-	fileData, err := os.ReadFile(folderPath + "/" + emailID + ".json")
+	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
 	if err != nil {
 		return response{}, fmt.Errorf("User not registered, Please run hossted login to register")
 	}
@@ -111,35 +112,78 @@ func getResponse(emailID string) (response, error) {
 	return resp, nil
 }
 
-func useCases(resp response, emailID string) error {
+func useCases(resp response) (orgID string, err error) {
 	if resp.Success {
 		if len(resp.OrgIDs) == 0 {
-			fmt.Println("We have just sent the confirmation link to", emailID, ". Once you confirm it, you'll be able to continue the activation.")
+			for orgID := range resp.OrgIDs[0] {
+				fmt.Println("We have just sent the confirmation link registered emailID", ". Once you confirm it, you'll be able to continue the activation.")
+				return orgID, nil
+			}
+
 		} else if len(resp.OrgIDs) == 1 {
-			for orgID, email := range resp.OrgIDs[0] {
+			for orgID, orgName := range resp.OrgIDs[0] {
 				prompt := promptui.Select{
-					Label: fmt.Sprintf("Are you sure you want to register this cluster with org_name %s", email),
+					Label: fmt.Sprintf("Are you sure you want to register this cluster with org_name %s", orgName),
 					Items: []string{"Yes", "No"},
 				}
 				_, value, err := prompt.Run()
 				if err != nil {
-					return err
+					return "", err
 				}
 				if value == "Yes" {
 					fmt.Println("Your orgID is ", orgID)
+					return orgID, nil
 				} else {
-					return nil
+					return "", nil
 				}
 			}
 		} else if len(resp.OrgIDs) > 1 {
-			// Handle cases where len(resp.OrgIDs) > 1
-			fmt.Println("There are multiple organization IDs. Handling multiple org IDs logic here.")
+			fmt.Println("You have multiple organisations to choose from:")
+
+			var items []string
+			for i, info := range resp.OrgIDs {
+				for _, orgName := range info {
+					items = append(items, fmt.Sprintf("%d: %s", i+1, orgName))
+				}
+			}
+
+			prompt := promptui.Select{
+				Label: "Select Your Organisation",
+				Items: items,
+			}
+
+			_, result, err := prompt.Run()
+			if err != nil {
+				fmt.Println("Prompt failed:", err)
+				return "", err
+			}
+
+			userOrgName, err := removePrefix(result)
+			if err != nil {
+				return "", err
+			}
+			var selectedOrgID string
+
+			for _, info := range resp.OrgIDs {
+				for orgID, orgName := range info {
+					if orgName == userOrgName {
+						selectedOrgID = orgID
+					}
+				}
+			}
+
+			if selectedOrgID == "" {
+				return "", fmt.Errorf("selected organization not found")
+			}
+
+			return selectedOrgID, nil
+
 		}
 	} else {
-		return fmt.Errorf("Cluster registration failed to hossted platform")
+		return "", fmt.Errorf("Cluster registration failed to hossted platform")
 	}
 
-	return nil
+	return "", nil
 }
 
 // promptK8sContext retrieves Kubernetes contexts from kubeconfig.
@@ -183,7 +227,7 @@ func promptK8sContext() (clusterName string, err error) {
 	return clusterName, nil
 }
 
-func deployOperator(clusterName, emailID string) error {
+func deployOperator(clusterName, emailID, orgID, JWT string) error {
 	operator := promptui.Select{
 		Label: fmt.Sprintf("Do you wish to install the operator in %s", clusterName),
 		Items: []string{"Yes", "No"},
@@ -195,6 +239,8 @@ func deployOperator(clusterName, emailID string) error {
 
 	if value == "Yes" {
 
+		cveEnabled := "false"
+		monitoringEnabled := "false"
 		monitoring := promptui.Select{
 			Label: fmt.Sprintf("Do you wish to enable monitoring in operator"),
 			Items: []string{"Yes", "No"},
@@ -206,6 +252,7 @@ func deployOperator(clusterName, emailID string) error {
 
 		if monitoringEnable == "Yes" {
 			fmt.Println("Enabled Monitoring ", monitoringEnable)
+			monitoringEnabled = "true"
 		}
 
 		cve := promptui.Select{
@@ -235,11 +282,11 @@ func deployOperator(clusterName, emailID string) error {
 			InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
 				"set": "operator.scannerReportTTL=,operator.scanJobTimeout=30m",
 			})
-
+			cveEnabled = "true"
 		}
 
 		RepoAdd("hossted", "https://charts.hossted.com")
-
+		RepoUpdate()
 		// Progress bar setup
 		fmt.Println("Installing hossted-operator chart...")
 		bar := progressbar.DefaultBytes(
@@ -254,7 +301,7 @@ func deployOperator(clusterName, emailID string) error {
 		}
 
 		args := map[string]string{
-			"set": "env.EMAIL_ID=" + emailID,
+			"set": "env.EMAIL_ID=" + emailID + ",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances," + "env.HOSSTED_ORG_ID=" + orgID + ",secret.HOSSTED_AUTH_TOKEN=" + JWT + ",cve.enable=" + cveEnabled + ",monitoring.enable=" + monitoringEnabled,
 		}
 		InstallChart("hossted-operator", "hossted", "hossted-operator", args)
 
@@ -370,8 +417,7 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 	if client.Version == "" && client.Devel {
 		client.Version = ">0.0.0-0"
 	}
-	//name, chart, err := client.NameAndChart(args)
-	client.ReleaseName = name
+
 	cp, err := client.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", repo, chart), settings)
 	if err != nil {
 		log.Fatal(err)
@@ -423,7 +469,8 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 		}
 	}
 
-	client.Namespace = "hossted-platform"
+	client.ReleaseName = name
+	client.Namespace = name
 	client.CreateNamespace = true
 	release, err := client.Run(chartRequested, vals)
 	if err != nil {
@@ -445,4 +492,18 @@ func isChartInstallable(ch *chart.Chart) (bool, error) {
 func debug(format string, v ...interface{}) {
 	format = fmt.Sprintf("[debug] %s\n", format)
 	log.Output(2, fmt.Sprintf(format, v...))
+}
+
+func removePrefix(text string) (string, error) {
+	// Define a regular expression to match a number followed by a colon and a space
+	regex := regexp.MustCompile(`^\d+:\s+`)
+
+	match := regex.FindStringSubmatch(text)
+	if match != nil {
+		// Extract the captured prefix (number and colon)
+		prefix := match[0]
+		return strings.TrimPrefix(text, prefix), nil
+	}
+
+	return text, nil
 }

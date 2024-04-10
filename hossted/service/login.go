@@ -57,7 +57,7 @@ func postRequest(email string) error {
 		return err
 	}
 
-	err = saveResponse(email, body)
+	err = saveResponse(body)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func postRequest(email string) error {
 	return nil
 }
 
-func saveResponse(email string, data []byte) error {
+func saveResponse(data []byte) error {
 	homeDir, err := os.UserHomeDir()
 
 	folderPath := filepath.Join(homeDir, ".hossted")
@@ -73,7 +73,7 @@ func saveResponse(email string, data []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(folderPath+"/"+email+".json", data, 0644)
+	err = ioutil.WriteFile(folderPath+"/"+"config.json", data, 0644)
 	if err != nil {
 		return err
 	}
