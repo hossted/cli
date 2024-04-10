@@ -25,17 +25,18 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		if activate_type == "k8s" {
 			err := service.ActivateK8s()
 			if err != nil {
 				fmt.Println(err)
 			}
 			return
+		} else {
+			hossted.SetUpdates(ENVIRONMENT, true)
+			hossted.SetMonitoring(ENVIRONMENT, true)
 		}
-		// Activate invokes update true and monitoring true
 
-		hossted.SetUpdates(ENVIRONMENT, true)
-		hossted.SetMonitoring(ENVIRONMENT, true)
 	},
 }
 

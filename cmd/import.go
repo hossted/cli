@@ -4,9 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/hossted/cli/hossted/service"
+	"github.com/hossted/cli/hossted"
 	"github.com/spf13/cobra"
 )
 
@@ -17,12 +15,12 @@ var importCmd = &cobra.Command{
 	Long:    `hossted import - Import existing app and send info to hossted API`,
 	Example: `hossted import k8s`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if import_type == "k8s" {
-			err := service.ActivateK8s()
-			if err != nil {
-				fmt.Println(err)
-			}
+		if len(args) == 0 {
+			cmd.Help()
+			panic(1)
 		}
+		importType := args[0]
+		println(importType)
 
 		/*
 				Uuid      string `json:"uuid,omitempty"`
@@ -31,34 +29,30 @@ var importCmd = &cobra.Command{
 			Status    string `json:"status,omitempty"`
 			Test_mode string `json:"test_mode,omitempty"`
 			Comment   string `json:"comment,omitempty"`
-				kluster := hossted.KCluster{
-					Uuid:      uuid,
-					Cloud:     cloud,
-					Status:    status,
-					Test_mode: test_mode,
-					Comment:   comment,
-				}
-				authorization = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
-				hossted.Import(ENVIRONMENT, authorization, kluster)
-
 		*/
-
+		kluster := hossted.KCluster{
+			Uuid:      uuid,
+			Cloud:     cloud,
+			Status:    status,
+			Test_mode: test_mode,
+			Comment:   comment,
+		}
+		authorization = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
+		hossted.Import(ENVIRONMENT, authorization, kluster)
 	},
 }
 
 var (
-	import_type string
-	Uuid        string
-	User        string
-	Cloud       string
-	Status      string
-	Test_mode   string
-	Comment     string
+	Uuid      string
+	User      string
+	Cloud     string
+	Status    string
+	Test_mode string
+	Comment   string
 )
 
 func init() {
 	rootCmd.AddCommand(importCmd)
-	importCmd.Flags().StringVarP(&import_type, "type", "t", "", "supported env type k8s|docker")
 	importCmd.Flags().StringVarP(&uuid, "uuid", "", "", "")
 	importCmd.Flags().StringVarP(&ip, "ip", "", "", "")
 	importCmd.Flags().StringVarP(&user, "user", "", "", "")
