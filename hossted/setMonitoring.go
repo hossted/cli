@@ -135,7 +135,7 @@ func SetMonitoring(env string, flag bool) error {
 func stopAndRemoveMonitoring(cli *client.Client) error {
 	ctx := context.Background()
 
-	err := cli.ContainerStop(ctx, "monitoring", nil)
+	err := cli.ContainerStop(ctx, "monitoring", container.StopOptions{})
 	if err != nil {
 		panic(err)
 	}

@@ -1,13 +1,17 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/hossted/cli/hossted"
+	"github.com/hossted/cli/hossted/service"
 	"github.com/spf13/cobra"
 )
+
+var activate_type string
 
 // registerCmd represents the register command
 var activateCmd = &cobra.Command{
@@ -21,12 +25,22 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-	// Activate invokes update true and monitoring true
-	hossted.SetUpdates(ENVIRONMENT,true)
-	hossted.SetMonitoring(ENVIRONMENT, true)
+
+		if activate_type == "k8s" {
+			err := service.ActivateK8s()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		} else {
+			hossted.SetUpdates(ENVIRONMENT, true)
+			hossted.SetMonitoring(ENVIRONMENT, true)
+		}
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(activateCmd)
+	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|docker")
 }
