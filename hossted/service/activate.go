@@ -301,7 +301,13 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		}
 
 		args := map[string]string{
-			"set": "env.EMAIL_ID=" + emailID + ",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances," + "env.HOSSTED_ORG_ID=" + orgID + ",secret.HOSSTED_AUTH_TOKEN=" + JWT + ",cve.enable=" + cveEnabled + ",monitoring.enable=" + monitoringEnabled,
+			"set": "env.EMAIL_ID=" + emailID +
+				//",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances" +
+				",env.HOSSTED_ORG_ID=" + orgID +
+				",secret.HOSSTED_AUTH_TOKEN=" + JWT +
+				",cve.enable=" + cveEnabled +
+				",monitoring.enable=" + monitoringEnabled +
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD"),
 		}
 		InstallChart("hossted-operator", "hossted", "hossted-operator", args)
 
@@ -470,7 +476,7 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 	}
 
 	client.ReleaseName = name
-	client.Namespace = name
+	client.Namespace = "hossted-operator"
 	client.CreateNamespace = true
 	release, err := client.Run(chartRequested, vals)
 	if err != nil {
