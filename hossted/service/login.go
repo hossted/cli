@@ -73,7 +73,7 @@ func saveResponse(data []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(folderPath+"/"+"config.json", data, 0644)
+	err = os.WriteFile(folderPath+"/"+"config.json", data, 0644)
 	if err != nil {
 		return err
 	}

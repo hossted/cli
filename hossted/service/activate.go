@@ -37,13 +37,14 @@ type response struct {
 	Success bool                `json:"success"`
 	OrgIDs  []map[string]string `json:"org_ids"`
 	Token   string              `json:"token"`
+	Email   string              `json:"email"`
 	Message string              `json:"message"`
 }
 
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s() error {
 
-	emailsID, err := promptEmail()
+	emailsID, err := getEmail()
 	if err != nil {
 		return err
 	}
@@ -76,16 +77,22 @@ func ActivateK8s() error {
 	return nil
 }
 
-func promptEmail() (string, error) {
-	prompt := promptui.Prompt{
-		Label: "Enter your email:",
-	}
-
-	emailID, err := prompt.Run()
+func getEmail() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	folderPath := filepath.Join(homeDir, ".hossted")
+	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
 	if err != nil {
 		return "", err
 	}
-	return emailID, nil
+
+	// Parse the JSON data into Config struct
+	var config response
+	err = json.Unmarshal(fileData, &config)
+	if err != nil {
+		return "", err
+	}
+
+	return config.Email, nil
 
 }
 
@@ -118,24 +125,6 @@ func useCases(resp response) (orgID string, err error) {
 			for orgID := range resp.OrgIDs[0] {
 				fmt.Println("We have just sent the confirmation link registered emailID", ". Once you confirm it, you'll be able to continue the activation.")
 				return orgID, nil
-			}
-
-		} else if len(resp.OrgIDs) == 1 {
-			for orgID, orgName := range resp.OrgIDs[0] {
-				prompt := promptui.Select{
-					Label: fmt.Sprintf("Are you sure you want to register this cluster with org_name %s", orgName),
-					Items: []string{"Yes", "No"},
-				}
-				_, value, err := prompt.Run()
-				if err != nil {
-					return "", err
-				}
-				if value == "Yes" {
-					fmt.Println("Your orgID is ", orgID)
-					return orgID, nil
-				} else {
-					return "", nil
-				}
 			}
 		} else if len(resp.OrgIDs) > 1 {
 			fmt.Println("You have multiple organisations to choose from:")
@@ -212,6 +201,7 @@ func promptK8sContext() (clusterName string, err error) {
 		Label: "Select your Kubernetes context:",
 		Items: contexts,
 	}
+
 	_, clusterName, err = promptK8s.Run()
 	if err != nil {
 		return "", err
@@ -307,7 +297,8 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",secret.HOSSTED_AUTH_TOKEN=" + JWT +
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD"),
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
+				",env.CONTEXT_NAME=" + clusterName,
 		}
 		InstallChart("hossted-operator", "hossted", "hossted-operator", args)
 
