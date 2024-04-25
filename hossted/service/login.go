@@ -30,7 +30,7 @@ func postRequest(email string) error {
 
 	payloadStr := fmt.Sprintf(`{"email": "%s"}`, email)
 
-	url := os.Getenv("HOSSTED_API_URL")
+	url := os.Getenv("HOSSTED_API_URL") + "/cli/login"
 
 	// Create HTTP request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
@@ -55,6 +55,10 @@ func postRequest(email string) error {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Registration Failed, Error %s", string(body))
 	}
 
 	err = saveResponse(body)

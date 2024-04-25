@@ -4,10 +4,12 @@ go 1.21
 
 require (
 	github.com/docker/docker v24.0.7+incompatible
+	github.com/fatih/color v1.13.0
 	github.com/gofrs/flock v0.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/schollz/progressbar/v3 v3.14.2
 	helm.sh/helm/v3 v3.14.3
+	k8s.io/cli-runtime v0.29.0
 )
 
 require (
@@ -35,7 +37,6 @@ require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
-	github.com/fatih/color v1.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -137,7 +138,6 @@ require (
 	k8s.io/api v0.29.0 // indirect
 	k8s.io/apiextensions-apiserver v0.29.0 // indirect
 	k8s.io/apiserver v0.29.0 // indirect
-	k8s.io/cli-runtime v0.29.0 // indirect
 	k8s.io/component-base v0.29.0 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
