@@ -587,7 +587,7 @@ func eventMonitoring() error {
 		return err
 	}
 
-	timeout := time.After(120 * time.Second)
+	timeout := time.After(180 * time.Second)
 	for {
 		select {
 		case <-timeout:
@@ -603,7 +603,9 @@ func eventMonitoring() error {
 				}
 			}
 			// Sleep for a short duration before checking again
-			time.Sleep(1 * time.Second)
+			yellow := color.New(color.FgYellow).SprintFunc()
+			fmt.Println(yellow("Waiting Hosted Platform Monitoring Agents to get into running state."))
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
@@ -777,16 +779,19 @@ func sendEvent(eventType, message string) error {
 func getClusterUUID() (string, error) {
 	var clusterUUID string
 	var err error
+	yellow := color.New(color.FgYellow).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
 
 	// Retry for 120 seconds
 	for i := 0; i < 120; i++ {
-		fmt.Println("Waiting for Hossted Operator to get running")
+		fmt.Println(yellow("Waiting for Hossted Operator to get into running state"))
 		clusterUUID, err = getClusterUUIDFromK8s()
 		if err == nil {
+			fmt.Println(green("Success:"), "cluster registered successfully")
 			return clusterUUID, nil
 		}
 
-		time.Sleep(3 * time.Second) // Wait for 1 second before retrying
+		time.Sleep(4 * time.Second) // Wait for 1 second before retrying
 	}
 
 	return "", fmt.Errorf("Failed to get ClusterUUID after 120 seconds: %v", err)
