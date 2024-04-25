@@ -1,11 +1,13 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,6 +15,10 @@ import (
 	"sync"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/fatih/color"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/gofrs/flock"
@@ -25,11 +31,23 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/strvals"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+)
+
+const (
+	hosstedPlatformNamespace   = "hossted-platform"
+	hosstedOperatorReleaseName = "hossted-operator"
+	trivyOperatorReleaseName   = "trivy-operator"
+	grafanaAgentReleaseName    = "hossted-grafana-agent"
 )
 
 // Response represents the structure of the JSON response.
@@ -218,8 +236,11 @@ func promptK8sContext() (clusterName string, err error) {
 }
 
 func deployOperator(clusterName, emailID, orgID, JWT string) error {
+	green := color.New(color.FgGreen).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
+
 	operator := promptui.Select{
-		Label: fmt.Sprintf("Do you wish to install the operator in %s", clusterName),
+		Label: fmt.Sprintf("Do you wish to install the hossted platform in %s", yellow(clusterName)),
 		Items: []string{"Yes", "No"},
 	}
 	_, value, err := operator.Run()
@@ -231,8 +252,11 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 
 		cveEnabled := "false"
 		monitoringEnabled := "false"
+		loggingEnabled := "false"
+
+		//------------------------------ Monitoring ----------------------------------
 		monitoring := promptui.Select{
-			Label: fmt.Sprintf("Do you wish to enable monitoring in operator"),
+			Label: fmt.Sprintf("Do you wish to enable monitoring in hossted platform"),
 			Items: []string{"Yes", "No"},
 		}
 		_, monitoringEnable, err := monitoring.Run()
@@ -241,12 +265,28 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		}
 
 		if monitoringEnable == "Yes" {
-			fmt.Println("Enabled Monitoring ", monitoringEnable)
+			fmt.Println("Enabled Monitoring :", green(monitoringEnable))
 			monitoringEnabled = "true"
 		}
 
+		//------------------------------ Logging ----------------------------------
+		logging := promptui.Select{
+			Label: fmt.Sprintf("Do you wish to enable logging in hossted-platform"),
+			Items: []string{"Yes", "No"},
+		}
+		_, loggingEnable, err := logging.Run()
+		if err != nil {
+			return err
+		}
+
+		if loggingEnable == "Yes" {
+			fmt.Println("Enabled Logging:", green(loggingEnable))
+			loggingEnabled = "true"
+		}
+
+		//------------------------------ CVE Scan ----------------------------------
 		cve := promptui.Select{
-			Label: fmt.Sprintf("Do you wish to enable cve scan in operator"),
+			Label: fmt.Sprintf("Do you wish to enable cve scan in hossted platform"),
 			Items: []string{"Yes", "No"},
 		}
 		_, cveEnable, err := cve.Run()
@@ -255,10 +295,14 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		}
 
 		if cveEnable == "Yes" {
-			fmt.Println("Enabled CVE Scanning ", cveEnable)
+
+			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
+
 			RepoAdd("aqua", "https://aquasecurity.github.io/helm-charts/")
 			// Progress bar setup
-			fmt.Println("Installing trivy-operator chart...")
+
+			fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform CVE:"), hosstedPlatformNamespace)
+
 			bar := progressbar.DefaultBytes(
 				-1,
 				"Installing",
@@ -269,16 +313,34 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				time.Sleep(50 * time.Millisecond)
 				bar.Add(1)
 			}
+
 			InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
 				"set": "operator.scannerReportTTL=,operator.scanJobTimeout=30m",
 			})
+
 			cveEnabled = "true"
 		}
 
+		//------------------------------ Helm Repo Add  ----------------------------------
+
 		RepoAdd("hossted", "https://charts.hossted.com")
 		RepoUpdate()
-		// Progress bar setup
-		fmt.Println("Installing hossted-operator chart...")
+
+		//------------------------------ Helm Install Chart ----------------------------------
+		args := map[string]string{
+			"set": "env.EMAIL_ID=" + emailID +
+				//",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances" +
+				",env.HOSSTED_ORG_ID=" + orgID +
+				",secret.HOSSTED_AUTH_TOKEN=" + JWT +
+				",cve.enable=" + cveEnabled +
+				",monitoring.enable=" + monitoringEnabled +
+				",logging.enable=" + loggingEnabled +
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
+				",env.CONTEXT_NAME=" + clusterName,
+		}
+
+		fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform Operator:"), hosstedPlatformNamespace)
+
 		bar := progressbar.DefaultBytes(
 			-1,
 			"Installing",
@@ -290,17 +352,13 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 			bar.Add(1)
 		}
 
-		args := map[string]string{
-			"set": "env.EMAIL_ID=" + emailID +
-				//",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances" +
-				",env.HOSSTED_ORG_ID=" + orgID +
-				",secret.HOSSTED_AUTH_TOKEN=" + JWT +
-				",cve.enable=" + cveEnabled +
-				",monitoring.enable=" + monitoringEnabled +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
-				",env.CONTEXT_NAME=" + clusterName,
+		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
+
+		//------------------------------ Add Events ----------------------------------
+		err = addEvents()
+		if err != nil {
+			return err
 		}
-		InstallChart("hossted-operator", "hossted", "hossted-operator", args)
 
 	}
 	return nil
@@ -343,7 +401,7 @@ func RepoAdd(name, url string) {
 	}
 
 	if f.Has(name) {
-		fmt.Printf("repository name (%s) already exists\n", name)
+		//fmt.Printf("repository name (%s) already exists\n", name)
 		return
 	}
 
@@ -387,26 +445,30 @@ func RepoUpdate() {
 		repos = append(repos, r)
 	}
 
-	fmt.Printf("Hang tight while we grab the latest from your chart repositories...\n")
+	//fmt.Printf("Hang tight while we grab the latest from your chart repositories...\n")
 	var wg sync.WaitGroup
 	for _, re := range repos {
 		wg.Add(1)
 		go func(re *repo.ChartRepository) {
 			defer wg.Done()
 			if _, err := re.DownloadIndexFile(); err != nil {
-				fmt.Printf("...Unable to get an update from the %q chart repository (%s):\n\t%s\n", re.Config.Name, re.Config.URL, err)
+				//	fmt.Printf("...Unable to get an update from the %q chart repository (%s):\n\t%s\n", re.Config.Name, re.Config.URL, err)
 			} else {
-				fmt.Printf("...Successfully got an update from the %q chart repository\n", re.Config.Name)
+				//	fmt.Printf("...Successfully got an update from the %q chart repository\n", re.Config.Name)
 			}
 		}(re)
 	}
 	wg.Wait()
-	fmt.Printf("Update Complete. ⎈ Happy Helming!⎈\n")
+	//fmt.Printf("Updated Helm Repos Complete. ⎈ Happy Helming!⎈\n")
 }
 
 func InstallChart(name, repo, chart string, args map[string]string) {
 	actionConfig := new(action.Configuration)
-	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), debug); err != nil {
+	clientGetter := genericclioptions.NewConfigFlags(false)
+	namespace := hosstedPlatformNamespace
+	clientGetter.Namespace = &namespace
+
+	if err := actionConfig.Init(clientGetter, hosstedPlatformNamespace, os.Getenv("HELM_DRIVER"), debug); err != nil {
 		log.Fatal(err)
 	}
 	client := action.NewInstall(actionConfig)
@@ -419,8 +481,6 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	debug("CHART PATH: %s\n", cp)
 
 	p := getter.All(settings)
 	valueOpts := &values.Options{}
@@ -467,14 +527,14 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 	}
 
 	client.ReleaseName = name
-	client.Namespace = "hossted-operator"
+	client.Namespace = hosstedPlatformNamespace
 	client.CreateNamespace = true
 	release, err := client.Run(chartRequested, vals)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("Release Name: [%s] Status [%s]", release.Name, release.Info.Status)
+	green := color.New(color.FgGreen).SprintFunc()
+	fmt.Printf("Release Name: [%s] Status [%s]", green(release.Name), green(release.Info.Status))
 
 }
 
@@ -487,8 +547,8 @@ func isChartInstallable(ch *chart.Chart) (bool, error) {
 }
 
 func debug(format string, v ...interface{}) {
-	format = fmt.Sprintf("[debug] %s\n", format)
-	log.Output(2, fmt.Sprintf(format, v...))
+	//format = fmt.Sprintf("[debug] %s\n", format)
+	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
 func removePrefix(text string) (string, error) {
@@ -503,4 +563,216 @@ func removePrefix(text string) (string, error) {
 	}
 
 	return text, nil
+}
+
+func addEvents() error {
+
+	if err := eventOperator(); err != nil {
+		return err
+	}
+	if err := eventCVE(); err != nil {
+		return err
+	}
+	if err := eventMonitoring(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func eventMonitoring() error {
+
+	releases, err := listReleases()
+	if err != nil {
+		return err
+	}
+
+	timeout := time.After(120 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Printf("%s Timeout reached. Hossted Platform Monitoring installation failed.\n", red("Error:"))
+			return nil
+		default:
+			for _, release := range releases {
+				if release.Name == grafanaAgentReleaseName {
+					green := color.New(color.FgGreen).SprintFunc()
+					fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
+					return nil
+				}
+			}
+			// Sleep for a short duration before checking again
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func eventCVE() error {
+	releases, err := listReleases()
+	if err != nil {
+		return err
+	}
+
+	timeout := time.After(120 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Printf("%s Timeout reached. Hossted Platform CVE installation failed.\n", red("Error:"))
+			return nil
+		default:
+			for _, release := range releases {
+				if release.Name == trivyOperatorReleaseName {
+					green := color.New(color.FgGreen).SprintFunc()
+					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
+					return nil
+				}
+			}
+			// Sleep for a short duration before checking again
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func eventOperator() error {
+	releases, err := listReleases()
+	if err != nil {
+		return err
+	}
+
+	timeout := time.After(120 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Printf("%s Timeout reached. Hossted Platform operator installation failed.\n", red("Error:"))
+			return nil
+		default:
+			for _, release := range releases {
+				if release.Name == hosstedOperatorReleaseName {
+					green := color.New(color.FgGreen).SprintFunc()
+					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
+					err := sendEvent("success", "Hossted Platform operator installed successfully")
+					if err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+			// Sleep for a short duration before checking again
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func listReleases() ([]*release.Release, error) {
+	actionConfig := new(action.Configuration)
+	clientGetter := genericclioptions.NewConfigFlags(false)
+	namespace := hosstedPlatformNamespace
+	clientGetter.Namespace = &namespace
+
+	if err := actionConfig.Init(clientGetter, hosstedPlatformNamespace, os.Getenv("HELM_DRIVER"), debug); err != nil {
+		log.Fatal(err)
+	}
+
+	client := action.NewList(actionConfig)
+	client.Deployed = true
+
+	return client.Run()
+}
+
+func getKubeClient() *dynamic.DynamicClient {
+
+	var conf *rest.Config
+	var err error
+
+	// for running locally
+
+	var kubeconfig string
+	path, ok := os.LookupEnv("KUBECONFIG")
+	if ok {
+		kubeconfig = path
+	} else {
+		kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	}
+
+	conf, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	dynClient, err := dynamic.NewForConfig(conf)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return dynClient
+}
+
+var hpGVK = schema.GroupVersionResource{
+	Group:    "hossted.com",
+	Version:  "v1",
+	Resource: "hosstedprojects",
+}
+
+func sendEvent(eventType, message string) error {
+	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
+	url := os.Getenv("HOSSTED_API_URL") + "/statuses"
+
+	type event struct {
+		WareType string `json:"ware_type"`
+		Type     string `json:"type"`
+		UUID     string `json:"uuid"`
+		Message  string `json:"message"`
+	}
+
+	cs := getKubeClient()
+	hp, err := cs.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	clusterUUID, _, _ := unstructured.NestedString(hp.Object, "status", "clusterUUID")
+
+	newEvent := event{
+		WareType: "k8s",
+		Type:     eventType,
+		UUID:     clusterUUID,
+		Message:  message,
+	}
+
+	eventByte, err := json.Marshal(newEvent)
+	if err != nil {
+		return err
+	}
+	// Create HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(eventByte)))
+	if err != nil {
+		return err
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add Authorization header with Basic authentication
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
+	// Perform the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	err = saveResponse(body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

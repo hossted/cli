@@ -30,7 +30,7 @@ func postRequest(email string) error {
 
 	payloadStr := fmt.Sprintf(`{"email": "%s"}`, email)
 
-	url := os.Getenv("HOSSTED_API_URL")
+	url := os.Getenv("HOSSTED_API_URL") + "/cli/login"
 
 	// Create HTTP request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
