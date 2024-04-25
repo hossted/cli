@@ -361,6 +361,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 			return err
 		}
 
+		fmt.Println(green("Success: "), "Hossted Platfrom components deployed")
 	}
 	return nil
 }
@@ -581,33 +582,43 @@ func addEvents() error {
 }
 
 func eventMonitoring() error {
+	retries := 60
+	for i := 0; i < retries; i++ {
+		err := checkMonitoringStatus()
+		if err == nil {
+			green := color.New(color.FgGreen).SprintFunc()
+			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
+			err := sendEvent("success", "Hossted Platform Monitoring started successfully")
+			if err != nil {
+				return err
+			}
+			return nil
+		}
 
+		// If not successful, wait for a short duration before retrying
+		yellow := color.New(color.FgYellow).SprintFunc()
+		fmt.Println(yellow("Info:"), "Waiting Hosted Platform Monitoring Agents to get into running state.")
+		time.Sleep(3 * time.Second)
+	}
+
+	red := color.New(color.FgRed).SprintFunc()
+	fmt.Printf("%s Timeout reached. Hossted Platform Monitoring installation failed.\n", red("Error:"))
+	return fmt.Errorf("Hossted Platform Monitoring installation failed after %d retries", retries)
+}
+
+func checkMonitoringStatus() error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
 	}
 
-	timeout := time.After(180 * time.Second)
-	for {
-		select {
-		case <-timeout:
-			red := color.New(color.FgRed).SprintFunc()
-			fmt.Printf("%s Timeout reached. Hossted Platform Monitoring installation failed.\n", red("Error:"))
+	for _, release := range releases {
+		if release.Name == grafanaAgentReleaseName {
 			return nil
-		default:
-			for _, release := range releases {
-				if release.Name == grafanaAgentReleaseName {
-					green := color.New(color.FgGreen).SprintFunc()
-					fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-					return nil
-				}
-			}
-			// Sleep for a short duration before checking again
-			yellow := color.New(color.FgYellow).SprintFunc()
-			fmt.Println(yellow("Waiting Hosted Platform Monitoring Agents to get into running state."))
-			time.Sleep(3 * time.Second)
 		}
 	}
+
+	return fmt.Errorf("Grafana Agent release not found")
 }
 
 func eventCVE() error {
@@ -628,6 +639,10 @@ func eventCVE() error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
+					err := sendEvent("success", "Hossted Platform CVE Scan started successfully")
+					if err != nil {
+						return err
+					}
 					return nil
 				}
 			}
@@ -734,7 +749,6 @@ func sendEvent(eventType, message string) error {
 		return err
 	}
 
-	fmt.Println("ClusterUUID ", clusterUUID)
 	newEvent := event{
 		WareType: "k8s",
 		Type:     eventType,
@@ -766,12 +780,9 @@ func sendEvent(eventType, message string) error {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
 	}
-
-	fmt.Println(string(body))
 
 	return nil
 }
@@ -780,17 +791,14 @@ func getClusterUUID() (string, error) {
 	var clusterUUID string
 	var err error
 	yellow := color.New(color.FgYellow).SprintFunc()
-	green := color.New(color.FgGreen).SprintFunc()
 
 	// Retry for 120 seconds
 	for i := 0; i < 120; i++ {
-		fmt.Println(yellow("Waiting for Hossted Operator to get into running state"))
 		clusterUUID, err = getClusterUUIDFromK8s()
 		if err == nil {
-			fmt.Println(green("Success:"), "cluster registered successfully")
 			return clusterUUID, nil
 		}
-
+		fmt.Println(yellow("Info:"), "Waiting for Hossted Operator to get into running state")
 		time.Sleep(4 * time.Second) // Wait for 1 second before retrying
 	}
 
