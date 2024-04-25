@@ -57,6 +57,10 @@ func postRequest(email string) error {
 		return err
 	}
 
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Registration Failed, Error %s", string(body))
+	}
+
 	err = saveResponse(body)
 	if err != nil {
 		return err

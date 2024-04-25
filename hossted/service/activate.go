@@ -295,7 +295,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		}
 
 		if cveEnable == "Yes" {
-
+			cveEnabled = "true"
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
 
 			RepoAdd("aqua", "https://aquasecurity.github.io/helm-charts/")
@@ -326,6 +326,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		RepoAdd("hossted", "https://charts.hossted.com")
 		RepoUpdate()
 
+		fmt.Println(loggingEnabled)
 		//------------------------------ Helm Install Chart ----------------------------------
 		args := map[string]string{
 			"set": "env.EMAIL_ID=" + emailID +
@@ -534,7 +535,7 @@ func InstallChart(name, repo, chart string, args map[string]string) {
 		log.Fatal(err)
 	}
 	green := color.New(color.FgGreen).SprintFunc()
-	fmt.Printf("Release Name: [%s] Status [%s]", green(release.Name), green(release.Info.Status))
+	fmt.Printf("Release Name: [%s] Status [%s]\n", green(release.Name), green(release.Info.Status))
 
 }
 
@@ -726,13 +727,12 @@ func sendEvent(eventType, message string) error {
 		Message  string `json:"message"`
 	}
 
-	cs := getKubeClient()
-	hp, err := cs.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	clusterUUID, err := getClusterUUID()
 	if err != nil {
 		return err
 	}
-	clusterUUID, _, _ := unstructured.NestedString(hp.Object, "status", "clusterUUID")
 
+	fmt.Println("ClusterUUID ", clusterUUID)
 	newEvent := event{
 		WareType: "k8s",
 		Type:     eventType,
@@ -769,10 +769,38 @@ func sendEvent(eventType, message string) error {
 		return err
 	}
 
-	err = saveResponse(body)
-	if err != nil {
-		return err
-	}
+	fmt.Println(string(body))
 
 	return nil
+}
+
+func getClusterUUID() (string, error) {
+	var clusterUUID string
+	var err error
+
+	// Retry for 120 seconds
+	for i := 0; i < 120; i++ {
+		fmt.Println("Waiting for Hossted Operator to get running")
+		clusterUUID, err = getClusterUUIDFromK8s()
+		if err == nil {
+			return clusterUUID, nil
+		}
+
+		time.Sleep(3 * time.Second) // Wait for 1 second before retrying
+	}
+
+	return "", fmt.Errorf("Failed to get ClusterUUID after 120 seconds: %v", err)
+}
+
+func getClusterUUIDFromK8s() (string, error) {
+	cs := getKubeClient()
+	hp, err := cs.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	clusterUUID, _, err := unstructured.NestedString(hp.Object, "status", "clusterUUID")
+	if err != nil || clusterUUID == "" {
+		return "", fmt.Errorf("ClusterUUID is nil, func errored")
+	}
+	return clusterUUID, nil
 }
