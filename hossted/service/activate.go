@@ -72,7 +72,12 @@ func ActivateK8s() error {
 	if err != nil {
 		return err
 	}
+	// validate auth token 
 
+	err = validateToken(resp)
+	if err != nil {
+		return err
+	}
 	// handle usecases for orgID selection
 	orgID, err := useCases(resp)
 	if err != nil {
@@ -816,4 +821,59 @@ func getClusterUUIDFromK8s() (string, error) {
 		return "", fmt.Errorf("ClusterUUID is nil, func errored")
 	}
 	return clusterUUID, nil
+}
+
+func validateToken(res response) error {
+
+	type validationResp struct{
+		Success bool `json:"success"` 
+		Message string `json:"message"`
+	}
+
+	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
+	url := os.Getenv("HOSSTED_API_URL") + "/cli/bearer"
+
+	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
+	// Create HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
+	if err != nil {
+		return err
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add Authorization header with Basic authentication
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
+
+	// Perform the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	// check for non 200 status
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Token Validation Failed, Error %s", string(body))
+	}
+
+
+	var tresp validationResp
+	err = json.Unmarshal(body, &tresp)
+	if err != nil {
+		return err
+	}
+	if !tresp.Success {
+		return fmt.Errorf("Auth token is invalid, Please login again")
+	}
+
+	return nil
+
 }
