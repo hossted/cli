@@ -72,7 +72,7 @@ func ActivateK8s() error {
 	if err != nil {
 		return err
 	}
-	// validate auth token 
+	// validate auth token
 
 	err = validateToken(resp)
 	if err != nil {
@@ -320,7 +320,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 			}
 
 			InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
-				"set": "operator.scannerReportTTL=,operator.scanJobTimeout=30m",
+				"set": "operator.scannerReportTTL=,operator.scanJobTimeout=30m=,trivy.command=filesystem=,trivyOperator.scanJobPodTemplateContainerSecurityContext.runAsUser=0",
 			})
 
 			cveEnabled = "true"
@@ -825,8 +825,8 @@ func getClusterUUIDFromK8s() (string, error) {
 
 func validateToken(res response) error {
 
-	type validationResp struct{
-		Success bool `json:"success"` 
+	type validationResp struct {
+		Success bool   `json:"success"`
 		Message string `json:"message"`
 	}
 
@@ -863,7 +863,6 @@ func validateToken(res response) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Token Validation Failed, Error %s", string(body))
 	}
-
 
 	var tresp validationResp
 	err = json.Unmarshal(body, &tresp)
