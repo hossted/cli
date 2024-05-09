@@ -320,7 +320,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 			}
 
 			InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
-				"set": "operator.scannerReportTTL=,operator.scanJobTimeout=30m,trivy.command=filesystem,trivyOperator.scanJobPodTemplateContainerSecurityContext.runAsUser=0",
+				"set": "trivy.severity=HIGH\\,CRITICAL,operator.scannerReportTTL=,operator.scanJobTimeout=30m,trivy.command=filesystem,trivyOperator.scanJobPodTemplateContainerSecurityContext.runAsUser=0,operator.scanJobsConcurrentLimit=10",
 			})
 
 			cveEnabled = "true"
