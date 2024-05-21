@@ -341,7 +341,12 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
 				",logging.enable=" + loggingEnabled +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
+				",env.LOKI_URL=" + os.Getenv("LOKI_URL") +
+				",env.LOKI_USERNAME=" + os.Getenv("LOKI_USERNAME") +
+				",env.LOKI_PASSWORD=" + os.Getenv("LOKI_PASSWORD") +
+				",env.MIMIR_URL=" + os.Getenv("MIMIR_URL") +
+				",env.MIMIR_USERNAME=" + os.Getenv("MIMIR_USERNAME") +
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +				
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
