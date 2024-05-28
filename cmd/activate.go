@@ -32,9 +32,15 @@ hossted activate
 				fmt.Println(err)
 			}
 			return
-		} else {
-			hossted.SetUpdates(ENVIRONMENT, true)
-			hossted.SetMonitoring(ENVIRONMENT, true)
+		} else if activate_type == "docker" {
+			// hossted.SetUpdates(ENVIRONMENT, true)
+			// hossted.SetMonitoring(ENVIRONMENT, true)			
+			err := service.ActivateCompose()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+
 		}
 
 	},
