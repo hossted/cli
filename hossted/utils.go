@@ -568,6 +568,7 @@ func GetDockersInfo() (string, error) {
 
 	return string(dockers), nil
 }
+
 func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (activityLogResponse, error) {
 
 	var response activityLogResponse

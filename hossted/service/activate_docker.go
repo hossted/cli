@@ -3,7 +3,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
 package service
 
-type ClusterInfo struct {
+type VmInfo struct {
 	ClusterUUID string `json:"clusterUUID"`
 	EmailID     string `json:"email_id,omitempty"`
 }
@@ -18,8 +18,8 @@ type ContainerStatus struct {
 }
 
 type AppInfo struct {
-	ClusterInfo   ClusterInfo     `json:"container_status"`
-	ContainerStatus []ContainerStatus `json:""`
+	VmInfo          VmInfo            `json:"vm_info"`
+	ContainerStatus []ContainerStatus `json:"container_status"`
 }
 
 func ActivateCompose() error {

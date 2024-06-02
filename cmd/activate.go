@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/hossted/cli/hossted"
 	"github.com/hossted/cli/hossted/service"
 	"github.com/spf13/cobra"
 )
@@ -32,9 +31,9 @@ hossted activate
 				fmt.Println(err)
 			}
 			return
-		} else if activate_type == "docker" {
+		} else if activate_type == "compose" {
 			// hossted.SetUpdates(ENVIRONMENT, true)
-			// hossted.SetMonitoring(ENVIRONMENT, true)			
+			// hossted.SetMonitoring(ENVIRONMENT, true)
 			err := service.ActivateCompose()
 			if err != nil {
 				fmt.Println(err)

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -71,7 +72,7 @@ func getComposeStatusFileJson(filePath string) (AppInfo, error) {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Printf("Error reading file: %s\n", err)
 		return appData, err
@@ -128,7 +129,7 @@ func updateUUID(filePath string, email string) error {
 	clusterUUID := "D-" + uuid.NewString()
 	fmt.Println("Generating UUID for cluster: ", clusterUUID)
 	info := AppInfo{
-		ClusterInfo: ClusterInfo{
+		VmInfo: VmInfo{
 			ClusterUUID: clusterUUID,
 			EmailID:     email,
 		},
@@ -148,8 +149,8 @@ func checkUUID(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Registering cluster with UUID: ", appData.ClusterInfo.ClusterUUID)
-	return appData.ClusterInfo.ClusterUUID, nil
+	fmt.Println("Registering cluster with UUID: ", appData.VmInfo.ClusterUUID)
+	return appData.VmInfo.ClusterUUID, nil
 }
 
 func setAppStatus(filePath string) error {
