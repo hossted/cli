@@ -3,23 +3,34 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
 package service
 
-type VmInfo struct {
-	ClusterUUID string `json:"clusterUUID"`
-	EmailID     string `json:"email_id,omitempty"`
+type OsInfo struct {
+	OsUUID               string `yaml:"osUUID"`
+	EmailID              string `yaml:"emailId,omitempty"`
+	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
+}
+
+type AppRequest struct {
+	AppAPIInfo AppAPIInfo `json:"app_api_info"`
+	AppInfo    AppInfo    `json:"app_info"`
 }
 
 // AppAPIInfo contains basic information about the application API.
-type ContainerStatus struct {
-	Name       string `json:"name,omitempty"`
-	AppUUID    string `json:"appUUID,omitempty"`
-	Status     string `json:"status,omitempty"`
-	AppVersion string `json:"appVersion,omitempty"`
-	Image      string `json:"image,omitempty"`
+type AppAPIInfo struct {
+	AppUUID string `json:"app_uuid,omitempty"`
+	OsUUID  string `json:"os_uuid,omitempty"`
+	EmailID string `json:"email_id,omitempty"`
 }
 
 type AppInfo struct {
-	VmInfo          VmInfo            `json:"vm_info"`
-	ContainerStatus []ContainerStatus `json:"container_status"`
+	ComposeFile   string          `json:"compose_file,omitempty"`
+	ContainerInfo []ContainerInfo `json:"container_info,omitempty"`
+}
+
+type ContainerInfo struct {
+	Name       string `json:"name,omitempty"`
+	Status     string `json:"status,omitempty"`
+	AppVersion string `json:"app_version,omitempty"`
+	Image      string `json:"image,omitempty"`
 }
 
 func ActivateCompose() error {
@@ -112,7 +123,7 @@ func ActivateCompose() error {
 // func updateUUID(filepath, email string) error {
 // 	clusterUUID := "D-" + uuid.NewString()
 // 	fmt.Println("Generating Cluster UUID", clusterUUID)
-// 	info := AppInfo{
+// 	info := AppsInfo{
 // 		ClusterInfo: ClusterInfo{
 // 			ClusterUUID: clusterUUID,
 // 			EmailID:     email,
@@ -150,7 +161,7 @@ func ActivateCompose() error {
 // 		fmt.Printf("Error reading file: %s\n", err)
 // 		return "", err
 // 	}
-// 	var appData AppInfo
+// 	var appData AppsInfo
 // 	err = json.Unmarshal(data, &appData)
 // 	if err != nil {
 // 		fmt.Printf("Error unmarshaling JSON: %s\n", err)

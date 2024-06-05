@@ -8,14 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/docker/docker/api/types"
-
-	// "github.com/docker/docker/api/types"
+	"gopkg.in/yaml.v2"
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -28,17 +27,27 @@ func Reconcile() error {
 		return err
 	}
 
-	filePath, err := getComposeStatusFilePath()
+	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
 		return err
 	}
 
-	err = setClusterUUID(emailsID, filePath)
+	appFilePath, err := getComposeFilePath("compose-request.json")
 	if err != nil {
 		return err
 	}
 
-	err = setAppStatus(filePath)
+	osUuid, err := setClusterUUID(emailsID, osFilePath)
+	if err != nil {
+		return err
+	}
+
+	list, err := listAllContainers()
+	if err != nil {
+		return err
+	}
+
+	err = setComposeRequest(appFilePath, list, osUuid, emailsID)
 	if err != nil {
 		return err
 	}
@@ -47,127 +56,132 @@ func Reconcile() error {
 
 }
 
-func getComposeStatusFilePath() (string, error) {
+func getComposeFilePath(filename string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("Error getting home directory: %s\n", err)
 		return "", err
 	}
 
-	// Construct the full path to compose-status.json
-	filePath := filepath.Join(homeDir, ".hossted", "compose-status.json")
+	// Construct the full path to file
+	filePath := filepath.Join(homeDir, ".hossted", filename)
 	return filePath, nil
 }
 
-func getComposeStatusFileJson(filePath string) (AppInfo, error) {
-	var appData AppInfo
+func readFile(filePath string) ([]byte, error) {
+	var data []byte
 	file, err := os.Open(filePath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Printf("File %s does not exist.\n", filePath)
-		} else {
-			fmt.Printf("Error opening file: %s\n", err)
-		}
-		return appData, err
+		return data, err
 	}
 	defer file.Close()
 
-	data, err := io.ReadAll(file)
+	data, err = io.ReadAll(file)
 	if err != nil {
 		fmt.Printf("Error reading file: %s\n", err)
-		return appData, err
+		return data, err
 	}
-
-	err = json.Unmarshal(data, &appData)
-	if err != nil {
-		fmt.Printf("Error unmarshaling JSON: %s\n", err)
-		return appData, err
-	}
-	return appData, nil
+	return data, nil
 }
 
-func writeComposeStatusFileJson(filePath string, appData AppInfo) error {
-	jsonData, err := json.MarshalIndent(appData, "", "    ")
+func writeFile(filePath string, data []byte) error {
+	// Create or open the file
+	file, err := os.Create(filePath)
 	if err != nil {
-		fmt.Printf("Write compose-status.json - error marshaling JSON: %s\n", err)
+		fmt.Printf("error creating %s file: %s\n", filePath, err)
+		return err
+	}
+	defer file.Close()
+
+	// Write the data to the file
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Printf("error writing %s file: %s\n", filePath, err)
 		return err
 	}
 
-	// Write the JSON data to the file
-	err = ioutil.WriteFile(filePath, jsonData, 0644)
-	if err != nil {
-		fmt.Printf("Write compose-status.json - error writing JSON: %s\n", err)
-		return err
-	}
 	return nil
+
 }
 
-func setClusterUUID(email string, filePath string) error {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		err = updateUUID(filePath, email)
+func setClusterUUID(email string, osFilePath string) (string, error) {
+	var uuid string
+	if _, err := os.Stat(osFilePath); os.IsNotExist(err) {
+		uuid, err = updateUUID(osFilePath, email)
 		if err != nil {
-			return err
+			return uuid, err
 		}
 	} else if err != nil {
-		return err
+		return uuid, err
 	} else {
-		uuid, err := checkUUID(filePath)
+		uuid, err := checkUUID(osFilePath)
 		if err != nil {
-			return err
+			return uuid, err
 		}
 		if uuid == "" {
-			err = updateUUID(filePath, email)
+			uuid, err = updateUUID(osFilePath, email)
 			if err != nil {
-				return err
+				return uuid, err
 			}
 		}
 	}
-	return nil
+	return uuid, nil
 }
 
-func updateUUID(filePath string, email string) error {
-	clusterUUID := "D-" + uuid.NewString()
-	fmt.Println("Generating UUID for cluster: ", clusterUUID)
-	info := AppInfo{
-		VmInfo: VmInfo{
-			ClusterUUID: clusterUUID,
-			EmailID:     email,
-		},
-		ContainerStatus: []ContainerStatus{},
+func updateUUID(osFilePath string, email string) (string, error) {
+	osUUID := "D-" + uuid.NewString()
+	fmt.Println("Generating UUID for cluster: ", osUUID)
+	info := OsInfo{
+		OsUUID:  osUUID,
+		EmailID: email,
 	}
 
-	err := writeComposeStatusFileJson(filePath, info)
+	yamlData, err := yaml.Marshal(info)
 	if err != nil {
-		return err
+		fmt.Printf("error in YAML marshaling: %s\n", err)
+		return osUUID, err
 	}
 
-	return nil
+	err = writeFile(osFilePath, yamlData)
+	if err != nil {
+		return osUUID, err
+	}
+
+	return osUUID, nil
 }
 
-func checkUUID(filePath string) (string, error) {
-	appData, err := getComposeStatusFileJson(filePath)
+func checkUUID(osFilePath string) (string, error) {
+	var osData OsInfo
+	data, err := readFile(osFilePath)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Registering cluster with UUID: ", appData.VmInfo.ClusterUUID)
-	return appData.VmInfo.ClusterUUID, nil
+
+	err = yaml.Unmarshal(data, &osData)
+	if err != nil {
+		fmt.Printf("Error unmarshaling Yaml: %s\n", err)
+		return "", err
+	}
+
+	fmt.Println("Registering cluster with UUID: ", osData.OsUUID)
+	return osData.OsUUID, nil
 }
 
-func setAppStatus(filePath string) error {
-	// list the running containers
-	list, err := listContainers()
+func setComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) error {
+	// prepare appsInfo with updated container status
+	appRequest, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
 	if err != nil {
 		return err
 	}
 
-	// prepare appInfo with updated container status
-	appInfo, err := prepareContainerStatus(filePath, list)
+	jsonData, err := json.MarshalIndent(appRequest, "", "    ")
 	if err != nil {
+		fmt.Printf("error marshaling JSON: %s\n", err)
 		return err
 	}
 
 	// write compose status file
-	err = writeComposeStatusFileJson(filePath, appInfo)
+	err = writeFile(appFilePath, jsonData)
 	if err != nil {
 		return err
 	}
@@ -175,7 +189,7 @@ func setAppStatus(filePath string) error {
 	return nil
 }
 
-func listContainers() ([]types.Container, error) {
+func listAllContainers() ([]types.Container, error) {
 	// Create a Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -198,44 +212,170 @@ func listContainers() ([]types.Container, error) {
 	return containers, nil
 }
 
-func prepareContainerStatus(filePath string, containerList []types.Container) (AppInfo, error) {
-	var containerStatusList []ContainerStatus
-	appData, err := getComposeStatusFileJson(filePath)
+func listProjectContainers(projectName string) ([]types.Container, error) {
+	// Create a Docker client
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return appData, err
+		return nil, err
 	}
+	// Define context
+	ctx := context.Background()
 
-	// Create a map for existing containers
-	existingContainer := make(map[string]ContainerStatus)
-	for _, status := range appData.ContainerStatus {
-		existingContainer[status.Name] = status
+	// Define filters to list only running containers
+	filter := filters.NewArgs()
+	filter.Add("label", "com.docker.compose.project="+projectName)
+	filter.Add("label", "com.docker.compose.config-hash")
+	filter.Add("label", "com.docker.compose.project.config_files")
+
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true, Filters: filter})
+
+	if err != nil {
+		return nil, err
 	}
+	return containers, nil
+}
+
+func getUniqueComposeProjects(containerList []types.Container) (map[string]bool, error) {
+	uniqueProjects := make(map[string]bool)
 
 	for _, container := range containerList {
-		containerName := container.Names[0]
-		if strings.HasPrefix(container.Names[0], "/") {
-			containerName = container.Names[0][1:]
-		}
-
-		if status, found := existingContainer[containerName]; found {
-			fmt.Println("container already exists: ", status)
-			// Update existing status
-			status.Status = container.State
-			containerStatusList = append(containerStatusList, status)
-		} else {
-			// Add new container and its status
-			appUUID := "A-" + uuid.NewString()
-			status = ContainerStatus{
-				AppUUID: appUUID,
-				Name:    containerName,
-				Image:   container.Image,
-				Status:  container.State,
-			}
-			fmt.Println("adding new container: ", status)
-			containerStatusList = append(containerStatusList, status)
+		if project, ok := container.Labels["com.docker.compose.project"]; ok {
+			uniqueProjects[project] = true
 		}
 	}
 
-	appData.ContainerStatus = containerStatusList
-	return appData, nil
+	return uniqueProjects, nil
+}
+
+func prepareComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) (map[string]AppRequest, error) {
+	var appsData map[string]AppRequest
+
+	if _, err := os.Stat(appFilePath); os.IsNotExist(err) {
+		appsData = make(map[string]AppRequest)
+	} else {
+		data, err := readFile(appFilePath)
+		if err != nil {
+			fmt.Printf("Error in reading %s file: %s\n", appFilePath, err)
+			return appsData, err
+		}
+		err = json.Unmarshal(data, &appsData)
+		if err != nil {
+			fmt.Printf("Error in JSON unmarshaling %s file: %s\n", appFilePath, err)
+			return appsData, err
+		}
+	}
+
+	uniqueProjects, err := getUniqueComposeProjects(containerList)
+	if err != nil {
+		return appsData, err
+	}
+
+	// Create a slice of existing apps
+	existingApps := make(map[string]bool)
+	for app := range appsData {
+		existingApps[app] = true
+	}
+
+	for project := range uniqueProjects {
+		var composeFileContent string
+		list, err := listProjectContainers(project)
+		if err != nil {
+			return appsData, err
+		}
+
+		// Check if project is present in the existingApps
+		if found := existingApps[project]; found {
+			// create only AppInfo(compose request)
+			var newComposeRequest AppInfo
+			var containersInfo []ContainerInfo
+
+			for i, container := range list {
+				if i == 0 {
+					// Extract compose file content
+					if _, ok := container.Labels["com.docker.compose.project.config_files"]; ok {
+						composeFiles := container.Labels["com.docker.compose.project.config_files"]
+						composeFilePath := strings.Split(composeFiles, ",")[0]
+						data, err := readFile(composeFilePath)
+						if err != nil {
+							fmt.Printf("Error in reading compose file %s: %s\n", composeFilePath, err)
+						}
+						composeFileContent = string(data)
+					}
+				}
+
+				name := container.Names[0]
+				if strings.HasPrefix(container.Names[0], "/") {
+					name = container.Names[0][1:]
+				}
+				containerInfo := ContainerInfo{
+					Name:   name,
+					Status: container.State,
+					Image:  container.Image,
+				}
+				containersInfo = append(containersInfo, containerInfo)
+			}
+
+			newComposeRequest.ContainerInfo = containersInfo
+			newComposeRequest.ComposeFile = composeFileContent
+
+			// get previous compose request
+			prevComposeRequest := appsData[project].AppInfo
+
+			//compare newComposeRequest and prevComposeRequest
+			res := reflect.DeepEqual(prevComposeRequest, newComposeRequest)
+			if !res {
+				appsData[project] = AppRequest{
+					AppAPIInfo: appsData[project].AppAPIInfo,
+					AppInfo:    newComposeRequest,
+				}
+			}
+		} else {
+			// create AppAPIInfo
+			appUUID := "A-" + uuid.NewString()
+			appAPIInfo := AppAPIInfo{
+				AppUUID: appUUID,
+				OsUUID:  osUuid,
+				EmailID: email,
+			}
+
+			// create AppInfo(compose request)
+			var newComposeRequest AppInfo
+			var containersInfo []ContainerInfo
+
+			for i, container := range list {
+				if i == 0 {
+					// Extract compose file content
+					if _, ok := container.Labels["com.docker.compose.project.config_files"]; ok {
+						composeFiles := container.Labels["com.docker.compose.project.config_files"]
+						composeFilePath := strings.Split(composeFiles, ",")[0]
+						data, err := readFile(composeFilePath)
+						if err != nil {
+							fmt.Printf("Error in reading compose file %s: %s\n", composeFilePath, err)
+						}
+						composeFileContent = string(data)
+					}
+				}
+
+				name := container.Names[0]
+				if strings.HasPrefix(container.Names[0], "/") {
+					name = container.Names[0][1:]
+				}
+				containerInfo := ContainerInfo{
+					Name:   name,
+					Status: container.State,
+					Image:  container.Image,
+				}
+				containersInfo = append(containersInfo, containerInfo)
+			}
+
+			newComposeRequest.ContainerInfo = containersInfo
+			newComposeRequest.ComposeFile = composeFileContent
+			appsData[project] = AppRequest{
+				AppAPIInfo: appAPIInfo,
+				AppInfo:    newComposeRequest,
+			}
+		}
+	}
+
+	return appsData, nil
 }
