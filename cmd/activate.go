@@ -32,6 +32,13 @@ hossted activate
 				fmt.Println(err)
 			}
 			return
+
+		} else if activate_type == "k8s-standby" {
+			err := service.InstallOperatorStandbymode()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
 		} else {
 			hossted.SetUpdates(ENVIRONMENT, true)
 			hossted.SetMonitoring(ENVIRONMENT, true)
