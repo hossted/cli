@@ -65,7 +65,7 @@ func ActivateCompose() error {
 	// )
 	// ADD MONITORING
 
-	err = Reconcile()
+	err = reconcileCompose()
 	if err != nil {
 		return err
 	}

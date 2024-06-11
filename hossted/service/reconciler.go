@@ -4,25 +4,34 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
-	"gopkg.in/yaml.v2"
-
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	"gopkg.in/yaml.v2"
 )
 
-func Reconcile() error {
+func reconcileCompose() error {
 	emailsID, err := getEmail()
+	if err != nil {
+		return err
+	}
+
+	resp, err := getResponse()
 	if err != nil {
 		return err
 	}
@@ -47,7 +56,12 @@ func Reconcile() error {
 		return err
 	}
 
-	err = setComposeRequest(appFilePath, list, osUuid, emailsID)
+	err = writeComposeRequest2File(appFilePath, list, osUuid, emailsID)
+	if err != nil {
+		return err
+	}
+
+	err = sendComposeInfo(appFilePath, resp.Token)
 	if err != nil {
 		return err
 	}
@@ -114,7 +128,7 @@ func setClusterUUID(email string, osFilePath string) (string, error) {
 	} else if err != nil {
 		return uuid, err
 	} else {
-		uuid, err := checkUUID(osFilePath)
+		uuid, err = checkUUID(osFilePath)
 		if err != nil {
 			return uuid, err
 		}
@@ -167,7 +181,7 @@ func checkUUID(osFilePath string) (string, error) {
 	return osData.OsUUID, nil
 }
 
-func setComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) error {
+func writeComposeRequest2File(appFilePath string, containerList []types.Container, osUuid string, email string) error {
 	// prepare appsInfo with updated container status
 	appRequest, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
 	if err != nil {
@@ -185,6 +199,150 @@ func setComposeRequest(appFilePath string, containerList []types.Container, osUu
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+type optionsState struct {
+	Monitoring bool `json:"monitoring"`
+	Logging    bool `json:"logging"`
+	CVEScan    bool `json:"cve_scan"`
+}
+
+type request struct {
+	UUID         string       `json:"uuid"`
+	OsUUID       string       `json:"osuuid"`
+	Email        string       `json:"email"`
+	Type         string       `json:"type"`
+	Product      string       `json:"product"`
+	CPUNum       string       `json:"cpunum"`
+	Memory       string       `json:"memory"`
+	OptionsState optionsState `json:"options_state"`
+	ComposeFile  string       `json:"compose_file"`
+}
+
+func sendComposeInfo(appFilePath, token string) error {
+	composeInfo, err := readFile(appFilePath)
+	if err != nil {
+		return err
+	}
+
+	composeUrl := os.Getenv("HOSSTED_API_URL") + "/compose/hosts"
+	containersUrl := os.Getenv("HOSSTED_API_URL") + "/compose/containers"
+
+	var data map[string]AppRequest
+	err = json.Unmarshal(composeInfo, &data)
+	if err != nil {
+		return err
+	}
+
+	cpu, err := getCPUUsage()
+	if err != nil {
+		return err
+	}
+	mem, err := getMemoryUsage()
+	if err != nil {
+		return err
+	}
+	for appName, compose := range data {
+		newReq := request{
+			UUID:    compose.AppAPIInfo.AppUUID,
+			OsUUID:  compose.AppAPIInfo.OsUUID,
+			Email:   compose.AppAPIInfo.EmailID,
+			Type:    "compose",
+			Product: appName,
+			CPUNum:  cpu,
+			Memory:  mem,
+			OptionsState: optionsState{
+				Monitoring: true,
+				Logging:    true,
+				CVEScan:    true,
+			},
+			ComposeFile: compose.AppInfo.ComposeFile,
+		}
+
+		body, err := json.Marshal(newReq)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest("POST", composeUrl, bytes.NewBuffer([]byte(body)))
+		if err != nil {
+			return err
+		}
+
+		// Set headers
+		req.Header.Set("Content-Type", "application/json")
+
+		// Add Authorization header with Basic authentication
+		req.Header.Set("Authorization", "Bearer "+token)
+		// Perform the request
+		client := http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
+		}
+
+		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
+	}
+
+	///////////////////////////////////////////
+	// body, err := json.Marshal(composeInfo)
+	// if err != nil {
+	// 	return err
+	// }
+
+	req, err := http.NewRequest("POST", containersUrl, bytes.NewBuffer([]byte(composeInfo)))
+	if err != nil {
+		return err
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add Authorization header with Basic authentication
+	req.Header.Set("Authorization", "Bearer "+token)
+	// Perform the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	// ApiResponse represents the structure of the JSON response from the API
+	type ApiResponse struct {
+		Success bool        `json:"success"`
+		Message interface{} `json:"message"`
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var apiResponse ApiResponse
+	fmt.Println(string(respBody))
+	if err := json.Unmarshal(respBody, &apiResponse); err != nil {
+		return err
+	}
+
+	if !apiResponse.Success {
+		return fmt.Errorf("API response indicates failure: %v\n", apiResponse)
+	}
+
+	fmt.Printf("Successfully sent container info request")
 
 	return nil
 }
@@ -378,4 +536,29 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 	}
 
 	return appsData, nil
+}
+
+// GetCPUUsage returns the average CPU usage percentage as a formatted string
+func getCPUUsage() (string, error) {
+	percentages, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		return "", err
+	}
+
+	if len(percentages) > 0 {
+		return fmt.Sprintf("%.2f%%", percentages[0]), nil
+	}
+
+	return "", fmt.Errorf("no CPU usage data available")
+}
+
+// GetMemoryUsage returns the memory usage statistics as a formatted string
+func getMemoryUsage() (string, error) {
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return "", err
+	}
+
+	memUsage := fmt.Sprintf("%.2f%%", vmStat.UsedPercent)
+	return memUsage, nil
 }
