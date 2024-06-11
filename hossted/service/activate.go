@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -61,7 +62,6 @@ type response struct {
 
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s() error {
-
 	emailsID, err := getEmail()
 	if err != nil {
 		return err
@@ -80,6 +80,7 @@ func ActivateK8s() error {
 	}
 	// handle usecases for orgID selection
 	orgID, err := useCases(resp)
+
 	if err != nil {
 		return err
 	}
@@ -92,6 +93,36 @@ func ActivateK8s() error {
 
 	fmt.Println("Your cluster name is ", clusterName)
 
+	isStandby, err := isStandbyMode()
+	if err != nil {
+		return err
+	}
+
+	if isStandby {
+		fmt.Println("Standby mode detected")
+		clientset := getKubeClient()
+		fmt.Println("Updating deployment....")
+		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator-controller-manager", emailsID, clusterName, orgID)
+		if err != nil {
+			return err
+		}
+
+		config, err := readConfig()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Updating secret....")
+		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator-secret", "AUTH_TOKEN", config.Token)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Secret updated")
+		return nil
+		// -------------------------------------- To be continued --------------------------------------
+	}
+
 	err = deployOperator(clusterName, emailsID, orgID, resp.Token)
 	if err != nil {
 		return err
@@ -100,23 +131,76 @@ func ActivateK8s() error {
 	return nil
 }
 
+func isStandbyMode() (bool, error) {
+	isStandby := false
+	cr := getDynClient()
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	if err != nil {
+		return isStandby, err
+	}
+
+	cve, _, err := unstructured.NestedMap(hp.Object, "spec", "cve")
+	if err != nil {
+		return isStandby, err
+	}
+	cveEnable, _, err := unstructured.NestedBool(cve, "enable")
+	if err != nil {
+		return isStandby, err
+	}
+
+	logging, _, err := unstructured.NestedMap(hp.Object, "spec", "logging")
+	if err != nil {
+		return isStandby, err
+	}
+	loggingEnable, _, err := unstructured.NestedBool(logging, "enable")
+	if err != nil {
+		return isStandby, err
+	}
+
+	monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
+	if err != nil {
+		return isStandby, err
+	}
+	monitoringEnable, _, err := unstructured.NestedBool(monitoring, "enable")
+	if err != nil {
+		return isStandby, err
+	}
+
+	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
+	if err != nil {
+		return isStandby, err
+	}
+
+	if !cveEnable && !loggingEnable && !monitoringEnable && stop {
+		isStandby = true
+	}
+
+	return isStandby, nil
+}
+
 func getEmail() (string, error) {
+	config, err := readConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.Email, nil
+}
+
+func readConfig() (response, error) {
+	var config response
 	homeDir, err := os.UserHomeDir()
 	folderPath := filepath.Join(homeDir, ".hossted")
 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
 	if err != nil {
-		return "", err
+		return config, err
 	}
 
 	// Parse the JSON data into Config struct
-	var config response
 	err = json.Unmarshal(fileData, &config)
 	if err != nil {
-		return "", err
+		return config, err
 	}
-
-	return config.Email, nil
-
+	return config, nil
 }
 
 func getResponse() (response, error) {
@@ -240,6 +324,72 @@ func promptK8sContext() (clusterName string, err error) {
 	return clusterName, nil
 }
 
+func getKubeClient() *kubernetes.Clientset {
+	var kubeconfig string
+	path, ok := os.LookupEnv("KUBECONFIG")
+	if ok {
+		kubeconfig = path
+	} else {
+		kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+	return clientset
+}
+
+func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName, emailID, contextName, hosstedOrgID string) error {
+	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// Update environment variables
+	for i, container := range deployment.Spec.Template.Spec.Containers {
+		if container.Name == "manager" {
+			for j, env := range container.Env {
+				if env.Name == "EMAIL_ID" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = emailID
+				} else if env.Name == "CONTEXT_NAME" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = contextName
+				} else if env.Name == "HOSSTED_ORG_ID" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedOrgID
+				}
+			}
+		}
+	}
+
+	_, err = clientset.AppsV1().Deployments(namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secretKey, secretValue string) error {
+	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// Update the secret
+	secret.Data[secretKey] = []byte(secretValue)
+
+	_, err = clientset.CoreV1().Secrets(namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func deployOperator(clusterName, emailID, orgID, JWT string) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
@@ -346,7 +496,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",env.LOKI_PASSWORD=" + os.Getenv("LOKI_PASSWORD") +
 				",env.MIMIR_URL=" + os.Getenv("MIMIR_URL") +
 				",env.MIMIR_USERNAME=" + os.Getenv("MIMIR_USERNAME") +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +				
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
@@ -709,7 +859,7 @@ func listReleases() ([]*release.Release, error) {
 	return client.Run()
 }
 
-func getKubeClient() *dynamic.DynamicClient {
+func getDynClient() *dynamic.DynamicClient {
 
 	var conf *rest.Config
 	var err error
@@ -816,7 +966,7 @@ func getClusterUUID() (string, error) {
 }
 
 func getClusterUUIDFromK8s() (string, error) {
-	cs := getKubeClient()
+	cs := getDynClient()
 	hp, err := cs.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
 	if err != nil {
 		return "", err
