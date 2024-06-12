@@ -17,6 +17,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/fatih/color"
 	"github.com/schollz/progressbar/v3"
@@ -118,9 +119,28 @@ func ActivateK8s() error {
 			return err
 		}
 
-		fmt.Println("Secret updated")
+		fmt.Println("Updated deployment and secret")
+
+		cveEnabled, monitoringEnabled, loggingEnabled, err := askPromptsToInstall()
+		if err != nil {
+			return err
+		}
+
+		if cveEnabled == "true" {
+			fmt.Println("Enabled CVE Scan:", cveEnabled)
+			installCve()
+		}
+
+		if monitoringEnabled == "true" || loggingEnabled == "true" {
+			fmt.Println("Patching 'hossted-operator-cr' CR")
+			err = patchCR(monitoringEnabled, loggingEnabled)
+			if err != nil {
+				return err
+			}
+		}
+
+		fmt.Println("Patch'hossted-operator-cr' CR completed")
 		return nil
-		// -------------------------------------- To be continued --------------------------------------
 	}
 
 	err = deployOperator(clusterName, emailsID, orgID, resp.Token)
@@ -143,7 +163,7 @@ func isStandbyMode() (bool, error) {
 	if err != nil {
 		return isStandby, err
 	}
-	cveEnable, _, err := unstructured.NestedBool(cve, "enable")
+	cveEnabled, _, err := unstructured.NestedBool(cve, "enable")
 	if err != nil {
 		return isStandby, err
 	}
@@ -152,7 +172,7 @@ func isStandbyMode() (bool, error) {
 	if err != nil {
 		return isStandby, err
 	}
-	loggingEnable, _, err := unstructured.NestedBool(logging, "enable")
+	loggingEnabled, _, err := unstructured.NestedBool(logging, "enable")
 	if err != nil {
 		return isStandby, err
 	}
@@ -161,7 +181,7 @@ func isStandbyMode() (bool, error) {
 	if err != nil {
 		return isStandby, err
 	}
-	monitoringEnable, _, err := unstructured.NestedBool(monitoring, "enable")
+	monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
 	if err != nil {
 		return isStandby, err
 	}
@@ -171,7 +191,7 @@ func isStandbyMode() (bool, error) {
 		return isStandby, err
 	}
 
-	if !cveEnable && !loggingEnable && !monitoringEnable && stop {
+	if !cveEnabled && !loggingEnabled && !monitoringEnabled && stop {
 		isStandby = true
 	}
 
@@ -189,6 +209,9 @@ func getEmail() (string, error) {
 func readConfig() (response, error) {
 	var config response
 	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return config, err
+	}
 	folderPath := filepath.Join(homeDir, ".hossted")
 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
 	if err != nil {
@@ -390,6 +413,114 @@ func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secret
 	return nil
 }
 
+func patchCR(monitoringEnabled, loggingEnabled string) error {
+	cr := getDynClient()
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	patch := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"logging": map[string]interface{}{
+				"enable": loggingEnabled == "true",
+			},
+			"monitoring": map[string]interface{}{
+				"enable": monitoringEnabled == "true",
+			},
+		},
+	}
+
+	patchData, err := json.Marshal(patch)
+	if err != nil {
+		return err
+	}
+
+	// Apply the patch
+	_, err = cr.Resource(hpGVK).Namespace(hp.GetNamespace()).Patch(context.TODO(), hp.GetName(), types.MergePatchType, patchData, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func askPromptsToInstall() (string, string, string, error) {
+	green := color.New(color.FgGreen).SprintFunc()
+	cveEnabled := "false"
+	monitoringEnabled := "false"
+	loggingEnabled := "false"
+
+	//------------------------------ Monitoring ----------------------------------
+	monitoring := promptui.Select{
+		Label: "Do you wish to enable monitoring in hossted platform",
+		Items: []string{"Yes", "No"},
+	}
+	_, monitoringEnable, err := monitoring.Run()
+	if err != nil {
+		return cveEnabled, monitoringEnabled, loggingEnabled, err
+	}
+
+	if monitoringEnable == "Yes" {
+		fmt.Println("Enabled Monitoring :", green(monitoringEnable))
+		monitoringEnabled = "true"
+	}
+
+	//------------------------------ Logging ----------------------------------
+	logging := promptui.Select{
+		Label: "Do you wish to enable logging in hossted-platform",
+		Items: []string{"Yes", "No"},
+	}
+	_, loggingEnable, err := logging.Run()
+	if err != nil {
+		return cveEnabled, monitoringEnabled, loggingEnabled, err
+	}
+
+	if loggingEnable == "Yes" {
+		fmt.Println("Enabled Logging:", green(loggingEnable))
+		loggingEnabled = "true"
+	}
+
+	//------------------------------ CVE Scan ----------------------------------
+	cve := promptui.Select{
+		Label: "Do you wish to enable cve scan in hossted platform",
+		Items: []string{"Yes", "No"},
+	}
+	_, cveEnable, err := cve.Run()
+	if err != nil {
+		return cveEnabled, monitoringEnabled, loggingEnabled, err
+	}
+	if cveEnable == "Yes" {
+		fmt.Println("Enabled Logging:", green(loggingEnable))
+		cveEnabled = "true"
+	}
+
+	return cveEnabled, monitoringEnabled, loggingEnabled, nil
+}
+
+func installCve() {
+	yellow := color.New(color.FgYellow).SprintFunc()
+	RepoAdd("aqua", "https://aquasecurity.github.io/helm-charts/")
+
+	// Progress bar setup
+	fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform CVE:"), hosstedPlatformNamespace)
+
+	bar := progressbar.DefaultBytes(
+		-1,
+		"Installing",
+	)
+
+	// Simulate installation process with a time delay
+	for i := 0; i < 100; i++ {
+		time.Sleep(50 * time.Millisecond)
+		bar.Add(1)
+	}
+
+	InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
+		"set": "trivy.severity=HIGH\\,CRITICAL,operator.scannerReportTTL=,operator.scanJobTimeout=30m,trivy.command=filesystem,trivyOperator.scanJobPodTemplateContainerSecurityContext.runAsUser=0,operator.scanJobsConcurrentLimit=10",
+	})
+}
+
 func deployOperator(clusterName, emailID, orgID, JWT string) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
@@ -404,76 +535,14 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 	}
 
 	if value == "Yes" {
-
-		cveEnabled := "false"
-		monitoringEnabled := "false"
-		loggingEnabled := "false"
-
-		//------------------------------ Monitoring ----------------------------------
-		monitoring := promptui.Select{
-			Label: fmt.Sprintf("Do you wish to enable monitoring in hossted platform"),
-			Items: []string{"Yes", "No"},
-		}
-		_, monitoringEnable, err := monitoring.Run()
+		cveEnabled, monitoringEnabled, loggingEnabled, err := askPromptsToInstall()
 		if err != nil {
 			return err
 		}
 
-		if monitoringEnable == "Yes" {
-			fmt.Println("Enabled Monitoring :", green(monitoringEnable))
-			monitoringEnabled = "true"
-		}
-
-		//------------------------------ Logging ----------------------------------
-		logging := promptui.Select{
-			Label: fmt.Sprintf("Do you wish to enable logging in hossted-platform"),
-			Items: []string{"Yes", "No"},
-		}
-		_, loggingEnable, err := logging.Run()
-		if err != nil {
-			return err
-		}
-
-		if loggingEnable == "Yes" {
-			fmt.Println("Enabled Logging:", green(loggingEnable))
-			loggingEnabled = "true"
-		}
-
-		//------------------------------ CVE Scan ----------------------------------
-		cve := promptui.Select{
-			Label: fmt.Sprintf("Do you wish to enable cve scan in hossted platform"),
-			Items: []string{"Yes", "No"},
-		}
-		_, cveEnable, err := cve.Run()
-		if err != nil {
-			return err
-		}
-
-		if cveEnable == "Yes" {
-			cveEnabled = "true"
+		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-
-			RepoAdd("aqua", "https://aquasecurity.github.io/helm-charts/")
-			// Progress bar setup
-
-			fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform CVE:"), hosstedPlatformNamespace)
-
-			bar := progressbar.DefaultBytes(
-				-1,
-				"Installing",
-			)
-
-			// Simulate installation process with a time delay
-			for i := 0; i < 100; i++ {
-				time.Sleep(50 * time.Millisecond)
-				bar.Add(1)
-			}
-
-			InstallChart("trivy-operator", "aqua", "trivy-operator", map[string]string{
-				"set": "trivy.severity=HIGH\\,CRITICAL,operator.scannerReportTTL=,operator.scanJobTimeout=30m,trivy.command=filesystem,trivyOperator.scanJobPodTemplateContainerSecurityContext.runAsUser=0,operator.scanJobsConcurrentLimit=10",
-			})
-
-			cveEnabled = "true"
+			installCve()
 		}
 
 		//------------------------------ Helm Repo Add  ----------------------------------
@@ -485,7 +554,6 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		//------------------------------ Helm Install Chart ----------------------------------
 		args := map[string]string{
 			"set": "env.EMAIL_ID=" + emailID +
-				//",env.HOSSTED_API_URL=https://api.dev.hossted.com/v1/instances" +
 				",env.HOSSTED_ORG_ID=" + orgID +
 				",secret.HOSSTED_AUTH_TOKEN=" + JWT +
 				",cve.enable=" + cveEnabled +
