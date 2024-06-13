@@ -6,13 +6,13 @@ LDFLAGS="-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=p
 DEVFLAGS="-X '${PACKAGE}/cmd.VERSION=dev' -X '${PACKAGE}/cmd.ENVIRONMENT=dev' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}'"
 
 linux: main.go
-	GOOS=linux GOARCH=amd64 go build -o bin/linux/hossted -v -ldflags=${LDFLAGS}
+	GOOS=linux GOARCH=amd64 go build -o bin/linux/hossted-linux-amd64 -v -ldflags=${LDFLAGS}
 
 windows: main.go
-	GOOS=windows GOARCH=386 go build -o bin/windows/hossted.exe main.go
+	GOOS=windows GOARCH=386 go build -o bin/windows/hossted.exe -v -ldflags=${LDFLAGS} 
 
 osx: main.go
-	GOOS=darwin GOARCH=amd64 go build -o bin/osx/hossted main.go
+	GOOS=darwin GOARCH=amd64 go build -o bin/osx/hossted-darwin-amd64  -v -ldflags=${LDFLAGS}
 
 dev: main.go
 	go build -o bin/dev/hossted -v -ldflags=${DEVFLAGS}
