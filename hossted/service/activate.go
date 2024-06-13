@@ -399,6 +399,8 @@ func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_URL")
 				} else if env.Name == "MIMIR_USERNAME" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_USERNAME")
+				} else if env.Name == "HOSSTED_API_URL" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("HOSSTED_API_URL")
 
 				}
 			}
