@@ -81,7 +81,6 @@ func ActivateK8s() error {
 	}
 	// handle usecases for orgID selection
 	orgID, err := useCases(resp)
-
 	if err != nil {
 		return err
 	}
@@ -96,7 +95,7 @@ func ActivateK8s() error {
 
 	isStandby, err := isStandbyMode()
 	if err != nil {
-		return err
+		//return err
 	}
 
 	if isStandby {
@@ -388,6 +387,19 @@ func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = contextName
 				} else if env.Name == "HOSSTED_ORG_ID" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedOrgID
+				} else if env.Name == "LOKI_PASSWORD" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_PASSWORD")
+				} else if env.Name == "LOKI_URL" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_URL")
+				} else if env.Name == "LOKI_USERNAME" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_USERNAME")
+				} else if env.Name == "MIMIR_PASSWORD" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_PASSWORD")
+				} else if env.Name == "MIMIR_URL" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_URL")
+				} else if env.Name == "MIMIR_USERNAME" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_USERNAME")
+
 				}
 			}
 		}
