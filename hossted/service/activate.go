@@ -131,12 +131,17 @@ func ActivateK8s() error {
 			installCve()
 		}
 
-		if monitoringEnabled == "true" || loggingEnabled == "true" {
+		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" {
 			fmt.Println("Patching 'hossted-operator-cr' CR")
-			err = patchCR(monitoringEnabled, loggingEnabled)
+			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled)
 			if err != nil {
 				return err
 			}
+		}
+
+		err = patchStopCR()
+		if err != nil {
+			return err
 		}
 
 		fmt.Println("Patch'hossted-operator-cr' CR completed")
@@ -413,7 +418,7 @@ func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secret
 	return nil
 }
 
-func patchCR(monitoringEnabled, loggingEnabled string) error {
+func patchCR(monitoringEnabled, loggingEnabled, cveEnabled string) error {
 	cr := getDynClient()
 	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
 	if err != nil {
@@ -422,12 +427,42 @@ func patchCR(monitoringEnabled, loggingEnabled string) error {
 
 	patch := map[string]interface{}{
 		"spec": map[string]interface{}{
+			"cve": map[string]interface{}{
+				"enable": cveEnabled == "true",
+			},
 			"logging": map[string]interface{}{
 				"enable": loggingEnabled == "true",
 			},
 			"monitoring": map[string]interface{}{
 				"enable": monitoringEnabled == "true",
 			},
+		},
+	}
+
+	patchData, err := json.Marshal(patch)
+	if err != nil {
+		return err
+	}
+
+	// Apply the patch
+	_, err = cr.Resource(hpGVK).Namespace(hp.GetNamespace()).Patch(context.TODO(), hp.GetName(), types.MergePatchType, patchData, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patchStopCR() error {
+	cr := getDynClient()
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	patch := map[string]interface{}{
+		"spec": map[string]bool{
+			"stop": false,
 		},
 	}
 
