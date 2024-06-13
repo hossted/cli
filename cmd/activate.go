@@ -42,6 +42,12 @@ hossted activate
 			}
 			return
 
+		} else if activate_type == "standby" {
+			err := service.InstallOperatorStandbymode()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
 		}
 
 	},
