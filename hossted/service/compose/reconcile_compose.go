@@ -1,15 +1,10 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
-package service
+package compose
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -20,21 +15,13 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
+	"github.com/hossted/cli/hossted/service/common"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"gopkg.in/yaml.v2"
 )
 
-func reconcileCompose() error {
-	emailsID, err := getEmail()
-	if err != nil {
-		return err
-	}
-
-	resp, err := getResponse()
-	if err != nil {
-		return err
-	}
+func reconcileCompose(orgID, emailID, token string) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -46,7 +33,7 @@ func reconcileCompose() error {
 		return err
 	}
 
-	osUuid, err := setClusterUUID(emailsID, osFilePath)
+	osUuid, err := setClusterUUID(emailID, osFilePath)
 	if err != nil {
 		return err
 	}
@@ -56,12 +43,12 @@ func reconcileCompose() error {
 		return err
 	}
 
-	err = writeComposeRequest2File(appFilePath, list, osUuid, emailsID)
+	err = writeComposeRequest2File(appFilePath, list, osUuid, emailID)
 	if err != nil {
 		return err
 	}
 
-	err = sendComposeInfo(appFilePath, resp.Token)
+	err = sendComposeInfo(appFilePath, token, orgID)
 	if err != nil {
 		return err
 	}
@@ -212,6 +199,7 @@ type optionsState struct {
 type request struct {
 	UUID         string       `json:"uuid"`
 	OsUUID       string       `json:"osuuid"`
+	OrgID        string       `json:"org_id"`
 	Email        string       `json:"email"`
 	Type         string       `json:"type"`
 	Product      string       `json:"product"`
@@ -221,7 +209,21 @@ type request struct {
 	ComposeFile  string       `json:"compose_file"`
 }
 
-func sendComposeInfo(appFilePath, token string) error {
+type dockerInstance struct {
+	DockerID   string      `json:"docker_id"`
+	InstanceID string      `json:"instance_id"`
+	ImageID    string      `json:"image_id"`
+	Ports      interface{} `json:"ports"`
+	Status     string      `json:"status"`
+	Size       int64       `json:"size"`
+	Names      string      `json:"names"`
+	Mounts     interface{} `json:"mounts"`
+	Networks   string      `json:"networks"`
+	Tag        string      `json:"tag"`
+	Image      string      `json:"image"`
+}
+
+func sendComposeInfo(appFilePath, token, orgID string) error {
 	composeInfo, err := readFile(appFilePath)
 	if err != nil {
 		return err
@@ -249,6 +251,7 @@ func sendComposeInfo(appFilePath, token string) error {
 			UUID:    compose.AppAPIInfo.AppUUID,
 			OsUUID:  compose.AppAPIInfo.OsUUID,
 			Email:   compose.AppAPIInfo.EmailID,
+			OrgID:   orgID,
 			Type:    "compose",
 			Product: appName,
 			CPUNum:  cpu,
@@ -266,83 +269,46 @@ func sendComposeInfo(appFilePath, token string) error {
 			return err
 		}
 
-		req, err := http.NewRequest("POST", composeUrl, bytes.NewBuffer([]byte(body)))
+		err = common.HttpRequest("POST", composeUrl, token, body)
 		if err != nil {
 			return err
-		}
-
-		// Set headers
-		req.Header.Set("Content-Type", "application/json")
-
-		// Add Authorization header with Basic authentication
-		req.Header.Set("Authorization", "Bearer "+token)
-		// Perform the request
-		client := http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
 		}
 
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 	}
 
-	///////////////////////////////////////////
-	// body, err := json.Marshal(composeInfo)
-	// if err != nil {
-	// 	return err
-	// }
-
-	req, err := http.NewRequest("POST", containersUrl, bytes.NewBuffer([]byte(composeInfo)))
+	var ar map[string]AppRequest
+	err = json.Unmarshal(composeInfo, &ar)
 	if err != nil {
 		return err
 	}
 
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
+	for appName, info := range ar {
+		for _, ci := range info.AppInfo.DockerInstance {
+			newDI := dockerInstance{
+				DockerID:   ci.DockerID,
+				InstanceID: info.AppAPIInfo.AppUUID,
+				ImageID:    ci.ImageID,
+				Ports:      ci.Ports,
+				Status:     ci.Status,
+				Size:       ci.Size,
+				Names:      ci.Names,
+				Networks:   ci.Networks,
+				Image:      ci.Image,
+				Mounts:     ci.Mounts,
+			}
+			newDIBody, err := json.Marshal(newDI)
+			if err != nil {
+				return err
+			}
+			err = common.HttpRequest("POST", containersUrl, token, newDIBody)
+			if err != nil {
+				return err
+			}
 
-	// Add Authorization header with Basic authentication
-	req.Header.Set("Authorization", "Bearer "+token)
-	// Perform the request
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
+			fmt.Printf("Successfully registered docker info, appName:[%s], dockerName:[%s], appID:[%s]\n", appName, ci.Names, info.AppAPIInfo.AppUUID)
+		}
 	}
-
-	defer resp.Body.Close()
-
-	// ApiResponse represents the structure of the JSON response from the API
-	type ApiResponse struct {
-		Success bool        `json:"success"`
-		Message interface{} `json:"message"`
-	}
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
-	}
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var apiResponse ApiResponse
-	fmt.Println(string(respBody))
-	if err := json.Unmarshal(respBody, &apiResponse); err != nil {
-		return err
-	}
-
-	if !apiResponse.Success {
-		return fmt.Errorf("API response indicates failure: %v\n", apiResponse)
-	}
-
-	fmt.Printf("Successfully sent container info request")
 
 	return nil
 }
@@ -445,7 +411,7 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 		if found := existingApps[project]; found {
 			// create only AppInfo(compose request)
 			var newComposeRequest AppInfo
-			var containersInfo []ContainerInfo
+			var dockerInstances []dockerInstance
 
 			for i, container := range list {
 				if i == 0 {
@@ -465,15 +431,21 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 				if strings.HasPrefix(container.Names[0], "/") {
 					name = container.Names[0][1:]
 				}
-				containerInfo := ContainerInfo{
-					Name:   name,
-					Status: container.State,
-					Image:  container.Image,
+				containerInfo := dockerInstance{
+					Names:    name,
+					Status:   container.State,
+					Image:    container.Image,
+					ImageID:  container.ImageID,
+					Ports:    container.Ports,
+					Size:     container.SizeRw,
+					Networks: container.HostConfig.NetworkMode,
+					DockerID: container.ID,
+					Mounts:   container.Mounts,
 				}
-				containersInfo = append(containersInfo, containerInfo)
+				dockerInstances = append(dockerInstances, containerInfo)
 			}
 
-			newComposeRequest.ContainerInfo = containersInfo
+			newComposeRequest.DockerInstance = dockerInstances
 			newComposeRequest.ComposeFile = composeFileContent
 
 			// get previous compose request
@@ -486,6 +458,7 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 					AppAPIInfo: appsData[project].AppAPIInfo,
 					AppInfo:    newComposeRequest,
 				}
+				// send http patch request
 			}
 		} else {
 			// create AppAPIInfo
@@ -498,7 +471,7 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 
 			// create AppInfo(compose request)
 			var newComposeRequest AppInfo
-			var containersInfo []ContainerInfo
+			var dockerInstances []dockerInstance
 
 			for i, container := range list {
 				if i == 0 {
@@ -518,20 +491,27 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 				if strings.HasPrefix(container.Names[0], "/") {
 					name = container.Names[0][1:]
 				}
-				containerInfo := ContainerInfo{
-					Name:   name,
-					Status: container.State,
-					Image:  container.Image,
+				dockerInfo := dockerInstance{
+					Names:    name,
+					Status:   container.State,
+					Image:    container.Image,
+					ImageID:  container.ImageID,
+					Ports:    container.Ports,
+					Size:     container.SizeRw,
+					Networks: container.HostConfig.NetworkMode,
+					DockerID: container.ID,
+					Mounts:   container.Mounts,
 				}
-				containersInfo = append(containersInfo, containerInfo)
+				dockerInstances = append(dockerInstances, dockerInfo)
 			}
 
-			newComposeRequest.ContainerInfo = containersInfo
+			newComposeRequest.DockerInstance = dockerInstances
 			newComposeRequest.ComposeFile = composeFileContent
 			appsData[project] = AppRequest{
 				AppAPIInfo: appAPIInfo,
 				AppInfo:    newComposeRequest,
 			}
+
 		}
 	}
 

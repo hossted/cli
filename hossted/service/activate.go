@@ -68,7 +68,7 @@ func ActivateK8s() error {
 	}
 
 	// getResponse from reading file in .hossted/config.json
-	resp, err := getResponse()
+	resp, err := getLoginResponse()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func getEmail() (string, error) {
 
 }
 
-func getResponse() (response, error) {
+func getLoginResponse() (response, error) {
 	//read file
 	homeDir, err := os.UserHomeDir()
 

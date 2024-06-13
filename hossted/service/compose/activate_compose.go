@@ -1,7 +1,8 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
-package service
+package compose
+
+import (
+	"github.com/hossted/cli/hossted/service/common"
+)
 
 type OsInfo struct {
 	OsUUID               string `yaml:"osUUID"`
@@ -22,58 +23,51 @@ type AppAPIInfo struct {
 }
 
 type AppInfo struct {
-	ComposeFile   string          `json:"compose_file,omitempty"`
-	ContainerInfo []ContainerInfo `json:"container_info,omitempty"`
+	ComposeFile    string           `json:"compose_file,omitempty"`
+	DockerInstance []dockerInstance `json:"container_info,omitempty"`
 }
 
 type ContainerInfo struct {
-	Name       string `json:"name,omitempty"`
-	Status     string `json:"status,omitempty"`
-	AppVersion string `json:"app_version,omitempty"`
-	Image      string `json:"image,omitempty"`
+	Name       string      `json:"names,omitempty"`
+	Status     string      `json:"status,omitempty"`
+	AppVersion string      `json:"app_version,omitempty"`
+	Image      string      `json:"image,omitempty"`
+	ImageID    string      `json:"image_id,omitempty"`
+	Ports      interface{} `json:"ports,omitempty"`
+	Size       int64       `json:"size,omitempty"`
+	Networks   string      `json:"networks,omitempty"`
+	Mounts     string      `json:"mounts,omitempty"`
+	DockerID   string      `json:"docker_id,omitempty"`
 }
 
 func ActivateCompose() error {
-	// emailsID, err := getEmail()
-	// if err != nil {
-	// 	return err
-	// }
-	// getResponse from reading file in .hossted/email@id.json
-	resp, err := getResponse()
+
+	emailID, err := common.GetEmail()
 	if err != nil {
 		return err
 	}
-	// validate auth token
 
-	err = validateToken(resp)
+	resp, err := common.GetLoginResponse()
+	if err != nil {
+		return err
+	}
+
+	// validate auth token
+	err = common.ValidateToken(resp)
 	if err != nil {
 		return err
 	}
 	// handle usecases for orgID selection
-	_, err = useCases(resp)
+	orgID, err := common.UseCases(resp)
 	if err != nil {
 		return err
 	}
-	// VM REGISTRATION
-	// reconiler( )
-	// 	// perform cluster registeration
-	// - create UUID if not exists
 
-	// app registeration
-	//  -
-
-	// )
-	// ADD MONITORING
-
-	err = reconcileCompose()
+	err = reconcileCompose(orgID, emailID, resp.Token)
 	if err != nil {
 		return err
 	}
-	// SET CLUSTER UUID
-	// UUID, err :=
-	// if err!=nil {
 
-	// }
 	return nil
 
 }

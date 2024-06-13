@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/hossted/cli/hossted/service"
+	"github.com/hossted/cli/hossted/service/compose"
+
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +36,7 @@ hossted activate
 		} else if activate_type == "compose" {
 			// hossted.SetUpdates(ENVIRONMENT, true)
 			// hossted.SetMonitoring(ENVIRONMENT, true)
-			err := service.ActivateCompose()
+			err := compose.ActivateCompose()
 			if err != nil {
 				fmt.Println(err)
 			}
