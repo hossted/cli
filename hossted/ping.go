@@ -26,6 +26,7 @@ func Ping(env string) error {
 		fmt.Println(err)
 		return err
 	}
+
 	//Send request
 	response, err := PingRequest(dockersJson, uuid, env)
 	if err != nil {

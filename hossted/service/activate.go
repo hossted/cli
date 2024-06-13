@@ -67,8 +67,8 @@ func ActivateK8s() error {
 		return err
 	}
 
-	// getResponse from reading file in .hossted/email@id.json
-	resp, err := getResponse()
+	// getResponse from reading file in .hossted/config.json
+	resp, err := getLoginResponse()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func getEmail() (string, error) {
 
 }
 
-func getResponse() (response, error) {
+func getLoginResponse() (response, error) {
 	//read file
 	homeDir, err := os.UserHomeDir()
 
@@ -346,7 +346,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",env.LOKI_PASSWORD=" + os.Getenv("LOKI_PASSWORD") +
 				",env.MIMIR_URL=" + os.Getenv("MIMIR_URL") +
 				",env.MIMIR_USERNAME=" + os.Getenv("MIMIR_USERNAME") +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +				
+				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
