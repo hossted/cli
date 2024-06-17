@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var activate_type string
+var activate_type, releaseName string
 
 // registerCmd represents the register command
 var activateCmd = &cobra.Command{
@@ -28,7 +28,8 @@ hossted activate
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if activate_type == "k8s" {
-			err := service.ActivateK8s()
+
+			err := service.ActivateK8s(releaseName)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -56,4 +57,5 @@ hossted activate
 func init() {
 	rootCmd.AddCommand(activateCmd)
 	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|docker")
+	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 }

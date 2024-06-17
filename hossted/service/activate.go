@@ -62,7 +62,7 @@ type response struct {
 }
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s() error {
+func ActivateK8s(releaseName string) error {
 	emailsID, err := getEmail()
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func ActivateK8s() error {
 
 	fmt.Println("Your cluster name is ", clusterName)
 
-	isStandby, err := isStandbyMode()
+	isStandby, err := isStandbyMode(releaseName)
 	if err != nil {
 		//return err
 	}
@@ -155,10 +155,10 @@ func ActivateK8s() error {
 	return nil
 }
 
-func isStandbyMode() (bool, error) {
+func isStandbyMode(releaseName string) (bool, error) {
 	isStandby := false
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
 	if err != nil {
 		return isStandby, err
 	}
