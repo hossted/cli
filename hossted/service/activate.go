@@ -102,7 +102,7 @@ func ActivateK8s(releaseName string) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator-controller-manager", emailsID, clusterName, orgID)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", emailsID, clusterName, orgID)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func ActivateK8s(releaseName string) error {
 		}
 
 		fmt.Println("Updating secret....")
-		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator-secret", "AUTH_TOKEN", config.Token)
+		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", config.Token)
 		if err != nil {
 			return err
 		}
@@ -132,13 +132,13 @@ func ActivateK8s(releaseName string) error {
 
 		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" {
 			fmt.Println("Patching 'hossted-operator-cr' CR")
-			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled)
+			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, releaseName)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = patchStopCR()
+		err = patchStopCR(releaseName)
 		if err != nil {
 			return err
 		}
@@ -432,9 +432,9 @@ func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secret
 	return nil
 }
 
-func patchCR(monitoringEnabled, loggingEnabled, cveEnabled string) error {
+func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, releaseName string) error {
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -467,9 +467,9 @@ func patchCR(monitoringEnabled, loggingEnabled, cveEnabled string) error {
 	return nil
 }
 
-func patchStopCR() error {
+func patchStopCR(releaseName string) error {
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
