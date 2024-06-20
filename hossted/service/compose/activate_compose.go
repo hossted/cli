@@ -1,13 +1,19 @@
 package compose
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/hossted/cli/hossted/service/common"
+	"gopkg.in/yaml.v2"
 )
 
 type OsInfo struct {
 	OsUUID               string `yaml:"osUUID"`
 	EmailID              string `yaml:"emailId,omitempty"`
 	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
+	OrgID                string `yaml:"orgID,omitempty"`
 }
 
 type AppRequest struct {
@@ -63,13 +69,36 @@ func ActivateCompose() error {
 		return err
 	}
 
-	err = reconcileCompose(orgID, emailID, resp.Token)
+	err = ComposeReconciler(orgID, emailID, resp.Token)
 	if err != nil {
 		return err
 	}
 
 	return nil
 
+}
+
+func GetOrgID() (string, error) {
+	//read file
+	homeDir, err := os.UserHomeDir()
+
+	folderPath := filepath.Join(homeDir, ".hossted")
+	if err != nil {
+		return "", err
+	}
+
+	fileData, err := os.ReadFile(folderPath + "/" + "compose.yaml")
+	if err != nil {
+		return "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
+	}
+
+	var osInfo OsInfo
+	err = yaml.Unmarshal(fileData, &osInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return osInfo.OrgID, nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan

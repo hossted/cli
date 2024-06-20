@@ -40,9 +40,13 @@ hossted activate
 			err := compose.ActivateCompose()
 			if err != nil {
 				fmt.Println(err)
+				return
 			}
-			return
-
+			err = compose.SetCrontabCompose()
+			if err != nil {
+				fmt.Println("error in setting crontab for compose: ", err)
+				return
+			}
 		} else if activate_type == "standby" {
 			err := service.InstallOperatorStandbymode()
 			if err != nil {

@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func reconcileCompose(orgID, emailID, token string) error {
+func ComposeReconciler(orgID, emailID, token string) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -33,7 +33,7 @@ func reconcileCompose(orgID, emailID, token string) error {
 		return err
 	}
 
-	osUuid, err := setClusterUUID(emailID, osFilePath)
+	osUuid, err := setClusterUUID(emailID, orgID, osFilePath)
 	if err != nil {
 		return err
 	}
@@ -105,10 +105,10 @@ func writeFile(filePath string, data []byte) error {
 
 }
 
-func setClusterUUID(email string, osFilePath string) (string, error) {
+func setClusterUUID(email, orgID, osFilePath string) (string, error) {
 	var uuid string
 	if _, err := os.Stat(osFilePath); os.IsNotExist(err) {
-		uuid, err = updateUUID(osFilePath, email)
+		uuid, err = updateUUID(osFilePath, email, orgID)
 		if err != nil {
 			return uuid, err
 		}
@@ -120,7 +120,7 @@ func setClusterUUID(email string, osFilePath string) (string, error) {
 			return uuid, err
 		}
 		if uuid == "" {
-			uuid, err = updateUUID(osFilePath, email)
+			uuid, err = updateUUID(osFilePath, email, orgID)
 			if err != nil {
 				return uuid, err
 			}
@@ -129,12 +129,13 @@ func setClusterUUID(email string, osFilePath string) (string, error) {
 	return uuid, nil
 }
 
-func updateUUID(osFilePath string, email string) (string, error) {
+func updateUUID(osFilePath, email, orgID string) (string, error) {
 	osUUID := "D-" + uuid.NewString()
 	fmt.Println("Generating UUID for cluster: ", osUUID)
 	info := OsInfo{
 		OsUUID:  osUUID,
 		EmailID: email,
+		OrgID:   orgID,
 	}
 
 	yamlData, err := yaml.Marshal(info)
