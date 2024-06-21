@@ -18,8 +18,8 @@ func ReconcileCompose() error {
 		return err
 	}
 
-	// get OrgID
-	orgID, err := compose.GetOrgID()
+	// get OrgID and HosstedApiUrl
+	orgID, hosstedAPIUrl, err := compose.GetOrgIDHosstedApiUrl()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -30,7 +30,7 @@ func ReconcileCompose() error {
 		sendComposeInfo inside compose.ComposeReconciler uses HOSSTED_API_URL env variable which will not
 		be present during cron ReconcileCompose. So for now, the below function is not sending compose info.
 	*/
-	err = compose.ComposeReconciler(orgID, emailID, resp.Token)
+	err = compose.ComposeReconciler(orgID, emailID, hosstedAPIUrl, resp.Token)
 	if err != nil {
 		return err
 	}
