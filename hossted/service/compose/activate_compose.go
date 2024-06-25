@@ -1,7 +1,11 @@
 package compose
 
 import (
+	"fmt"
+
+	"github.com/fatih/color"
 	"github.com/hossted/cli/hossted/service/common"
+	"github.com/manifoldco/promptui"
 )
 
 type OsInfo struct {
@@ -70,6 +74,29 @@ func ActivateCompose() error {
 
 	return nil
 
+}
+
+func askPromptsToInstall() (string, error) {
+	green := color.New(color.FgGreen).SprintFunc()
+
+	monitoringEnabled := "false"
+
+	//------------------------------ Monitoring ----------------------------------
+	monitoring := promptui.Select{
+		Label: "Do you wish to enable monitoring in hossted platform",
+		Items: []string{"Yes", "No"},
+	}
+	_, monitoringEnable, err := monitoring.Run()
+	if err != nil {
+		return monitoringEnable, err
+	}
+
+	if monitoringEnable == "Yes" {
+		fmt.Println("Enabled Monitoring :", green(monitoringEnable))
+		monitoringEnabled = "true"
+	}
+
+	return monitoringEnabled, nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan
