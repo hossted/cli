@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -36,6 +38,62 @@ func reconcileCompose(orgID, emailID, token string) error {
 	osUuid, err := setClusterUUID(emailID, osFilePath)
 	if err != nil {
 		return err
+	}
+
+	monitoringEnable, err := askPromptsToInstall()
+	if err != nil {
+		return err
+	}
+
+	if monitoringEnable == "true" {
+		configFilePath := "compose/monitoring/grafana-agent-config.yaml"
+
+		// Read the Grafana Agent config file
+		configData, err := os.ReadFile(configFilePath)
+		if err != nil {
+			log.Fatalf("Failed to read the Grafana Agent config file: %v", err)
+		}
+
+		// Replace the UUID placeholder with the actual UUID
+		configStr := string(configData)
+		configStr = strings.Replace(configStr, "${UUID}", osUuid, -1)
+
+		// Replace MIMIR_USERNAME and MIMIR_PASSWORD placeholders
+		mimirUsername := os.Getenv("MIMIR_USERNAME")
+		mimirPassword := os.Getenv("MIMIR_PASSWORD")
+		mimirURL := os.Getenv("MIMIR_URL")
+
+		if mimirUsername == "" || mimirPassword == "" || mimirURL == "" {
+			log.Fatalf("MIMIR_USERNAME, MIMIR_URL and  MIMIR_PASSWORD environment variables must be set")
+		}
+
+		configStr = strings.Replace(configStr, "${MIMIR_USERNAME}", mimirUsername, -1)
+		configStr = strings.Replace(configStr, "${MIMIR_PASSWORD}", mimirPassword, -1)
+		configStr = strings.Replace(configStr, "${MIMIR_URL}", mimirURL, -1)
+
+		// Write the updated config back to the file
+		err = os.WriteFile(configFilePath, []byte(configStr), 0644)
+		if err != nil {
+			log.Fatalf("Failed to write the updated Grafana Agent config file: %v", err)
+		}
+
+		// Define the path to the Docker Compose file
+		composeFile := "compose/monitoring/docker-compose.yaml"
+
+		// Create the command to run Docker Compose
+		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")
+
+		// Set the command's output to the standard output
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		// Run the command
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalf("Failed to execute Docker Compose: %v", err)
+		}
+
+		fmt.Println("Docker Compose executed successfully")
 	}
 
 	list, err := listAllContainers()
