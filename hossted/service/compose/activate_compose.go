@@ -1,13 +1,20 @@
 package compose
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/hossted/cli/hossted/service/common"
+	"gopkg.in/yaml.v2"
 )
 
 type OsInfo struct {
 	OsUUID               string `yaml:"osUUID"`
 	EmailID              string `yaml:"emailId,omitempty"`
 	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
+	OrgID                string `yaml:"orgID,omitempty"`
+	HosstedApiUrl        string `yaml:"hosstedAPIUrl,omitempty"`
 }
 
 type AppRequest struct {
@@ -63,13 +70,38 @@ func ActivateCompose() error {
 		return err
 	}
 
-	err = reconcileCompose(orgID, emailID, resp.Token)
+	hosstedAPIUrl := os.Getenv("HOSSTED_API_URL")
+
+	err = ComposeReconciler(orgID, emailID, hosstedAPIUrl, resp.Token)
 	if err != nil {
 		return err
 	}
 
 	return nil
 
+}
+
+func GetOrgIDHosstedApiUrl() (string, string, error) {
+	//read file
+	homeDir, err := os.UserHomeDir()
+
+	folderPath := filepath.Join(homeDir, ".hossted")
+	if err != nil {
+		return "", "", err
+	}
+
+	fileData, err := os.ReadFile(folderPath + "/" + "compose.yaml")
+	if err != nil {
+		return "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
+	}
+
+	var osInfo OsInfo
+	err = yaml.Unmarshal(fileData, &osInfo)
+	if err != nil {
+		return "", "", err
+	}
+
+	return osInfo.OrgID, osInfo.HosstedApiUrl, nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan

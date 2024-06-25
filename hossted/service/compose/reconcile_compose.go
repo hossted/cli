@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func reconcileCompose(orgID, emailID, token string) error {
+func ComposeReconciler(orgID, emailID, hosstedAPIUrl, token string) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -33,7 +33,7 @@ func reconcileCompose(orgID, emailID, token string) error {
 		return err
 	}
 
-	osUuid, err := setClusterUUID(emailID, osFilePath)
+	osUuid, err := setClusterUUID(orgID, emailID, hosstedAPIUrl, osFilePath)
 	if err != nil {
 		return err
 	}
@@ -43,14 +43,17 @@ func reconcileCompose(orgID, emailID, token string) error {
 		return err
 	}
 
-	err = writeComposeRequest2File(appFilePath, list, osUuid, emailID)
+	isComposeStateChange, err := writeComposeRequest2File(appFilePath, list, osUuid, emailID)
 	if err != nil {
 		return err
 	}
 
-	err = sendComposeInfo(appFilePath, token, orgID)
-	if err != nil {
-		return err
+	if isComposeStateChange {
+		// send compose info
+		err = sendComposeInfo(appFilePath, token, orgID, hosstedAPIUrl)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -105,10 +108,10 @@ func writeFile(filePath string, data []byte) error {
 
 }
 
-func setClusterUUID(email string, osFilePath string) (string, error) {
+func setClusterUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, error) {
 	var uuid string
 	if _, err := os.Stat(osFilePath); os.IsNotExist(err) {
-		uuid, err = updateUUID(osFilePath, email)
+		uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath)
 		if err != nil {
 			return uuid, err
 		}
@@ -120,7 +123,7 @@ func setClusterUUID(email string, osFilePath string) (string, error) {
 			return uuid, err
 		}
 		if uuid == "" {
-			uuid, err = updateUUID(osFilePath, email)
+			uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath)
 			if err != nil {
 				return uuid, err
 			}
@@ -129,12 +132,14 @@ func setClusterUUID(email string, osFilePath string) (string, error) {
 	return uuid, nil
 }
 
-func updateUUID(osFilePath string, email string) (string, error) {
+func updateUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, error) {
 	osUUID := "D-" + uuid.NewString()
 	fmt.Println("Generating UUID for cluster: ", osUUID)
 	info := OsInfo{
-		OsUUID:  osUUID,
-		EmailID: email,
+		OsUUID:        osUUID,
+		EmailID:       email,
+		OrgID:         orgID,
+		HosstedApiUrl: hosstedAPIUrl,
 	}
 
 	yamlData, err := yaml.Marshal(info)
@@ -168,26 +173,26 @@ func checkUUID(osFilePath string) (string, error) {
 	return osData.OsUUID, nil
 }
 
-func writeComposeRequest2File(appFilePath string, containerList []types.Container, osUuid string, email string) error {
+func writeComposeRequest2File(appFilePath string, containerList []types.Container, osUuid string, email string) (bool, error) {
 	// prepare appsInfo with updated container status
-	appRequest, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
+	appRequest, isComposeStateChange, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
 	if err != nil {
-		return err
+		return isComposeStateChange, err
 	}
 
 	jsonData, err := json.MarshalIndent(appRequest, "", "    ")
 	if err != nil {
 		fmt.Printf("error marshaling JSON: %s\n", err)
-		return err
+		return isComposeStateChange, err
 	}
 
 	// write compose status file
 	err = writeFile(appFilePath, jsonData)
 	if err != nil {
-		return err
+		return isComposeStateChange, err
 	}
 
-	return nil
+	return isComposeStateChange, nil
 }
 
 type optionsState struct {
@@ -223,14 +228,14 @@ type dockerInstance struct {
 	Image      string      `json:"image"`
 }
 
-func sendComposeInfo(appFilePath, token, orgID string) error {
+func sendComposeInfo(appFilePath, token, orgID, hosstedAPIUrl string) error {
 	composeInfo, err := readFile(appFilePath)
 	if err != nil {
 		return err
 	}
 
-	composeUrl := os.Getenv("HOSSTED_API_URL") + "/compose/hosts"
-	containersUrl := os.Getenv("HOSSTED_API_URL") + "/compose/containers"
+	composeUrl := hosstedAPIUrl + "/compose/hosts"
+	containersUrl := hosstedAPIUrl + "/compose/containers"
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -277,13 +282,7 @@ func sendComposeInfo(appFilePath, token, orgID string) error {
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 	}
 
-	var ar map[string]AppRequest
-	err = json.Unmarshal(composeInfo, &ar)
-	if err != nil {
-		return err
-	}
-
-	for appName, info := range ar {
+	for appName, info := range data {
 		for _, ci := range info.AppInfo.DockerInstance {
 			newDI := dockerInstance{
 				DockerID:   ci.DockerID,
@@ -371,8 +370,9 @@ func getUniqueComposeProjects(containerList []types.Container) (map[string]bool,
 	return uniqueProjects, nil
 }
 
-func prepareComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) (map[string]AppRequest, error) {
+func prepareComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) (map[string]AppRequest, bool, error) {
 	var appsData map[string]AppRequest
+	isComposeStateChange := false
 
 	if _, err := os.Stat(appFilePath); os.IsNotExist(err) {
 		appsData = make(map[string]AppRequest)
@@ -380,18 +380,18 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 		data, err := readFile(appFilePath)
 		if err != nil {
 			fmt.Printf("Error in reading %s file: %s\n", appFilePath, err)
-			return appsData, err
+			return appsData, isComposeStateChange, err
 		}
 		err = json.Unmarshal(data, &appsData)
 		if err != nil {
 			fmt.Printf("Error in JSON unmarshaling %s file: %s\n", appFilePath, err)
-			return appsData, err
+			return appsData, isComposeStateChange, err
 		}
 	}
 
 	uniqueProjects, err := getUniqueComposeProjects(containerList)
 	if err != nil {
-		return appsData, err
+		return appsData, isComposeStateChange, err
 	}
 
 	// Create a slice of existing apps
@@ -404,7 +404,7 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 		var composeFileContent string
 		list, err := listProjectContainers(project)
 		if err != nil {
-			return appsData, err
+			return appsData, isComposeStateChange, err
 		}
 
 		// Check if project is present in the existingApps
@@ -458,7 +458,7 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 					AppAPIInfo: appsData[project].AppAPIInfo,
 					AppInfo:    newComposeRequest,
 				}
-				// send http patch request
+				isComposeStateChange = true
 			}
 		} else {
 			// create AppAPIInfo
@@ -511,11 +511,11 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 				AppAPIInfo: appAPIInfo,
 				AppInfo:    newComposeRequest,
 			}
-
+			isComposeStateChange = true
 		}
 	}
 
-	return appsData, nil
+	return appsData, isComposeStateChange, nil
 }
 
 // GetCPUUsage returns the average CPU usage percentage as a formatted string
