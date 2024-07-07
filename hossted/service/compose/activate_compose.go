@@ -2,6 +2,7 @@ package compose
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/hossted/cli/hossted/service/common"
@@ -44,7 +45,7 @@ type ContainerInfo struct {
 	DockerID   string      `json:"docker_id,omitempty"`
 }
 
-func ActivateCompose() error {
+func ActivateCompose(composeFilePath string) error {
 
 	emailID, err := common.GetEmail()
 	if err != nil {
@@ -67,7 +68,7 @@ func ActivateCompose() error {
 		return err
 	}
 
-	err = reconcileCompose(orgID, emailID, resp.Token)
+	err = reconcileCompose(orgID, emailID, resp.Token, getProjectName(composeFilePath))
 	if err != nil {
 		return err
 	}
@@ -97,6 +98,15 @@ func askPromptsToInstall() (string, error) {
 	}
 
 	return monitoringEnabled, nil
+}
+
+// getProjectName takes a file path and returns the final directory name
+func getProjectName(filePath string) string {
+	// Clean the path to handle any extraneous characters
+	cleanPath := filepath.Clean(filePath)
+
+	// Get the final directory name
+	return filepath.Base(cleanPath)
 }
 
 // provide prompt to enable monitoring and vulnerability scan

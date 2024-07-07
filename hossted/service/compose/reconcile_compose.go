@@ -23,7 +23,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func reconcileCompose(orgID, emailID, token string) error {
+func reconcileCompose(orgID, emailID, token, projectName string) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -46,7 +46,7 @@ func reconcileCompose(orgID, emailID, token string) error {
 	}
 
 	if monitoringEnable == "true" {
-		configFilePath := "compose/monitoring/grafana-agent-config.yaml"
+		configFilePath := "compose/monitoring/config.river"
 
 		// Read the Grafana Agent config file
 		configData, err := os.ReadFile(configFilePath)
@@ -56,20 +56,26 @@ func reconcileCompose(orgID, emailID, token string) error {
 
 		// Replace the UUID placeholder with the actual UUID
 		configStr := string(configData)
-		configStr = strings.Replace(configStr, "${UUID}", osUuid, -1)
+		configStr = strings.Replace(configStr, "${UUID}", fmt.Sprintf("\"%s\"", osUuid), -1)
 
 		// Replace MIMIR_USERNAME and MIMIR_PASSWORD placeholders
 		mimirUsername := os.Getenv("MIMIR_USERNAME")
 		mimirPassword := os.Getenv("MIMIR_PASSWORD")
 		mimirURL := os.Getenv("MIMIR_URL")
+		lokiUsername := os.Getenv("LOKI_USERNAME")
+		lokiPassword := os.Getenv("LOKI_PASSWORD")
+		lokiURL := os.Getenv("LOKI_URL")
 
 		if mimirUsername == "" || mimirPassword == "" || mimirURL == "" {
 			log.Fatalf("MIMIR_USERNAME, MIMIR_URL and  MIMIR_PASSWORD environment variables must be set")
 		}
 
-		configStr = strings.Replace(configStr, "${MIMIR_USERNAME}", mimirUsername, -1)
-		configStr = strings.Replace(configStr, "${MIMIR_PASSWORD}", mimirPassword, -1)
-		configStr = strings.Replace(configStr, "${MIMIR_URL}", mimirURL, -1)
+		configStr = strings.Replace(configStr, "${MIMIR_USERNAME}", fmt.Sprintf("\"%s\"", mimirUsername), -1)
+		configStr = strings.Replace(configStr, "${MIMIR_PASSWORD}", fmt.Sprintf("\"%s\"", mimirPassword), -1)
+		configStr = strings.Replace(configStr, "${MIMIR_URL}", fmt.Sprintf("\"%s\"", mimirURL), -1)
+		configStr = strings.Replace(configStr, "${LOKI_USERNAME}", fmt.Sprintf("\"%s\"", lokiUsername), -1)
+		configStr = strings.Replace(configStr, "${LOKI_PASSWORD}", fmt.Sprintf("\"%s\"", lokiPassword), -1)
+		configStr = strings.Replace(configStr, "${LOKI_URL}", fmt.Sprintf("\"%s\"", lokiURL), -1)
 
 		// Write the updated config back to the file
 		err = os.WriteFile(configFilePath, []byte(configStr), 0644)
@@ -96,7 +102,7 @@ func reconcileCompose(orgID, emailID, token string) error {
 		fmt.Println("Docker Compose executed successfully")
 	}
 
-	list, err := listAllContainers()
+	list, err := listAllContainers(projectName)
 	if err != nil {
 		return err
 	}
@@ -371,7 +377,7 @@ func sendComposeInfo(appFilePath, token, orgID string) error {
 	return nil
 }
 
-func listAllContainers() ([]types.Container, error) {
+func listAllContainers(projectName string) ([]types.Container, error) {
 	// Create a Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -383,6 +389,9 @@ func listAllContainers() ([]types.Container, error) {
 	// Define filters to list only running containers
 	filter := filters.NewArgs()
 	//filter.Add("status", "running")
+
+	filter.Add("label", "com.docker.compose.project="+projectName)
+
 	filter.Add("label", "com.docker.compose.project")
 	filter.Add("label", "com.docker.compose.config-hash")
 
