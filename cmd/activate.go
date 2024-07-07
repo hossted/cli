@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var activate_type, releaseName string
+var activate_type, releaseName, composeFilePath string
 
 // registerCmd represents the register command
 var activateCmd = &cobra.Command{
@@ -37,7 +37,7 @@ hossted activate
 		} else if activate_type == "compose" {
 			// hossted.SetUpdates(ENVIRONMENT, true)
 			// hossted.SetMonitoring(ENVIRONMENT, true)
-			err := compose.ActivateCompose()
+			err := compose.ActivateCompose(composeFilePath)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -62,4 +62,5 @@ func init() {
 	rootCmd.AddCommand(activateCmd)
 	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|docker")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
+	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
 }

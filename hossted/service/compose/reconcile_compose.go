@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -21,7 +23,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ComposeReconciler(orgID, emailID, hosstedAPIUrl, token string) error {
+func reconcileCompose(orgID, emailID, token, projectName string) error {
+
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -38,10 +41,26 @@ func ComposeReconciler(orgID, emailID, hosstedAPIUrl, token string) error {
 		return err
 	}
 
-	list, err := listAllContainers()
+	enableMonitoring, err := askPromptsToInstall()
 	if err != nil {
 		return err
 	}
+
+	list, err := listAllContainers(projectName)
+	if err != nil {
+		return err
+	}
+
+	err = writeComposeRequest2File(
+		appFilePath,
+		list,
+		osUuid,
+		emailID,
+		enableMonitoring,
+		projectName)
+  if err != nil {
+    return err
+  }
 
 	isComposeStateChange, err := writeComposeRequest2File(appFilePath, list, osUuid, emailID)
 	if err != nil {
@@ -173,7 +192,23 @@ func checkUUID(osFilePath string) (string, error) {
 	return osData.OsUUID, nil
 }
 
-func writeComposeRequest2File(appFilePath string, containerList []types.Container, osUuid string, email string) (bool, error) {
+func writeComposeRequest2File(
+	appFilePath string,
+	containerList []types.Container,
+	osUuid,
+	email,
+	enableMonitoring,
+	projectName string) error {
+	// prepare appsInfo with updated container status
+	appRequest, err := prepareComposeRequest(
+		appFilePath,
+		containerList,
+		osUuid,
+		email,
+		enableMonitoring,
+		projectName,
+	)
+  
 	// prepare appsInfo with updated container status
 	appRequest, isComposeStateChange, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
 	if err != nil {
@@ -312,7 +347,7 @@ func sendComposeInfo(appFilePath, token, orgID, hosstedAPIUrl string) error {
 	return nil
 }
 
-func listAllContainers() ([]types.Container, error) {
+func listAllContainers(projectName string) ([]types.Container, error) {
 	// Create a Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -324,6 +359,9 @@ func listAllContainers() ([]types.Container, error) {
 	// Define filters to list only running containers
 	filter := filters.NewArgs()
 	//filter.Add("status", "running")
+
+	filter.Add("label", "com.docker.compose.project="+projectName)
+
 	filter.Add("label", "com.docker.compose.project")
 	filter.Add("label", "com.docker.compose.config-hash")
 
@@ -370,7 +408,14 @@ func getUniqueComposeProjects(containerList []types.Container) (map[string]bool,
 	return uniqueProjects, nil
 }
 
-func prepareComposeRequest(appFilePath string, containerList []types.Container, osUuid string, email string) (map[string]AppRequest, bool, error) {
+
+func prepareComposeRequest(
+	appFilePath string,
+	containerList []types.Container,
+	osUuid,
+	email,
+	enableMonitoring,
+	projectName string) (map[string]AppRequest, error) {
 	var appsData map[string]AppRequest
 	isComposeStateChange := false
 
@@ -515,7 +560,9 @@ func prepareComposeRequest(appFilePath string, containerList []types.Container, 
 		}
 	}
 
-	return appsData, isComposeStateChange, nil
+
+	runMonitoringCompose(enableMonitoring, osUuid, appsData[projectName].AppAPIInfo.AppUUID)
+	return appsData, nil
 }
 
 // GetCPUUsage returns the average CPU usage percentage as a formatted string
@@ -541,4 +588,65 @@ func getMemoryUsage() (string, error) {
 
 	memUsage := fmt.Sprintf("%.2f%%", vmStat.UsedPercent)
 	return memUsage, nil
+}
+
+func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
+	if monitoringEnable == "true" {
+		configFilePath := os.Getenv("HOME") + "/.hossted/compose/monitoring/config.river"
+
+		// Read the Grafana Agent config file
+		configData, err := os.ReadFile(configFilePath)
+		if err != nil {
+			log.Fatalf("Failed to read the Grafana Agent config file: %v", err)
+		}
+
+		// Replace the UUID placeholder with the actual UUID
+		configStr := string(configData)
+		configStr = strings.Replace(configStr, "${UUID}", fmt.Sprintf("\"%s\"", osUUID), -1)
+		configStr = strings.Replace(configStr, "${APP_UUID}", fmt.Sprintf("\"%s\"", appUUID), -1)
+
+		// Replace MIMIR_USERNAME and MIMIR_PASSWORD placeholders
+		mimirUsername := os.Getenv("MIMIR_USERNAME")
+		mimirPassword := os.Getenv("MIMIR_PASSWORD")
+		mimirURL := os.Getenv("MIMIR_URL")
+		lokiUsername := os.Getenv("LOKI_USERNAME")
+		lokiPassword := os.Getenv("LOKI_PASSWORD")
+		lokiURL := os.Getenv("LOKI_URL")
+
+		if mimirUsername == "" || mimirPassword == "" || mimirURL == "" {
+			log.Fatalf("MIMIR_USERNAME, MIMIR_URL and  MIMIR_PASSWORD environment variables must be set")
+		}
+
+		configStr = strings.Replace(configStr, "${MIMIR_USERNAME}", fmt.Sprintf("\"%s\"", mimirUsername), -1)
+		configStr = strings.Replace(configStr, "${MIMIR_PASSWORD}", fmt.Sprintf("\"%s\"", mimirPassword), -1)
+		configStr = strings.Replace(configStr, "${MIMIR_URL}", fmt.Sprintf("\"%s\"", mimirURL), -1)
+		configStr = strings.Replace(configStr, "${LOKI_USERNAME}", fmt.Sprintf("\"%s\"", lokiUsername), -1)
+		configStr = strings.Replace(configStr, "${LOKI_PASSWORD}", fmt.Sprintf("\"%s\"", lokiPassword), -1)
+		configStr = strings.Replace(configStr, "${LOKI_URL}", fmt.Sprintf("\"%s\"", lokiURL), -1)
+
+		// Write the updated config back to the file
+		err = os.WriteFile(configFilePath, []byte(configStr), 0644)
+		if err != nil {
+			log.Fatalf("Failed to write the updated Grafana Agent config file: %v", err)
+		}
+
+		// Define the path to the Docker Compose file
+		composeFile := os.Getenv("HOME") + "/.hossted/compose/monitoring/docker-compose.yaml"
+
+		// Create the command to run Docker Compose
+		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")
+
+		// Set the command's output to the standard output
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		// Run the command
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalf("Failed to execute Docker Compose: %v", err)
+		}
+
+		fmt.Println("Docker Compose executed successfully")
+	}
+	return nil
 }

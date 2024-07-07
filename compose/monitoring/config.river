@@ -1,0 +1,93 @@
+prometheus.scrape "metrics_integrations_cadvisor" {
+	targets = [{
+		__address__ = "cadvisor:8080",
+	}]
+	forward_to      = [prometheus.remote_write.metrics_integrations.receiver]
+	job_name        = "cadvisor"
+	scrape_interval = "30s"
+}
+
+prometheus.scrape "metrics_integrations_node_exporter" {
+	targets = [{
+		__address__ = "node_exporter:9100",
+	}]
+	forward_to      = [prometheus.remote_write.metrics_integrations.receiver]
+	job_name        = "node_exporter"
+	scrape_interval = "30s"
+}
+
+prometheus.remote_write "metrics_integrations" {
+	external_labels = {
+		cluster = "compose",
+		uuid    = ${UUID},
+        appuuid = ${APP_UUID}
+	}
+
+	endpoint {
+		name = "integrations-a79c36"
+		url  = ${MIMIR_URL}
+
+		basic_auth {
+			username = ${MIMIR_USERNAME}
+			password = ${MIMIR_PASSWORD}
+		}
+
+		queue_config { }
+
+		metadata_config { }
+	}
+}
+discovery.docker "compose" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "compose" {
+	targets = []
+
+    rule {
+        source_labels = ["__meta_docker_container_id"]
+        regex         = "/(.*)"
+        target_label  = "containerid"
+    }   
+    rule {
+        target_label = "instance"
+        replacement  = constants.hostname
+    }
+
+    rule {
+        source_labels = ["__meta_docker_container_name"]
+        regex         = "/(.*)"
+        target_label  = "container"
+    }
+
+    rule {
+        source_labels = ["__meta_docker_container_log_stream"]
+        target_label  = "stream"
+    }    
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.compose.targets 
+  forward_to = [loki.write.local.receiver]
+  relabel_rules    = discovery.relabel.compose.rules
+
+}
+
+loki.write "local" {
+	external_labels = {
+		cluster = "compose",
+		uuid    = ${UUID},
+        appuuid = ${APP_UUID}
+	}	
+  endpoint {
+    url = ${LOKI_URL}
+		basic_auth {
+			username = ${LOKI_USERNAME}
+			password = ${LOKI_PASSWORD}
+		}	
+  }
+}
+logging {
+	level = "debug"
+}

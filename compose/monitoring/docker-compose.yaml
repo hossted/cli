@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    ports:
+      - "8082:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev|host|etc)($$|/)"'
+    restart: unless-stopped
+
+  grafana_agent:
+    image: grafana/agent:v0.41.1
+    container_name: grafana_agent
+    entrypoint: |
+      /bin/bash -c '
+      AGENT_MODE=flow grafana-agent run /etc/config.river
+      '
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./config.river:/etc/config.river
+      - /var/run/docker.sock:/var/run/docker.sock:ro      
+    restart: unless-stopped
