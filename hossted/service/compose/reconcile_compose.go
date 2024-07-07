@@ -23,8 +23,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func reconcileCompose(orgID, emailID, token, projectName string) error {
-
+func ReconcileCompose(orgID, emailID, token, projectName, hosstedAPIUrl string) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -36,7 +35,7 @@ func reconcileCompose(orgID, emailID, token, projectName string) error {
 		return err
 	}
 
-	osUuid, err := setClusterUUID(orgID, emailID, hosstedAPIUrl, osFilePath)
+	osUuid, err := setClusterUUID(orgID, emailID, hosstedAPIUrl, osFilePath, projectName)
 	if err != nil {
 		return err
 	}
@@ -51,18 +50,13 @@ func reconcileCompose(orgID, emailID, token, projectName string) error {
 		return err
 	}
 
-	err = writeComposeRequest2File(
+	isComposeStateChange, err := writeComposeRequest2File(
 		appFilePath,
 		list,
 		osUuid,
 		emailID,
 		enableMonitoring,
 		projectName)
-  if err != nil {
-    return err
-  }
-
-	isComposeStateChange, err := writeComposeRequest2File(appFilePath, list, osUuid, emailID)
 	if err != nil {
 		return err
 	}
@@ -127,10 +121,10 @@ func writeFile(filePath string, data []byte) error {
 
 }
 
-func setClusterUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, error) {
+func setClusterUUID(orgID, email, hosstedAPIUrl, osFilePath, projectName string) (string, error) {
 	var uuid string
 	if _, err := os.Stat(osFilePath); os.IsNotExist(err) {
-		uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath)
+		uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath, projectName)
 		if err != nil {
 			return uuid, err
 		}
@@ -142,7 +136,7 @@ func setClusterUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, err
 			return uuid, err
 		}
 		if uuid == "" {
-			uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath)
+			uuid, err = updateUUID(orgID, email, hosstedAPIUrl, osFilePath, projectName)
 			if err != nil {
 				return uuid, err
 			}
@@ -151,7 +145,7 @@ func setClusterUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, err
 	return uuid, nil
 }
 
-func updateUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, error) {
+func updateUUID(orgID, email, hosstedAPIUrl, osFilePath, projectName string) (string, error) {
 	osUUID := "D-" + uuid.NewString()
 	fmt.Println("Generating UUID for cluster: ", osUUID)
 	info := OsInfo{
@@ -159,6 +153,7 @@ func updateUUID(orgID, email, hosstedAPIUrl, osFilePath string) (string, error) 
 		EmailID:       email,
 		OrgID:         orgID,
 		HosstedApiUrl: hosstedAPIUrl,
+		ProjectName:   projectName,
 	}
 
 	yamlData, err := yaml.Marshal(info)
@@ -198,9 +193,9 @@ func writeComposeRequest2File(
 	osUuid,
 	email,
 	enableMonitoring,
-	projectName string) error {
+	projectName string) (bool, error) {
 	// prepare appsInfo with updated container status
-	appRequest, err := prepareComposeRequest(
+	appRequest, isComposeStateChange, err := prepareComposeRequest(
 		appFilePath,
 		containerList,
 		osUuid,
@@ -208,9 +203,6 @@ func writeComposeRequest2File(
 		enableMonitoring,
 		projectName,
 	)
-  
-	// prepare appsInfo with updated container status
-	appRequest, isComposeStateChange, err := prepareComposeRequest(appFilePath, containerList, osUuid, email)
 	if err != nil {
 		return isComposeStateChange, err
 	}
@@ -408,14 +400,13 @@ func getUniqueComposeProjects(containerList []types.Container) (map[string]bool,
 	return uniqueProjects, nil
 }
 
-
 func prepareComposeRequest(
 	appFilePath string,
 	containerList []types.Container,
 	osUuid,
 	email,
 	enableMonitoring,
-	projectName string) (map[string]AppRequest, error) {
+	projectName string) (map[string]AppRequest, bool, error) {
 	var appsData map[string]AppRequest
 	isComposeStateChange := false
 
@@ -560,9 +551,8 @@ func prepareComposeRequest(
 		}
 	}
 
-
 	runMonitoringCompose(enableMonitoring, osUuid, appsData[projectName].AppAPIInfo.AppUUID)
-	return appsData, nil
+	return appsData, isComposeStateChange, nil
 }
 
 // GetCPUUsage returns the average CPU usage percentage as a formatted string
