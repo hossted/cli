@@ -12,8 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/hossted/cli/hossted/service/common"
 	"github.com/manifoldco/promptui"
-
-
+	"gopkg.in/yaml.v2"
 )
 
 type OsInfo struct {
@@ -22,6 +21,7 @@ type OsInfo struct {
 	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
 	OrgID                string `yaml:"orgID,omitempty"`
 	HosstedApiUrl        string `yaml:"hosstedAPIUrl,omitempty"`
+	ProjectName          string `yaml:"projectName,omitempty"`
 }
 
 type AppRequest struct {
@@ -77,13 +77,7 @@ func ActivateCompose(composeFilePath string) error {
 		return err
 	}
 
-
-	err = reconcileCompose(orgID, emailID, resp.Token, getProjectName(composeFilePath))
-
-	hosstedAPIUrl := os.Getenv("HOSSTED_API_URL")
-
-	err = ComposeReconciler(orgID, emailID, hosstedAPIUrl, resp.Token)
-
+	err = ReconcileCompose(orgID, emailID, resp.Token, GetProjectName(composeFilePath), os.Getenv("HOSSTED_API_URL"))
 	if err != nil {
 		return err
 	}
@@ -117,7 +111,7 @@ func askPromptsToInstall() (string, error) {
 }
 
 // getProjectName takes a file path and returns the final directory name
-func getProjectName(filePath string) string {
+func GetProjectName(filePath string) string {
 	// Clean the path to handle any extraneous characters
 	cleanPath := filepath.Clean(filePath)
 
@@ -127,8 +121,8 @@ func getProjectName(filePath string) string {
 
 func AddComposeFile() {
 	files := map[string]string{
-		"https://raw.githubusercontent.com/hossted/cli/compose-monitor/compose/monitoring/config.river":        "config.river",
-		"https://raw.githubusercontent.com/hossted/cli/compose-monitor/compose/monitoring/docker-compose.yaml": "docker-compose.yaml",
+		"https://raw.githubusercontent.com/hossted/cli/main/compose/monitoring/config.river":        "config.river",
+		"https://raw.githubusercontent.com/hossted/cli/main/compose/monitoring/docker-compose.yaml": "docker-compose.yaml",
 	}
 
 	// Define the base directory where the files will be saved
@@ -152,56 +146,53 @@ func AddComposeFile() {
 
 }
 
-// DownloadFile downloads a file from the specified URL and saves it to the specified path
-func DownloadFile(url, savePath string) error {
-	// Get the file from the URL
+// DownloadFile downloads a file from a URL and saves it to a local path.
+func DownloadFile(url, filePath string) error {
+	// Create the file
+	out, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	// Check if the request was successful
+	// Check server response
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch the file: status code %d", resp.StatusCode)
+		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	// Create the file on the filesystem
-	outFile, err := os.Create(savePath)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
 
-	// Copy the content from the response body to the file
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-func GetOrgIDHosstedApiUrl() (string, string, error) {
+func GetOrgIDHosstedApiUrl() (string, string, string, error) {
 	//read file
 	homeDir, err := os.UserHomeDir()
 
 	folderPath := filepath.Join(homeDir, ".hossted")
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	fileData, err := os.ReadFile(folderPath + "/" + "compose.yaml")
 	if err != nil {
-		return "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
+		return "", "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
 	}
 
 	var osInfo OsInfo
 	err = yaml.Unmarshal(fileData, &osInfo)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
-	return osInfo.OrgID, osInfo.HosstedApiUrl, nil
+	return osInfo.OrgID, osInfo.HosstedApiUrl, osInfo.ProjectName, nil
 
 }
 
