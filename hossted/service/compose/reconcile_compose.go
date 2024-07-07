@@ -46,7 +46,7 @@ func reconcileCompose(orgID, emailID, token, projectName string) error {
 	}
 
 	if monitoringEnable == "true" {
-		configFilePath := "compose/monitoring/config.river"
+		configFilePath := "~/.hossted/compose/monitoring/config.river"
 
 		// Read the Grafana Agent config file
 		configData, err := os.ReadFile(configFilePath)
@@ -84,7 +84,7 @@ func reconcileCompose(orgID, emailID, token, projectName string) error {
 		}
 
 		// Define the path to the Docker Compose file
-		composeFile := "compose/monitoring/docker-compose.yaml"
+		composeFile := "~/.hossted/compose/monitoring/docker-compose.yaml"
 
 		// Create the command to run Docker Compose
 		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")

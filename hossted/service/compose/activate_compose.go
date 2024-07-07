@@ -2,6 +2,10 @@ package compose
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/fatih/color"
@@ -95,6 +99,7 @@ func askPromptsToInstall() (string, error) {
 	if monitoringEnable == "Yes" {
 		fmt.Println("Enabled Monitoring :", green(monitoringEnable))
 		monitoringEnabled = "true"
+		AddComposeFile()
 	}
 
 	return monitoringEnabled, nil
@@ -107,6 +112,63 @@ func getProjectName(filePath string) string {
 
 	// Get the final directory name
 	return filepath.Base(cleanPath)
+}
+
+func AddComposeFile() {
+	files := map[string]string{
+		"https://raw.githubusercontent.com/hossted/cli/compose-monitor/compose/monitoring/config.river":        "config.river",
+		"https://raw.githubusercontent.com/hossted/cli/compose-monitor/compose/monitoring/docker-compose.yaml": "docker-compose.yaml",
+	}
+
+	// Define the base directory where the files will be saved
+	baseDir := filepath.Join(os.Getenv("HOME"), ".hossted/compose/monitoring")
+
+	// Ensure the base directory exists
+	err := os.MkdirAll(baseDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create directory: %v", err)
+	}
+
+	// Download and save each file
+	for url, fileName := range files {
+		savePath := filepath.Join(baseDir, fileName)
+		err := DownloadFile(url, savePath)
+		if err != nil {
+			log.Fatalf("Failed to download %s: %v", url, err)
+		}
+		log.Printf("File successfully downloaded to %s", savePath)
+	}
+
+}
+
+// DownloadFile downloads a file from the specified URL and saves it to the specified path
+func DownloadFile(url, savePath string) error {
+	// Get the file from the URL
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check if the request was successful
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch the file: status code %d", resp.StatusCode)
+	}
+
+	// Create the file on the filesystem
+	outFile, err := os.Create(savePath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	// Copy the content from the response body to the file
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan
