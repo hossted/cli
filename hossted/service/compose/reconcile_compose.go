@@ -581,7 +581,7 @@ func getMemoryUsage() (string, error) {
 
 func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 	if monitoringEnable == "true" {
-		configFilePath := "~/.hossted/compose/monitoring/config.river"
+		configFilePath := os.Getenv("HOME") + "/.hossted/compose/monitoring/config.river"
 
 		// Read the Grafana Agent config file
 		configData, err := os.ReadFile(configFilePath)
@@ -620,7 +620,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		}
 
 		// Define the path to the Docker Compose file
-		composeFile := "~/.hossted/compose/monitoring/docker-compose.yaml"
+		composeFile := os.Getenv("HOME") + "/.hossted/compose/monitoring/docker-compose.yaml"
 
 		// Create the command to run Docker Compose
 		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")
