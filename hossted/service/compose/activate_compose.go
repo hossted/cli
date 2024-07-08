@@ -77,7 +77,34 @@ func ActivateCompose(composeFilePath string) error {
 		return err
 	}
 
-	err = ReconcileCompose(orgID, emailID, resp.Token, GetProjectName(composeFilePath), os.Getenv("HOSSTED_API_URL"))
+	osFilePath, err := getComposeFilePath("compose.yaml")
+	if err != nil {
+		return err
+	}
+
+	osUUID, err := setClusterUUID(
+		orgID,
+		emailID,
+		os.Getenv("HOSSTED_API_URL"),
+		osFilePath,
+		GetProjectName(composeFilePath))
+	if err != nil {
+		return err
+	}
+
+	enableMonitoring, err := askPromptsToInstall()
+	if err != nil {
+		return err
+	}
+
+	err = ReconcileCompose(
+		osUUID,
+		orgID,
+		emailID,
+		resp.Token,
+		GetProjectName(composeFilePath),
+		os.Getenv("HOSSTED_API_URL"),
+		enableMonitoring)
 	if err != nil {
 		return err
 	}
@@ -172,27 +199,27 @@ func DownloadFile(url, filePath string) error {
 	return err
 }
 
-func GetOrgIDHosstedApiUrl() (string, string, string, error) {
+func GetOrgIDHosstedApiUrl() (string, string, string, string, error) {
 	//read file
 	homeDir, err := os.UserHomeDir()
 
 	folderPath := filepath.Join(homeDir, ".hossted")
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	fileData, err := os.ReadFile(folderPath + "/" + "compose.yaml")
 	if err != nil {
-		return "", "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
+		return "", "", "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
 	}
 
 	var osInfo OsInfo
 	err = yaml.Unmarshal(fileData, &osInfo)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
-	return osInfo.OrgID, osInfo.HosstedApiUrl, osInfo.ProjectName, nil
+	return osInfo.OrgID, osInfo.HosstedApiUrl, osInfo.ProjectName, osInfo.OsUUID, nil
 
 }
 

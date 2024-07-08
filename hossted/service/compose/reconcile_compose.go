@@ -23,24 +23,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReconcileCompose(orgID, emailID, token, projectName, hosstedAPIUrl string) error {
-
-	osFilePath, err := getComposeFilePath("compose.yaml")
-	if err != nil {
-		return err
-	}
+func ReconcileCompose(osUUID, orgID, emailID, token, projectName, hosstedAPIUrl, enableMonitoring string) error {
 
 	appFilePath, err := getComposeFilePath("compose-request.json")
-	if err != nil {
-		return err
-	}
-
-	osUuid, err := setClusterUUID(orgID, emailID, hosstedAPIUrl, osFilePath, projectName)
-	if err != nil {
-		return err
-	}
-
-	enableMonitoring, err := askPromptsToInstall()
 	if err != nil {
 		return err
 	}
@@ -53,7 +38,7 @@ func ReconcileCompose(orgID, emailID, token, projectName, hosstedAPIUrl string) 
 	isComposeStateChange, err := writeComposeRequest2File(
 		appFilePath,
 		list,
-		osUuid,
+		osUUID,
 		emailID,
 		enableMonitoring,
 		projectName)
