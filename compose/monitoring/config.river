@@ -20,7 +20,7 @@ prometheus.remote_write "metrics_integrations" {
 	external_labels = {
 		cluster = "compose",
 		uuid    = ${UUID},
-        appuuid = ${APP_UUID}
+        appuuid = ${APP_UUID},
 	}
 
 	endpoint {
@@ -78,7 +78,7 @@ loki.write "local" {
 	external_labels = {
 		cluster = "compose",
 		uuid    = ${UUID},
-        appuuid = ${APP_UUID}
+        appuuid = ${APP_UUID},
 	}	
   endpoint {
     url = ${LOKI_URL}
