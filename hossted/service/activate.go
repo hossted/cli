@@ -62,28 +62,28 @@ type response struct {
 }
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(releaseName string) error {
-	emailsID, err := getEmail()
-	if err != nil {
-		return err
-	}
+func ActivateK8s(releaseName, token, orgID string) error {
+	// emailsID, err := getEmail()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// getResponse from reading file in .hossted/config.json
-	resp, err := getLoginResponse()
-	if err != nil {
-		return err
-	}
+	// resp, err := getLoginResponse()
+	// if err != nil {
+	// 	return err
+	// }
 	// validate auth token
 
-	err = validateToken(resp)
-	if err != nil {
-		return err
-	}
+	// err = validateToken(resp)
+	// if err != nil {
+	// 	return err
+	// }
 	// handle usecases for orgID selection
-	orgID, err := useCases(resp)
-	if err != nil {
-		return err
-	}
+	// orgID, err := useCases(resp)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// prompt user for k8s context
 	clusterName, err := promptK8sContext()
@@ -102,18 +102,18 @@ func ActivateK8s(releaseName string) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", emailsID, clusterName, orgID)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID)
 		if err != nil {
 			return err
 		}
 
-		config, err := readConfig()
-		if err != nil {
-			return err
-		}
+		// config, err := readConfig()
+		// if err != nil {
+		// 	return err
+		// }
 
 		fmt.Println("Updating secret....")
-		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", config.Token)
+		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", token)
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func ActivateK8s(releaseName string) error {
 		return nil
 	}
 
-	err = deployOperator(clusterName, emailsID, orgID, resp.Token)
+	err = deployOperator(clusterName, "", orgID, token)
 	if err != nil {
 		return err
 	}

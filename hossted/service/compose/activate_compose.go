@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
-	"github.com/hossted/cli/hossted/service/common"
 	"github.com/manifoldco/promptui"
 	"gopkg.in/yaml.v2"
 )
@@ -54,28 +53,28 @@ type ContainerInfo struct {
 	DockerID   string      `json:"docker_id,omitempty"`
 }
 
-func ActivateCompose(composeFilePath string) error {
+func ActivateCompose(composeFilePath, token, orgID string) error {
 
-	emailID, err := common.GetEmail()
-	if err != nil {
-		return err
-	}
+	// emailID, err := common.GetEmail()
+	// if err != nil {
+	// 	return err
+	// }
 
-	resp, err := common.GetLoginResponse()
-	if err != nil {
-		return err
-	}
+	// resp, err := common.GetLoginResponse()
+	// if err != nil {
+	// 	return err
+	// }
 
-	// validate auth token
-	err = common.ValidateToken(resp)
-	if err != nil {
-		return err
-	}
-	// handle usecases for orgID selection
-	orgID, err := common.UseCases(resp)
-	if err != nil {
-		return err
-	}
+	// // validate auth token
+	// err = common.ValidateToken(resp)
+	// if err != nil {
+	// 	return err
+	// }
+	// // handle usecases for orgID selection
+	// orgID, err := common.UseCases(resp)
+	// if err != nil {
+	// 	return err
+	// }
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
@@ -84,7 +83,7 @@ func ActivateCompose(composeFilePath string) error {
 
 	osUUID, err := setClusterUUID(
 		orgID,
-		emailID,
+		"",
 		os.Getenv("HOSSTED_API_URL"),
 		osFilePath,
 		GetProjectName(composeFilePath))
@@ -100,8 +99,8 @@ func ActivateCompose(composeFilePath string) error {
 	err = ReconcileCompose(
 		osUUID,
 		orgID,
-		emailID,
-		resp.Token,
+		"",
+		token,
 		GetProjectName(composeFilePath),
 		os.Getenv("HOSSTED_API_URL"),
 		enableMonitoring)
