@@ -7,14 +7,23 @@ on:
   pull_request:
     branches:
       - main
-
+# general env vars      
+env:
+  LOKI_URL: ${{ secrets.LOKI_URL }}
+  LOKI_USERNAME: ${{ secrets.LOKI_USERNAME }}
+  LOKI_PASSWORD: ${{ secrets.LOKI_PASSWORD }}
+  MIMIR_USERNAME: ${{ secrets.MIMIR_USERNAME }}
+  MIMIR_PASSWORD: ${{ secrets.MIMIR_PASSWORD }}
+  HOSSTED_AUTH_TOKEN: ${{ secrets.HOSSTED_AUTH_TOKEN }}
+  PACKAGE: "github.com/hossted/cli"
+  VERSION: "0.4.4"
 jobs:
-  build:
+  build-binary:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -24,25 +33,24 @@ jobs:
       - name: Inject secrets and build
         env:
           LOKI_URL: ${{ secrets.LOKI_URL }}
-          LOKI_USERNAME: ${{ secrets.LOKI_USERNAME }}
-          LOKI_PASSWORD: ${{ secrets.LOKI_PASSWORD }}
-          MIMIR_USERNAME: ${{ secrets.MIMIR_USERNAME }}
-          MIMIR_PASSWORD: ${{ secrets.MIMIR_PASSWORD }}
           HOSSTED_API_URL: ${{ secrets.HOSSTED_API_URL }}
           MIMIR_URL: ${{ secrets.MIMIR_URL }}
-          
+          COMMIT_HASH: ${{GITHUB_SHA}}
+          BUILD_TIMESTAMP: $(shell date '+%Y-%m-%d')
         run: |
-          GOOS=linux GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=prod' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL" -o hossted-linux-amd64
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=prod' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL"  -o hossted-linux-amd64
           GOOS=darwin GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=prod' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL" -o hossted-darwin-amd64
+         # GOOS=linux GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=dev' -X '${PACKAGE}/cmd.ENVIRONMENT=dev' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL"  -o hossted-linux-amd64-dev
+         # GOOS=darwin GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=dev' -X '${PACKAGE}/cmd.ENVIRONMENT=dev' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL"  -o hossted-darwin-amd64-dev
 
-      - name: Upload Linux binary
+      - name: Upload Linux Production binary
         uses: actions/upload-artifact@v4
         with:
           name: hossted-linux-amd64
           path: ./hossted-linux-amd64
           if-no-files-found: error
           
-      - name: Upload OSx binary
+      - name: Upload OSx Production binary
         uses: actions/upload-artifact@v4
         with:
           name: hossted-darwin-amd64
