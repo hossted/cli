@@ -35,8 +35,14 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=prod' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL" -o hossted-linux-amd64
           GOOS=darwin GOARCH=amd64 go build -ldflags "-X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=prod' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL" -o hossted-darwin-amd64
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload hossted-linux-amd64 build artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: cli-binary
-          path: ./my_cli_binary
+          name: hossted-linux-amd64
+          path: ./hossted-linux-amd64
+          
+      - name: Upload hossted-darwin-amd64 build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hossted-darwin-amd64
+          path: ./hossted-darwin-amd64
