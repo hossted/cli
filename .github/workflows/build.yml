@@ -4,18 +4,19 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
   pull_request:
     branches:
       - main
 # general env vars      
 env:
-  LOKI_URL: ${{ secrets.LOKI_URL }}
   LOKI_USERNAME: ${{ secrets.LOKI_USERNAME }}
   LOKI_PASSWORD: ${{ secrets.LOKI_PASSWORD }}
   MIMIR_USERNAME: ${{ secrets.MIMIR_USERNAME }}
   MIMIR_PASSWORD: ${{ secrets.MIMIR_PASSWORD }}
   HOSSTED_AUTH_TOKEN: ${{ secrets.HOSSTED_AUTH_TOKEN }}
-  VERSION: "0.4.4"
+  VERSION: "${{ github.ref_name }}"
 jobs:
   build-binary:
     runs-on: ubuntu-latest
