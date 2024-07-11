@@ -2,7 +2,7 @@ name: SSH Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ,cli-activate ]
 
 jobs:
   deploy:
