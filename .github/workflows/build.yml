@@ -34,9 +34,9 @@ jobs:
           LOKI_URL: ${{ secrets.LOKI_URL }}
           HOSSTED_API_URL: ${{ secrets.HOSSTED_API_URL }}
           MIMIR_URL: ${{ secrets.MIMIR_URL }}
-          COMMIT_HASH: ${{env.GITHUB_SHA}}
-          BUILD_TIMESTAMP: $(shell date '+%Y-%m-%d')
+          COMMIT_HASH: ${{ github.sha }}
         run: |
+          BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
           echo "$BUILD_TIMESTAMP BUILD_TIMESTAMP"
           echo "$COMMIT_HASH COMMIT_HASH"
           echo "$LOKI_URL LOKI_URL"
