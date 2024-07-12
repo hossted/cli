@@ -1,0 +1,78 @@
+name: Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        required: true
+        type: string
+      build-command:
+        required: true
+        type: string
+      loki_url:
+        required: true
+        type: string
+      hossted_api_url:
+        required: true
+        type: string
+      mimir_url:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+
+# general env vars      
+env:
+  LOKI_USERNAME: ${{ secrets.LOKI_USERNAME }}
+  LOKI_PASSWORD: ${{ secrets.LOKI_PASSWORD }}
+  MIMIR_USERNAME: ${{ secrets.MIMIR_USERNAME }}
+  MIMIR_PASSWORD: ${{ secrets.MIMIR_PASSWORD }}
+  HOSSTED_AUTH_TOKEN: ${{ secrets.HOSSTED_AUTH_TOKEN }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ inputs.environment }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Inject secrets and build
+      env:
+          LOKI_URL: ${{ inputs.loki_url }}
+          HOSSTED_API_URL: ${{ inputs.hossted_api_url}}
+          MIMIR_URL: ${{ inputs.mimir_url }}
+          COMMIT_HASH: ${{ github.sha }}
+          VERSION: ${{ inputs.version }}
+          ENVIRONMENT: ${{ inputs.environment }}
+      run: |
+        BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
+        COMMON_FLAGS=" -X './cmd.VERSION=${VERSION}' -X './cmd.ENVIRONMENT=${ENVIRONMENT}' -X './cmd.COMMITHASH=${COMMIT_HASH}' -X './cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=$LOKI_URL -X main.lokiUsername=$LOKI_USERNAME -X main.lokiPassword=$LOKI_PASSWORD -X main.mimirUsername=$MIMIR_USERNAME -X main.mimirPassword=$MIMIR_PASSWORD -X main.hosstedAPIURL=$HOSSTED_API_URL -X main.mimirURL=$MIMIR_URL"
+        echo "COMMON_FLAGS= $COMMON_FLAGS"
+        GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
+        GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
+      
+
+    - name: Upload Linux binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted-linux-amd64
+        path: ./hossted-linux-amd64
+        if-no-files-found: error
+        
+    - name: Upload OSx binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted-darwin-amd64
+        path: ./hossted-darwin-amd64
+        if-no-files-found: error
