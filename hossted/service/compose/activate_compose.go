@@ -15,12 +15,19 @@ import (
 )
 
 type OsInfo struct {
-	OsUUID               string `yaml:"osUUID"`
+	OsUUID               string `yaml:"osUUID,omitempty"`
 	EmailID              string `yaml:"emailId,omitempty"`
 	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
 	OrgID                string `yaml:"orgID,omitempty"`
-	HosstedApiUrl        string `yaml:"hosstedAPIUrl,omitempty"`
+	Token                string `yaml:"token,omitempty"`
 	ProjectName          string `yaml:"projectName,omitempty"`
+	HosstedApiUrl        string `yaml:"hosstedAPIUrl,omitempty"`
+	MimirUsername        string `yaml:"MIMIR_USERNAME,omitempty"`
+	MimirPassword        string `yaml:"MIMIR_PASSWORD,omitempty"`
+	MimirUrl             string `yaml:"MIMIR_URL,omitempty"`
+	LokiUsername         string `yaml:"LOKI_USERNAME,omitempty"`
+	LokiPassword         string `yaml:"LOKI_PASSWORD,omitempty"`
+	LokiUrl              string `yaml:"LOKI_URL,omitempty"`
 }
 
 type AppRequest struct {
@@ -81,12 +88,20 @@ func ActivateCompose(composeFilePath, token, orgID string) error {
 		return err
 	}
 
-	osUUID, err := setClusterUUID(
-		orgID,
-		"",
-		os.Getenv("HOSSTED_API_URL"),
-		osFilePath,
-		GetProjectName(composeFilePath))
+	osInfo := OsInfo{
+		OrgID:         orgID,
+		Token:         token,
+		ProjectName:   GetProjectName(composeFilePath),
+		HosstedApiUrl: os.Getenv("HOSSTED_API_URL"),
+		MimirUsername: os.Getenv("MIMIR_USERNAME"),
+		MimirPassword: os.Getenv("MIMIR_PASSWORD"),
+		MimirUrl:      os.Getenv("MIMIR_URL"),
+		LokiUsername:  os.Getenv("LOKI_USERNAME"),
+		LokiPassword:  os.Getenv("LOKI_PASSWORD"),
+		LokiUrl:       os.Getenv("LOKI_URL"),
+	}
+
+	osData, err := setClusterInfo(osInfo, osFilePath)
 	if err != nil {
 		return err
 	}
@@ -96,14 +111,7 @@ func ActivateCompose(composeFilePath, token, orgID string) error {
 		return err
 	}
 
-	err = ReconcileCompose(
-		osUUID,
-		orgID,
-		"",
-		token,
-		GetProjectName(composeFilePath),
-		os.Getenv("HOSSTED_API_URL"),
-		enableMonitoring)
+	err = ReconcileCompose(osData, enableMonitoring)
 	if err != nil {
 		return err
 	}
@@ -198,28 +206,27 @@ func DownloadFile(url, filePath string) error {
 	return err
 }
 
-func GetOrgIDHosstedApiUrl() (string, string, string, string, error) {
+func GetClusterInfo() (OsInfo, error) {
+	var osInfo OsInfo
 	//read file
 	homeDir, err := os.UserHomeDir()
 
 	folderPath := filepath.Join(homeDir, ".hossted")
 	if err != nil {
-		return "", "", "", "", err
+		return osInfo, err
 	}
 
 	fileData, err := os.ReadFile(folderPath + "/" + "compose.yaml")
 	if err != nil {
-		return "", "", "", "", fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
+		return osInfo, fmt.Errorf("unable to read %s file", folderPath+"/compose.yaml")
 	}
 
-	var osInfo OsInfo
 	err = yaml.Unmarshal(fileData, &osInfo)
 	if err != nil {
-		return "", "", "", "", err
+		return osInfo, err
 	}
 
-	return osInfo.OrgID, osInfo.HosstedApiUrl, osInfo.ProjectName, osInfo.OsUUID, nil
-
+	return osInfo, nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan

@@ -62,9 +62,11 @@ hossted activate
 
 func init() {
 	rootCmd.AddCommand(activateCmd)
-	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|docker")
+	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|compose")
 	activateCmd.Flags().StringVarP(&token, "token", "", "", "token for orgID")
 	activateCmd.Flags().StringVarP(&org_id, "org_id", "", "", "orgID")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
+
+	activateCmd.MarkFlagRequired("type")
 }
