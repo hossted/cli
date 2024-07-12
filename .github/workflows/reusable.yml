@@ -12,6 +12,9 @@ on:
       environment:
         required: true
         type: string
+      is-production:
+        required: true
+        type: boolean
 
 jobs:
   build-and-deploy:
@@ -44,20 +47,34 @@ jobs:
         BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
         COMMON_FLAGS=" -X './cmd.VERSION=${VERSION}' -X './cmd.ENVIRONMENT=${ENVIRONMENT}' -X './cmd.COMMITHASH=${COMMIT_HASH}' -X './cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=${LOKI_URL} -X main.lokiUsername=${LOKI_USERNAME} -X main.lokiPassword=${LOKI_PASSWORD} -X main.mimirUsername=${MIMIR_USERNAME} -X main.mimirPassword=${MIMIR_PASSWORD} -X main.hosstedAPIURL=${HOSSTED_API_URL} -X main.mimirURL=${MIMIR_URL} -X main.hosstedAUTHTOKEN=${HOSSTED_AUTH_TOKEN}"
         echo "COMMON_FLAGS= $COMMON_FLAGS"
-        GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
+        GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64.${VERSION}.${ENVIRONMENT}
+        GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64.${VERSION}.${ENVIRONMENT}
       
 
     - name: Upload Linux binary
       uses: actions/upload-artifact@v4
       with:
-        name: hossted-linux-amd64
-        path: ./hossted-linux-amd64
+        name: hossted
+        path: ./hossted-linux-amd64*
         if-no-files-found: error
         
     - name: Upload OSx binary
       uses: actions/upload-artifact@v4
       with:
-        name: hossted-darwin-amd64
-        path: ./hossted-darwin-amd64
+        name: hossted
+        path: ./hossted-darwin-amd64*
         if-no-files-found: error
+    
+    - name: Create GitHub Release
+      if: ${{ inputs.is-production }}
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        body: |
+          Automated release created for tag ${{ github.ref_name }}.
+          This release includes the latest production build.
+        draft: true
+        prerelease: false
