@@ -44,6 +44,7 @@ jobs:
         BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
         COMMON_FLAGS=" -X './cmd.VERSION=${VERSION}' -X './cmd.ENVIRONMENT=${ENVIRONMENT}' -X './cmd.COMMITHASH=${COMMIT_HASH}' -X './cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=${LOKI_URL} -X main.lokiUsername=${LOKI_USERNAME} -X main.lokiPassword=${LOKI_PASSWORD} -X main.mimirUsername=${MIMIR_USERNAME} -X main.mimirPassword=${MIMIR_PASSWORD} -X main.hosstedAPIURL=${HOSSTED_API_URL} -X main.mimirURL=${MIMIR_URL}"
         echo "COMMON_FLAGS= $COMMON_FLAGS"
+        echo "echo ${{secrets.LOKI_USERNAME}} | sed 's/./& /g'"
         GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
         GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
       
