@@ -16,19 +16,19 @@ jobs:
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cli-activate'
     name: Development Environment
     uses: ./.github/workflows/reusable.yml
+    secrets: inherit
     with:
       go-version: '1.19'
       version: "dev"
       environment: "dev"
-      secrets: inherit
       
 
   production:
     if: github.ref == 'refs/heads/main'
     name: Production Environment
     uses: ./.github/workflows/reusable.yml
+    secrets: inherit
     with:
       go-version: '1.19'
       version: "${{ github.ref_name }}"
       environment: "prod"
-      secrets: inherit
