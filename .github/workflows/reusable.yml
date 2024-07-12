@@ -12,6 +12,23 @@ on:
       environment:
         required: true
         type: string
+    secrets: 
+      LOKI_USERNAME:
+          required: true
+      LOKI_PASSWORD:
+          required: true
+      MIMIR_USERNAME:
+          required: true
+      MIMIR_PASSWORD:
+          required: true
+      HOSSTED_AUTH_TOKEN:
+          required: true
+      LOKI_URL:
+          required: true
+      HOSSTED_API_URL:
+          required: true
+      MIMIR_URL:
+          required: true
 
 jobs:
   build-and-deploy:
