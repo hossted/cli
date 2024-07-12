@@ -49,8 +49,13 @@ jobs:
         echo "COMMON_FLAGS= $COMMON_FLAGS"
         GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
         GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
-      
-
+    
+    - name: Test Version of binary file
+      run: |
+        echo "Checking version of binary file..."
+        chmod 777 hossted-linux-amd64
+        ./hossted-linux-amd64 version
+        
     - name: Upload Linux binary
       uses: actions/upload-artifact@v4
       with:
@@ -78,3 +83,4 @@ jobs:
           This release includes the latest production build.
         draft: true
         prerelease: false
+    
