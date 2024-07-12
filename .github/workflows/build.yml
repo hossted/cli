@@ -18,9 +18,6 @@ jobs:
     uses: ./.github/workflows/reusable.yml
     with:
       go-version: '1.19'
-      LOKI_URL: ${{ secrets.LOKI_URL }}
-      HOSSTED_API_URL: ${{ secrets.HOSSTED_API_URL }}
-      MIMIR_URL: ${{ secrets.MIMIR_URL }}
       version: "dev"
       environment: "dev"
       
@@ -31,8 +28,5 @@ jobs:
     uses: ./.github/workflows/reusable.yml
     with:
       go-version: '1.19'
-      loki_url: ${{ secrets.LOKI_URL }}
-      hossted_api_url: ${{ secrets.HOSSTED_API_URL }}
-      mimir_url: ${{ secrets.MIMIR_URL }}
       version: "${{ github.ref_name }}"
       environment: "prod"
