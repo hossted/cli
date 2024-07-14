@@ -15,7 +15,7 @@ on:
       - main
 jobs:
   development:
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cli-activate'
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/cli-activate'
     name: Development Environment
     uses: ./.github/workflows/reusable.yml
     secrets: inherit
