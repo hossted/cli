@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/fatih/color"
+	"github.com/hossted/cli/hossted/service/common"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/gofrs/flock"
@@ -388,19 +389,19 @@ func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName
 				} else if env.Name == "HOSSTED_ORG_ID" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedOrgID
 				} else if env.Name == "LOKI_PASSWORD" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_PASSWORD")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_PASSWORD
 				} else if env.Name == "LOKI_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_URL")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_URL
 				} else if env.Name == "LOKI_USERNAME" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("LOKI_USERNAME")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_USERNAME
 				} else if env.Name == "MIMIR_PASSWORD" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_PASSWORD")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_PASSWORD
 				} else if env.Name == "MIMIR_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_URL")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_URL
 				} else if env.Name == "MIMIR_USERNAME" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("MIMIR_USERNAME")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_USERNAME
 				} else if env.Name == "HOSSTED_API_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = os.Getenv("HOSSTED_API_URL")
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_API_URL
 
 				}
 			}
@@ -608,12 +609,12 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
 				",logging.enable=" + loggingEnabled +
-				",env.LOKI_URL=" + os.Getenv("LOKI_URL") +
-				",env.LOKI_USERNAME=" + os.Getenv("LOKI_USERNAME") +
-				",env.LOKI_PASSWORD=" + os.Getenv("LOKI_PASSWORD") +
-				",env.MIMIR_URL=" + os.Getenv("MIMIR_URL") +
-				",env.MIMIR_USERNAME=" + os.Getenv("MIMIR_USERNAME") +
-				",env.MIMIR_PASSWORD=" + os.Getenv("MIMIR_PASSWORD") +
+				",env.LOKI_URL=" + common.LOKI_URL +
+				",env.LOKI_USERNAME=" + common.LOKI_USERNAME +
+				",env.LOKI_PASSWORD=" + common.LOKI_PASSWORD +
+				",env.MIMIR_URL=" + common.MIMIR_URL +
+				",env.MIMIR_USERNAME=" + common.MIMIR_USERNAME +
+				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
@@ -1011,8 +1012,8 @@ var hpGVK = schema.GroupVersionResource{
 }
 
 func sendEvent(eventType, message string) error {
-	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
-	url := os.Getenv("HOSSTED_API_URL") + "/statuses"
+	authToken := common.HOSSTED_AUTH_TOKEN
+	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
 		WareType string `json:"ware_type"`
@@ -1102,8 +1103,8 @@ func validateToken(res response) error {
 		Message string `json:"message"`
 	}
 
-	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
-	url := os.Getenv("HOSSTED_API_URL") + "/cli/bearer"
+	authToken := common.HOSSTED_AUTH_TOKEN
+	url := common.HOSSTED_API_URL + "/cli/bearer"
 
 	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
 	// Create HTTP request
