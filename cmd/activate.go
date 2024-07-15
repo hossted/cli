@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/hossted/cli/hossted"
 	"github.com/hossted/cli/hossted/service"
 	"github.com/hossted/cli/hossted/service/compose"
 
@@ -55,6 +56,9 @@ hossted activate
 				fmt.Println(err)
 			}
 			return
+		} else {
+			hossted.SetUpdates(ENVIRONMENT, true)
+			hossted.SetMonitoring(ENVIRONMENT, true)
 		}
 
 	},
