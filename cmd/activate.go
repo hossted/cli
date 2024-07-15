@@ -71,6 +71,4 @@ func init() {
 	activateCmd.Flags().StringVarP(&org_id, "org_id", "", "", "orgID")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
-
-	activateCmd.MarkFlagRequired("type")
 }
