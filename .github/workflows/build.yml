@@ -18,7 +18,6 @@ jobs:
     uses: ./.github/workflows/reusable.yml
     secrets: inherit
     with:
-      go-version: '1.19'
       version: "dev"
       environment: "dev"
       is-production: false
@@ -30,7 +29,6 @@ jobs:
     uses: ./.github/workflows/reusable.yml
     secrets: inherit
     with:
-      go-version: '1.19'
       version: "${{ github.ref_name }}"
       environment: "prod"
       is-production: true

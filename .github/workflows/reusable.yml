@@ -3,9 +3,6 @@ name: Reusable Workflow
 on:
   workflow_call:
     inputs:
-      go-version:
-        required: true
-        type: string
       version:
         required: true
         type: string
@@ -24,11 +21,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ inputs.go-version }}
 
     - name: Inject secrets and build
       env:
@@ -44,32 +36,44 @@ jobs:
           VERSION: ${{ inputs.version }}
           ENVIRONMENT: ${{ inputs.environment }}
       run: |
-        BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
-        PACKAGE=github.com/hossted/cli
-        SERVICE_COMMON_PACKAGE=${PACKAGE}/hossted/service/common
-        COMMON_FLAGS=" -X '${PACKAGE}/cmd.VERSION=${VERSION}' -X '${PACKAGE}/cmd.ENVIRONMENT=${ENVIRONMENT}' -X '${PACKAGE}/cmd.COMMITHASH=${COMMIT_HASH}' -X '${PACKAGE}/cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_URL=${LOKI_URL}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_USERNAME=${LOKI_USERNAME}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_PASSWORD=${LOKI_PASSWORD}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_USERNAME=${MIMIR_USERNAME}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_PASSWORD=${MIMIR_PASSWORD}' -X '${SERVICE_COMMON_PACKAGE}.HOSSTED_API_URL=${HOSSTED_API_URL}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_URL=${MIMIR_URL}' -X '${SERVICE_COMMON_PACKAGE}.HOSSTED_AUTH_TOKEN=${HOSSTED_AUTH_TOKEN}'"
-        echo "COMMON_FLAGS= $COMMON_FLAGS"
-        GOOS=linux GOARCH=amd64 go build -v -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -v -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
+        if [ "${{ inputs.is-production }}" == "true" ]; then
+          make -f Makefile linux
+          make -f Makefile osx
+        else
+          make -f Makefile dev
+        fi
     
     - name: Test Version of binary file
       run: |
         echo "Checking version of binary file..."
-        chmod 777 hossted-linux-amd64
-        ./hossted-linux-amd64 version
+        if [ "${{ inputs.is-production }}" == "true" ]; then
+          chmod 777 bin/linux/hossted-linux-amd64 && ./bin/linux/hossted-linux-amd64 version
+        else
+          chmod 777  bin/dev/hossted && ./bin/dev/hossted version
+        fi
         
     - name: Upload Linux binary
+      if: ${{ inputs.is-production }}
       uses: actions/upload-artifact@v4
       with:
         name: hossted-linux-amd64
-        path: ./hossted-linux-amd64
+        path: ./bin/linux/hossted-linux-amd64
         if-no-files-found: error
         
     - name: Upload OSx binary
+      if: ${{ inputs.is-production }}
       uses: actions/upload-artifact@v4
       with:
         name: hossted-darwin-amd64
-        path: ./hossted-darwin-amd64
+        path: ./bin/osx/hossted-darwin-amd64
+        if-no-files-found: error
+    
+    - name: Upload DEV binary
+      if: ${{ !inputs.is-production }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted
+        path: ./bin/dev/hossted
         if-no-files-found: error
     
     - name: Create GitHub Release
