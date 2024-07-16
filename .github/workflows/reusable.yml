@@ -45,10 +45,11 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
       run: |
         BUILD_TIMESTAMP="$(date '+%Y-%m-%d')"
-        COMMON_FLAGS=" -X './cmd.VERSION=${VERSION}' -X './cmd.ENVIRONMENT=${ENVIRONMENT}' -X './cmd.COMMITHASH=${COMMIT_HASH}' -X './cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X main.lokiURL=${LOKI_URL} -X main.lokiUsername=${LOKI_USERNAME} -X main.lokiPassword=${LOKI_PASSWORD} -X main.mimirUsername=${MIMIR_USERNAME} -X main.mimirPassword=${MIMIR_PASSWORD} -X main.hosstedAPIURL=${HOSSTED_API_URL} -X main.mimirURL=${MIMIR_URL} -X main.hosstedAUTHTOKEN=${HOSSTED_AUTH_TOKEN}"
+        SERVICE_COMMON_PACKAGE=./hossted/service/common
+        COMMON_FLAGS=" -X './cmd.VERSION=${VERSION}' -X './cmd.ENVIRONMENT=${ENVIRONMENT}' -X './cmd.COMMITHASH=${COMMIT_HASH}' -X './cmd.BUILDTIME=${BUILD_TIMESTAMP}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_URL=${LOKI_URL}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_USERNAME=${LOKI_USERNAME}' -X '${SERVICE_COMMON_PACKAGE}.LOKI_PASSWORD=${LOKI_PASSWORD}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_USERNAME=${MIMIR_USERNAME}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_PASSWORD=${MIMIR_PASSWORD}' -X '${SERVICE_COMMON_PACKAGE}.HOSSTED_API_URL=${HOSSTED_API_URL}' -X '${SERVICE_COMMON_PACKAGE}.MIMIR_URL=${MIMIR_URL}' -X '${SERVICE_COMMON_PACKAGE}.HOSSTED_AUTH_TOKEN=${HOSSTED_AUTH_TOKEN}'"
         echo "COMMON_FLAGS= $COMMON_FLAGS"
-        GOOS=linux GOARCH=amd64 go build -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
+        GOOS=linux GOARCH=amd64 go build -v -ldflags "$COMMON_FLAGS"  -o hossted-linux-amd64
+        GOOS=darwin GOARCH=amd64 go build -v -ldflags "$COMMON_FLAGS" -o hossted-darwin-amd64
     
     - name: Test Version of binary file
       run: |

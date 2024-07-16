@@ -4,18 +4,16 @@ on:
   push:
     branches:
       - dev
-      - cli-activate 
     # tag should with 3 numbers separated by dot, i.e. 0.4.6
     tags:
       - '*.*.*'
   pull_request:
     branches:
       - dev
-      - cli-activate
       - main
 jobs:
   development:
-    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/cli-activate'
+    if: github.ref == 'refs/heads/dev' 
     name: Development Environment
     uses: ./.github/workflows/reusable.yml
     secrets: inherit
