@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/hossted/cli/hossted"
 	"github.com/hossted/cli/hossted/service"
 	"github.com/hossted/cli/hossted/service/compose"
 
@@ -55,6 +56,9 @@ hossted activate
 				fmt.Println(err)
 			}
 			return
+		} else {
+			hossted.SetUpdates(ENVIRONMENT, true)
+			hossted.SetMonitoring(ENVIRONMENT, true)
 		}
 
 	},
@@ -67,6 +71,4 @@ func init() {
 	activateCmd.Flags().StringVarP(&org_id, "org_id", "", "", "orgID")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
-
-	activateCmd.MarkFlagRequired("type")
 }
