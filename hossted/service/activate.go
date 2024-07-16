@@ -64,6 +64,7 @@ type response struct {
 
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s(releaseName, token, orgID string) error {
+
 	// emailsID, err := getEmail()
 	// if err != nil {
 	// 	return err
