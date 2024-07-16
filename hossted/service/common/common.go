@@ -15,6 +15,17 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+var (
+	LOKI_PASSWORD      = "-"
+	LOKI_URL           = "-"
+	LOKI_USERNAME      = "-"
+	MIMIR_PASSWORD     = "-"
+	MIMIR_URL          = "-"
+	MIMIR_USERNAME     = "-"
+	HOSSTED_API_URL    = "-"
+	HOSSTED_AUTH_TOKEN = "-"
+)
+
 // Response represents the structure of the JSON response.
 type Response struct {
 	Success bool                `json:"success"`
@@ -143,8 +154,8 @@ func ValidateToken(res Response) error {
 		Message string `json:"message"`
 	}
 
-	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
-	url := os.Getenv("HOSSTED_API_URL") + "/cli/bearer"
+	authToken := HOSSTED_AUTH_TOKEN
+	url := HOSSTED_API_URL + "/cli/bearer"
 
 	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
 	// Create HTTP request
