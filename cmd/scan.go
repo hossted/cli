@@ -14,8 +14,8 @@ import (
 // hossted ps <appName>
 var scanCmd = &cobra.Command{
 	Use:   "scan",
-	Short: "[scan] docker-compose ps of the application",
-	Long:  "[scan] docker-compose ps of the application",
+	Short: "[scan] docker compose ps of the application",
+	Long:  "[scan] docker compose ps of the application",
 	Example: `
   hossted scan
   hossted scan images

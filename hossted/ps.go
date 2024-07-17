@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-// ListAppPS goes to the app directory, then calls docker-compose ps
+// ListAppPS goes to the app directory, then calls docker compose ps
 // if input is "", call prompt to get user input, otherwise look up the application in the config
 func ListAppPS(input string) error {
 	var app ConfigApplication
@@ -20,7 +20,7 @@ func ListAppPS(input string) error {
 		return err
 	}
 
-	cmd := exec.Command("sudo", "docker-compose", "ps")
+	cmd := exec.Command("sudo", "docker compose", "ps")
 	cmd.Dir = app.AppPath
 
 	out, err := cmd.Output()
