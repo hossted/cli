@@ -32,7 +32,7 @@ The hossted cli - built to interact with a hossted container
 |           | hossted set ssl \<AppName\> sign           | (TBC)                                                                      |
 |           | hossted set remote-support true            | To enable or disable remote ssh access with our maintanece and support key |
 | logs      | hossted logs \<AppName\>                   | View Application logs                                                      |
-| ps        | hossted ps \<AppName\>                     | docker-compose ps of the application                                       |
+| ps        | hossted ps \<AppName\>                     | docker compose ps of the application                                       |
 | version   | hossted version                            | Get the version of the hossted CLI program                                 |
 |           |                                            |                                                                            |
 | ip        | -                                          | (TBC) Get external and internal ip addresses                               |
