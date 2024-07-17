@@ -69,7 +69,7 @@ Available Commands:
   | help                          | hossted help            | Help about any command                                                                     |
   | logs                          | hossted log             | View application logs                                                                      |
   | status                        | hossted status          | View Hossted status                                                                        |
-  | ps                            | hossted ps              | docker-compose ps of the application                                                       |
+  | ps                            | hossted ps              | docker compose ps of the application                                                       |
   | version                       | hossted version         | Displays the current running version of the CLI                                            |
   | update-cli                    | hossted update-cli      | Updates the Hossted CLI to the latest version                                              |
   |-------------------------------+-------------------------+--------------------------------------------------------------------------------------------|

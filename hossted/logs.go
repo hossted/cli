@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-// GetAppLogs goes to the app directory, then calls docker-compose logs
+// GetAppLogs goes to the app directory, then calls docker compose logs
 // Similar to ListAppPS func
 func GetAppLogs(input string, followFlag bool) error {
 
@@ -25,9 +25,9 @@ func GetAppLogs(input string, followFlag bool) error {
 	}
 	var cmd *exec.Cmd
 	if followFlag {
-		cmd = exec.Command("sudo", "docker-compose", "logs", "-f")
+		cmd = exec.Command("sudo", "docker compose", "logs", "-f")
 	} else {
-		cmd = exec.Command("sudo", "docker-compose", "logs")
+		cmd = exec.Command("sudo", "docker compose", "logs")
 	}
 
 	cmd.Dir = app.AppPath
