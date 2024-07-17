@@ -385,7 +385,7 @@ func PrettyPrint(i interface{}) string {
 func stopTraefik(appDir string) error {
 	fmt.Println("Stopping traefik...")
 
-	command := []string{"sudo docker-compose stop traefik"}
+	command := []string{"sudo docker compose stop traefik"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
@@ -397,7 +397,7 @@ func stopTraefik(appDir string) error {
 func dockerUp(appDir string) error {
 	fmt.Println("Restarting service...")
 
-	command := []string{"sudo docker-compose up -d"}
+	command := []string{"sudo docker compose up -d"}
 	err, _, stderr := Shell(appDir, command)
 	if err != nil {
 		return err
