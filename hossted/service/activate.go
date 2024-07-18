@@ -616,6 +616,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",env.MIMIR_URL=" + common.MIMIR_URL +
 				",env.MIMIR_USERNAME=" + common.MIMIR_USERNAME +
 				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
+				",env.HOSSTED_API_URL=" + common.HOSSTED_API_URL +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
