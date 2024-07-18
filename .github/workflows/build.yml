@@ -13,7 +13,7 @@ on:
       - main
 jobs:
   development:
-    if: github.ref == 'refs/heads/dev' 
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
     name: Development Environment
     uses: ./.github/workflows/reusable.yml
     secrets: inherit
