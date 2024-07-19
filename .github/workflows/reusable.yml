@@ -37,8 +37,8 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
       run: |
         if [ "${{ inputs.is-production }}" == "true" ]; then
-          make -f Makefile linux
-          make -f Makefile osx
+          make -f Makefile linux && cp bin/linux/hossted-linux-amd64 bin/linux/hossted-${{ inputs.version }}-linux-amd64
+          make -f Makefile osx && cp bin/osx/hossted-darwin-amd64 bin/osx/hossted-${{ inputs.version }}-darwin-amd64
         else
           make -f Makefile linux-dev
           make -f Makefile osx-dev
@@ -57,16 +57,16 @@ jobs:
       if: ${{ inputs.is-production }}
       uses: actions/upload-artifact@v4
       with:
-        name: hossted-linux-amd64
-        path: ./bin/linux/hossted-linux-amd64
+        name: hossted-${{ inputs.version }}-linux-amd64
+        path: ./bin/linux/hossted-${{ inputs.version }}-linux-amd64
         if-no-files-found: error
         
     - name: Upload OSx binary
       if: ${{ inputs.is-production }}
       uses: actions/upload-artifact@v4
       with:
-        name: hossted-darwin-amd64
-        path: ./bin/osx/hossted-darwin-amd64
+        name: hossted-${{ inputs.version }}-darwin-amd64
+        path: ./bin/osx/hossted-${{ inputs.version }}-darwin-amd64
         if-no-files-found: error
     
     - name: Upload Linux DEV binary
@@ -87,15 +87,19 @@ jobs:
     
     - name: Create GitHub Release
       if: ${{ inputs.is-production }}
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
+        files: |
+            ./bin/linux/hossted-${{ inputs.version }}-linux-amd64
+            ./bin/osx/hossted-${{ inputs.version }}-darwin-amd64
+        name: Release ${{ github.ref_name }}
         body: |
           Automated release created for tag ${{ github.ref_name }}.
           This release includes the latest production build.
         draft: true
+        generate_release_notes: true
         prerelease: false
     
