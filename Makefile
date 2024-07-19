@@ -41,5 +41,11 @@ osx: main.go
 dev: main.go
 	go build -o bin/dev/hossted -v -ldflags=${DEVFLAGS}
 
+linux-dev: main.go
+	GOOS=linux GOARCH=amd64 go build -o bin/dev/hossted-dev-linux-amd64 -v -ldflags=${DEVFLAGS}
+
+osx-dev: main.go
+	GOOS=darwin GOARCH=amd64 go build -o bin/dev/hossted-dev-darwin-amd64 -v -ldflags=${DEVFLAGS}
+
 test: main.go
 	go test -v ./... -short
