@@ -40,7 +40,8 @@ jobs:
           make -f Makefile linux
           make -f Makefile osx
         else
-          make -f Makefile dev
+          make -f Makefile linux-dev
+          make -f Makefile osx-dev
         fi
     
     - name: Test Version of binary file
@@ -49,7 +50,7 @@ jobs:
         if [ "${{ inputs.is-production }}" == "true" ]; then
           chmod 777 bin/linux/hossted-linux-amd64 && ./bin/linux/hossted-linux-amd64 version
         else
-          chmod 777  bin/dev/hossted && ./bin/dev/hossted version
+          chmod 777  bin/dev/hossted-dev-linux-amd64 && ./bin/dev/hossted-dev-linux-amd64 version
         fi
         
     - name: Upload Linux binary
@@ -68,12 +69,20 @@ jobs:
         path: ./bin/osx/hossted-darwin-amd64
         if-no-files-found: error
     
-    - name: Upload DEV binary
+    - name: Upload Linux DEV binary
       if: ${{ !inputs.is-production }}
       uses: actions/upload-artifact@v4
       with:
-        name: hossted
-        path: ./bin/dev/hossted
+        name: hossted-dev-linux-amd64
+        path: ./bin/dev/hossted-dev-linux-amd64
+        if-no-files-found: error
+    
+    - name: Upload OSx DEV binary
+      if: ${{ !inputs.is-production }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted-dev-darwin-amd64
+        path: ./bin/dev/hossted-dev-darwin-amd64
         if-no-files-found: error
     
     - name: Create GitHub Release
