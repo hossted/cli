@@ -664,3 +664,43 @@ func GetDockerComposeDir() (string, error) {
 	labelValue := inspect.Config.Labels["com.docker.compose.project.working_dir"]
 	return labelValue, nil
 }
+
+// AddDomainToMotd appends a given domain name to /etc/motd if it does not already exist
+func AddDomainToMotd(domain string) error {
+	// Open /etc/motd in read mode to check if the domain already exists
+	file, err := os.Open("/etc/motd")
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to open /etc/motd for reading: %w", err)
+		}
+	} else {
+		defer file.Close()
+
+		// Check if the domain is already present
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if strings.TrimSpace(scanner.Text()) == domain {
+				fmt.Printf("Domain '%s' already exists in /etc/motd\n", domain)
+				return nil
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("error reading /etc/motd: %w", err)
+		}
+	}
+
+	// Open /etc/motd in append mode to add the new domain
+	file, err = os.OpenFile("/etc/motd", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open /etc/motd for writing: %w", err)
+	}
+	defer file.Close()
+
+	// Write the domain name to the file
+	if _, err := file.WriteString(domain + "\n"); err != nil {
+		return fmt.Errorf("failed to write to /etc/motd: %w", err)
+	}
+
+	fmt.Printf("Domain '%s' successfully added to /etc/motd\n", domain)
+	return nil
+}
