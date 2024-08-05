@@ -2,7 +2,6 @@ package compose
 
 import (
 	"fmt"
-
 	"io"
 	"log"
 	"net/http"
@@ -60,7 +59,8 @@ type ContainerInfo struct {
 	DockerID   string      `json:"docker_id,omitempty"`
 }
 
-func ActivateCompose(composeFilePath, token, orgID string) error {
+func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error {
+
 
 	// emailID, err := common.GetEmail()
 	// if err != nil {
@@ -100,6 +100,23 @@ func ActivateCompose(composeFilePath, token, orgID string) error {
 		LokiPassword:  os.Getenv("LOKI_PASSWORD"),
 		LokiUrl:       os.Getenv("LOKI_URL"),
 	}
+
+	// Override values in development mode
+	if develMode {
+		fmt.Printf("dev->osInfo: %+v\n", osInfo)
+
+		if devUrl := os.Getenv("HOSSTED_DEV_API_URL"); devUrl != "" {
+			osInfo.HosstedApiUrl = devUrl
+		}
+		if devUrl := os.Getenv("MIMIR_DEV_URL"); devUrl != "" {
+			osInfo.MimirUrl = devUrl
+		}
+		if devUrl := os.Getenv("LOKI_DEV_URL"); devUrl != "" {
+			osInfo.LokiUrl = devUrl
+		}
+	}
+
+	fmt.Printf("osInfo: %+v\n", osInfo)
 
 	osData, err := setClusterInfo(osInfo, osFilePath)
 	if err != nil {
