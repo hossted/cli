@@ -1,72 +1,82 @@
 package service
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/hossted/cli/hossted"
+	"github.com/hossted/cli/hossted/service/common"
 )
 
-func Login() error {
+type AuthResp struct {
+	DeviceCode              string `json:"device_code"`
+	UserCode                string `json:"user_code"`
+	VerificationURI         string `json:"verification_uri"`
+	VerificationURIComplete string `json:"verification_uri_complete"`
+	ExpiresIn               int    `json:"expires_in"`
+	Interval                int    `json:"interval"`
+}
 
-	email, err := hossted.EmailPrompt()
+func Login() error {
+	authResp, err := postRequest()
 	if err != nil {
 		return err
 	}
-	err = postRequest(email)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("User %s logged in successfully", email)
+
+	fmt.Printf("User Code: %s\n", authResp)
 	return nil
 }
 
-func postRequest(email string) error {
-	authToken := os.Getenv("HOSSTED_AUTH_TOKEN")
+func postRequest() (usercode string, err error) {
 
-	payloadStr := fmt.Sprintf(`{"email": "%s"}`, email)
-
-	url := os.Getenv("HOSSTED_API_URL") + "/cli/login"
+	//	payloadStr := fmt.Sprintf(`{"client_id": "%s"}`, common.CLIENT_ID)
+	data := url.Values{}
+	data.Set("client_id", common.HOSSTED_CLIENT_ID)
 
 	// Create HTTP request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
+	req, err := http.NewRequest(http.MethodPost, common.HOSSTED_AUTH_URL, strings.NewReader(data.Encode()))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Set headers
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Add Authorization header with Basic authentication
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
 	// Perform the request
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Registration Failed, Error %s", string(body))
+		return "", fmt.Errorf("Registration Failed, Error %s", string(body))
+	}
+
+	var authResp AuthResp
+	err = json.Unmarshal(body, &authResp)
+	if err != nil {
+		return "", err
 	}
 
 	err = saveResponse(body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return authResp.UserCode, nil
 }
 
 func saveResponse(data []byte) error {
@@ -77,7 +87,7 @@ func saveResponse(data []byte) error {
 		return err
 	}
 
-	err = os.WriteFile(folderPath+"/"+"config.json", data, 0644)
+	err = os.WriteFile(folderPath+"/"+"auth.json", data, 0644)
 	if err != nil {
 		return err
 	}
