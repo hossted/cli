@@ -30,8 +30,11 @@ jobs:
           MIMIR_PASSWORD: ${{ secrets.MIMIR_PASSWORD }}
           HOSSTED_AUTH_TOKEN: ${{ secrets.HOSSTED_AUTH_TOKEN }}
           LOKI_URL: ${{ secrets.LOKI_URL }}
+          LOKI_DEV_URL: ${{ secrets.LOKI_DEV_URL }}
           HOSSTED_API_URL: ${{ secrets.HOSSTED_API_URL }}
+          HOSSTED_DEV_API_URL: ${{ secrets.HOSSTED_DEV_API_URL }}
           MIMIR_URL: ${{ secrets.MIMIR_URL }}
+          MIMIR_DEV_URL: ${{ secrets.MIMIR_DEV_URL }}
           COMMIT_HASH: ${{ github.sha }}
           VERSION: ${{ inputs.version }}
           ENVIRONMENT: ${{ inputs.environment }}
