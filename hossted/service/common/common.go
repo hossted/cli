@@ -24,6 +24,8 @@ var (
 	MIMIR_USERNAME     = "-"
 	HOSSTED_API_URL    = "-"
 	HOSSTED_AUTH_TOKEN = "-"
+	HOSSTED_CLIENT_ID  = "-"
+	HOSSTED_AUTH_URL   = "-"
 )
 
 // Response represents the structure of the JSON response.

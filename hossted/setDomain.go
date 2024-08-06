@@ -31,6 +31,11 @@ func SetDomain(env, app, domain string) error {
 		return fmt.Errorf("\n\n%w", err)
 	}
 
+	err = AddDomainToMotd(domain)
+	if err != nil {
+		return err
+	}
+
 	check := verifyInputFormat(domain, "domain")
 	if !check {
 		return fmt.Errorf("Invalid domain input. Expecting domain name (e.g. example.com).\nInput - %s\n", domain)
@@ -79,6 +84,7 @@ func SetDomain(env, app, domain string) error {
 	fullCommand := "hossted set domain " + fmt.Sprint(domain)
 	options := `{"domain":"` + fmt.Sprint(domain) + `"}`
 	typeActivity := "set_domain"
+
 	sendActivityLog(env, uuid, fullCommand, options, typeActivity)
 	return nil
 
