@@ -26,6 +26,12 @@ var (
 	HOSSTED_AUTH_TOKEN = "-"
 	HOSSTED_CLIENT_ID  = "-"
 	HOSSTED_AUTH_URL   = "-"
+	///////////////////////////
+	HOSSTED_DEV_API_URL   = "-"
+	MIMIR_DEV_URL         = "-"
+	LOKI_DEV_URL          = "-"
+	HOSSTED_DEV_CLIENT_ID = "-"
+	HOSSTED_DEV_AUTH_URL  = "-"
 )
 
 // Response represents the structure of the JSON response.
