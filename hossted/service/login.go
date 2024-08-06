@@ -40,10 +40,19 @@ func postRequest(develMode bool) (usercode string, err error) {
 	if develMode {
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/authorize"
-		fmt.Printf("devel mode clientID\n hosstedAuthUrl: %s\n%s\n", clientID, hosstedAuthUrl)
+		fmt.Printf("devel mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
 	} else {
 		clientID = common.HOSSTED_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/authorize"
+		fmt.Printf("production mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
+	}
+
+	// Debugging prints
+	if hosstedAuthUrl == "" {
+		return "", fmt.Errorf("hosstedAuthUrl is not set")
+	}
+	if clientID == "" {
+		return "", fmt.Errorf("clientID is not set")
 	}
 
 	data := url.Values{}
