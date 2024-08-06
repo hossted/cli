@@ -15,6 +15,7 @@ import (
 
 var (
 	activate_type, releaseName, composeFilePath, token, org_id string
+	develMode bool
 )
 
 // registerCmd represents the register command
@@ -31,7 +32,6 @@ hossted activate
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if activate_type == "k8s" {
-
 			err := service.ActivateK8s(releaseName, token, org_id)
 			if err != nil {
 				fmt.Println(err)
@@ -40,7 +40,7 @@ hossted activate
 		} else if activate_type == "compose" {
 			// hossted.SetUpdates(ENVIRONMENT, true)
 			// hossted.SetMonitoring(ENVIRONMENT, true)
-			err := compose.ActivateCompose(composeFilePath, token, org_id)
+			err := compose.ActivateCompose(composeFilePath, token, org_id, develMode)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -71,4 +71,5 @@ func init() {
 	activateCmd.Flags().StringVarP(&org_id, "org_id", "", "", "orgID")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
+	activateCmd.Flags().BoolVar(&develMode, "d", false, "Toggle development mode")
 }

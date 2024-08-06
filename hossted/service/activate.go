@@ -602,6 +602,9 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		RepoUpdate()
 
 		fmt.Println(loggingEnabled)
+		
+		
+
 		//------------------------------ Helm Install Chart ----------------------------------
 		args := map[string]string{
 			"set": "env.EMAIL_ID=" + emailID +
