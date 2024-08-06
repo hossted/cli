@@ -105,13 +105,13 @@ func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error
 	if develMode {
 		fmt.Printf("dev->osInfo: %+v\n", osInfo)
 
-		if devUrl := os.Getenv("HOSSTED_DEV_API_URL"); devUrl != "" {
+		if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
 			osInfo.HosstedApiUrl = devUrl
 		}
-		if devUrl := os.Getenv("MIMIR_DEV_URL"); devUrl != "" {
+		if devUrl := common.MIMIR_DEV_URL; devUrl != "" {
 			osInfo.MimirUrl = devUrl
 		}
-		if devUrl := os.Getenv("LOKI_DEV_URL"); devUrl != "" {
+		if devUrl := common.LOKI_DEV_URL; devUrl != "" {
 			osInfo.LokiUrl = devUrl
 		}
 	}

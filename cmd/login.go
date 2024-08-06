@@ -17,7 +17,7 @@ Login enables user to login into hossted platform using email address`,
 	Aliases: []string{"l"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Prompt user for input
-		err := service.Login()
+		err := service.Login(develMode)
 		if err != nil {
 			return err
 		}
@@ -27,5 +27,5 @@ Login enables user to login into hossted platform using email address`,
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
-
+	loginCmd.Flags().BoolVar(&develMode, "d", false, "Toggle development mode")
 }

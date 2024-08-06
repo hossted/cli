@@ -22,8 +22,8 @@ type AuthResp struct {
 	Interval                int    `json:"interval"`
 }
 
-func Login() error {
-	authResp, err := postRequest()
+func Login(develMode bool) error {
+	authResp, err := postRequest(develMode)
 	if err != nil {
 		return err
 	}
@@ -32,14 +32,25 @@ func Login() error {
 	return nil
 }
 
-func postRequest() (usercode string, err error) {
+func postRequest(develMode bool) (usercode string, err error) {
 
-	//	payloadStr := fmt.Sprintf(`{"client_id": "%s"}`, common.CLIENT_ID)
+	var clientID, hosstedAuthUrl string
+
+	// Override values in development mode
+	if develMode {
+		fmt.Printf("devel mode clientID\n hosstedAuthUrl: %s\n%s\n", clientID, hosstedAuthUrl)
+		clientID = common.HOSSTED_DEV_CLIENT_ID
+		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL
+	}
+
+	clientID = common.HOSSTED_CLIENT_ID
+	hosstedAuthUrl = common.HOSSTED_AUTH_URL
+
 	data := url.Values{}
-	data.Set("client_id", common.HOSSTED_CLIENT_ID)
+	data.Set("client_id", clientID)
 
 	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPost, common.HOSSTED_AUTH_URL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return "", err
 	}
