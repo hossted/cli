@@ -35,6 +35,8 @@ jobs:
           HOSSTED_DEV_API_URL: ${{ secrets.HOSSTED_DEV_API_URL }}
           MIMIR_URL: ${{ secrets.MIMIR_URL }}
           MIMIR_DEV_URL: ${{ secrets.MIMIR_DEV_URL }}
+          HOSSTED_DEV_CLIENT_ID: ${{ secrets.HOSSTED_DEV_CLIENT_ID }}
+          HOSSTED_DEV_AUTH_URL: ${{ secrets.HOSSTED_DEV_AUTH_URL }}
           COMMIT_HASH: ${{ github.sha }}
           VERSION: ${{ inputs.version }}
           ENVIRONMENT: ${{ inputs.environment }}
