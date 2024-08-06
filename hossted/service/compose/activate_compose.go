@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/hossted/cli/hossted/service/common"
 	"github.com/manifoldco/promptui"
 	"gopkg.in/yaml.v2"
 )
@@ -61,7 +62,6 @@ type ContainerInfo struct {
 
 func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error {
 
-
 	// emailID, err := common.GetEmail()
 	// if err != nil {
 	// 	return err
@@ -92,13 +92,13 @@ func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error
 		OrgID:         orgID,
 		Token:         token,
 		ProjectName:   GetProjectName(composeFilePath),
-		HosstedApiUrl: os.Getenv("HOSSTED_API_URL"),
-		MimirUsername: os.Getenv("MIMIR_USERNAME"),
-		MimirPassword: os.Getenv("MIMIR_PASSWORD"),
-		MimirUrl:      os.Getenv("MIMIR_URL"),
-		LokiUsername:  os.Getenv("LOKI_USERNAME"),
-		LokiPassword:  os.Getenv("LOKI_PASSWORD"),
-		LokiUrl:       os.Getenv("LOKI_URL"),
+		HosstedApiUrl: common.HOSSTED_API_URL,
+		MimirUsername: common.MIMIR_USERNAME,
+		MimirPassword: common.MIMIR_PASSWORD,
+		MimirUrl:      common.MIMIR_URL,
+		LokiUsername:  common.LOKI_USERNAME,
+		LokiPassword:  common.LOKI_PASSWORD,
+		LokiUrl:       common.LOKI_URL,
 	}
 
 	// Override values in development mode
