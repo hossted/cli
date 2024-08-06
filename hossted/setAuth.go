@@ -45,6 +45,7 @@ func SetAuth(env, app string, flag bool) error {
 	filepath := fmt.Sprintf("/opt/%s/docker-compose.yml", app) // docker compsoe file path
 	commands := []string{
 		fmt.Sprintf("sudo sed -i '/tauth.basicauth.usersfile/d' '%s'", filepath),
+		fmt.Sprintf("sudo sed -i '/.middlewares=tauth,hauth/d' '%s'", filepath),
 		fmt.Sprintf("sudo sed -i -e 's/tauth,//g' '%s'", filepath),
 		fmt.Sprintf("sudo sed -i '/.middlewares=tauth/d' '%s'", filepath),
 		"sudo sed -i '/installation you may remove/d' '/etc/motd'",
@@ -60,7 +61,7 @@ func SetAuth(env, app string, flag bool) error {
 	}
 
 	// Remove letsencrypt
-	htpassPath := fmt.Sprintf("/opt/%s/letsencrypt/.htpass", name)
+	htpassPath := fmt.Sprintf("/opt/%s/hossted/letsencrypt/.htpass", name)
 	rmCommands := []string{
 		fmt.Sprintf("sudo rm '%s'", htpassPath),
 	}
