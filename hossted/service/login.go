@@ -44,7 +44,7 @@ func postRequest(develMode bool) (usercode string, err error) {
 	}
 
 	clientID = common.HOSSTED_CLIENT_ID
-	hosstedAuthUrl = common.HOSSTED_AUTH_URL
+	hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/authorize"
 
 	data := url.Values{}
 	data.Set("client_id", clientID)
