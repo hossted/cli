@@ -13,7 +13,7 @@ import (
 	"github.com/hossted/cli/hossted/service/common"
 )
 
-type AuthResp struct {
+type authResp struct {
 	DeviceCode              string `json:"device_code"`
 	UserCode                string `json:"user_code"`
 	VerificationURI         string `json:"verification_uri"`
@@ -28,11 +28,13 @@ func Login(develMode bool) error {
 		return err
 	}
 
-	fmt.Printf("User Code: %s\n", authResp)
+	fmt.Printf("User Code: %s\n", authResp.UserCode)
+	fmt.Printf("Verification URL Complete: %s\n", authResp.VerificationURIComplete)
+
 	return nil
 }
 
-func postRequest(develMode bool) (usercode string, err error) {
+func postRequest(develMode bool) (authresp authResp, err error) {
 
 	var clientID, hosstedAuthUrl string
 
@@ -40,19 +42,21 @@ func postRequest(develMode bool) (usercode string, err error) {
 	if develMode {
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/authorize"
-		fmt.Printf("devel mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
+		fmt.Printf("devel mode: true \nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
+		fmt.Println("------------------------------------------------------------------------------")
+
 	} else {
 		clientID = common.HOSSTED_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/authorize"
-		fmt.Printf("production mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
+		//fmt.Printf("production mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
 	}
 
 	// Debugging prints
 	if hosstedAuthUrl == "" {
-		return "", fmt.Errorf("hosstedAuthUrl is not set")
+		return authResp{}, fmt.Errorf("hosstedAuthUrl is not set")
 	}
 	if clientID == "" {
-		return "", fmt.Errorf("clientID is not set")
+		return authResp{}, fmt.Errorf("clientID is not set")
 	}
 
 	data := url.Values{}
@@ -61,7 +65,7 @@ func postRequest(develMode bool) (usercode string, err error) {
 	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return "", err
+		return authResp{}, err
 	}
 
 	// Set headers
@@ -71,32 +75,32 @@ func postRequest(develMode bool) (usercode string, err error) {
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return authResp{}, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return authResp{}, err
 	}
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Registration Failed, Error %s", string(body))
+		return authResp{}, fmt.Errorf("Registration Failed, Error %s", string(body))
 	}
 
-	var authResp AuthResp
+	var authResp authResp
 	err = json.Unmarshal(body, &authResp)
 	if err != nil {
-		return "", err
+		return authResp, err
 	}
 
 	err = saveResponse(body)
 	if err != nil {
-		return "", err
+		return authResp, err
 	}
 
-	return authResp.UserCode, nil
+	return authResp, nil
 }
 
 func saveResponse(data []byte) error {
