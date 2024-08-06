@@ -38,9 +38,9 @@ func postRequest(develMode bool) (usercode string, err error) {
 
 	// Override values in development mode
 	if develMode {
-		fmt.Printf("devel mode clientID\n hosstedAuthUrl: %s\n%s\n", clientID, hosstedAuthUrl)
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL
+		fmt.Printf("devel mode clientID\n hosstedAuthUrl: %s\n%s\n", clientID, hosstedAuthUrl)
 	}
 
 	clientID = common.HOSSTED_CLIENT_ID
