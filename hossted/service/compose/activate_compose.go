@@ -116,8 +116,6 @@ func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error
 		}
 	}
 
-	fmt.Printf("osInfo: %+v\n", osInfo)
-
 	osData, err := setClusterInfo(osInfo, osFilePath)
 	if err != nil {
 		return err
