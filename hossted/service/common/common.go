@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
+	"runtime"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -255,4 +257,25 @@ func HttpRequest(method, url, token string, body []byte) error {
 	}
 
 	return nil
+}
+
+func openBrowser(url string) error {
+    var cmd string
+    var args []string
+
+    switch runtime.GOOS {
+    case "windows":
+        cmd = "rundll32"
+        args = append(args, "url.dll,FileProtocolHandler", url)
+    case "darwin":
+        cmd = "open"
+        args = append(args, url)
+    case "linux":
+        cmd = "xdg-open"
+        args = append(args, url)
+    default:
+        return fmt.Errorf("unsupported platform")
+    }
+
+    return exec.Command(cmd, args...).Start()
 }

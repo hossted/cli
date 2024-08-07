@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"os/exec"
+	"runtime"
 
 	"github.com/hossted/cli/hossted/service/common"
 )
@@ -32,7 +34,7 @@ func Login(develMode bool) error {
 
 	fmt.Printf("User Code: %s\n", authResp.UserCode)
 	fmt.Printf("Verification URL Complete: %s\n", authResp.VerificationURIComplete)
-
+	openBrowser(authResp.VerificationURIComplete)
 	// Schedule pollAccessToken after authResp.Interval seconds
 
 	interval := time.Duration(authResp.Interval) * time.Second
@@ -200,4 +202,26 @@ func pollAccessToken(develMode bool, auth authResp) error {
 		return err
 	}
 	return nil
+}
+
+
+func openBrowser(url string) error {
+    var cmd string
+    var args []string
+
+    switch runtime.GOOS {
+    case "windows":
+        cmd = "rundll32"
+        args = append(args, "url.dll,FileProtocolHandler", url)
+    case "darwin":
+        cmd = "open"
+        args = append(args, url)
+    case "linux":
+        cmd = "xdg-open"
+        args = append(args, url)
+    default:
+        return fmt.Errorf("unsupported platform")
+    }
+
+    return exec.Command(cmd, args...).Start()
 }

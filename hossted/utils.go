@@ -17,7 +17,6 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
-
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 
