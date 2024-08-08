@@ -38,8 +38,6 @@ hossted activate
 			}
 			return
 		} else if activate_type == "compose" {
-			hossted.SetUpdates(ENVIRONMENT, true)
-			hossted.SetMonitoring(ENVIRONMENT, true)
 			err := compose.ActivateCompose(composeFilePath, develMode)
 			if err != nil {
 				fmt.Println(err)

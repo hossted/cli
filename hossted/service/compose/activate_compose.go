@@ -62,27 +62,6 @@ type ContainerInfo struct {
 
 func ActivateCompose(composeFilePath string, develMode bool) error {
 
-	// emailID, err := common.GetEmail()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := common.GetLoginResponse()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // validate auth token
-	// err = common.ValidateToken(resp)
-	// if err != nil {
-	// 	return err
-	// }
-	// // handle usecases for orgID selection
-	// orgID, err := common.UseCases(resp)
-	// if err != nil {
-	// 	return err
-	// }
-
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
 		return err
