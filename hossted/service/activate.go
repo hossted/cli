@@ -53,7 +53,7 @@ const (
 )
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(releaseName string) error {
+func ActivateK8s(releaseName string, develMode bool) error {
 
 	// emailsID, err := getEmail()
 	// if err != nil {
@@ -111,7 +111,7 @@ func ActivateK8s(releaseName string) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID, develMode)
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func ActivateK8s(releaseName string) error {
 		return nil
 	}
 
-	err = deployOperator(clusterName, "", orgID, tr.AccessToken)
+	err = deployOperator(clusterName, "", orgID, tr.AccessToken, develMode)
 	if err != nil {
 		return err
 	}
@@ -324,10 +324,30 @@ func getKubeClient() *kubernetes.Clientset {
 	return clientset
 }
 
-func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName, emailID, contextName, hosstedOrgID string) error {
+func updateDeployment(
+	clientset *kubernetes.Clientset,
+	namespace, deploymentName, emailID, contextName, hosstedOrgID string,
+	develMode bool) error {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		return err
+	}
+
+	hosstedApiUrl := common.HOSSTED_API_URL
+	mimirUrl := common.MIMIR_URL
+	lokiUrl := common.LOKI_URL
+
+	if develMode {
+
+		if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
+			hosstedApiUrl = devUrl
+		}
+		if devUrl := common.MIMIR_DEV_URL; devUrl != "" {
+			mimirUrl = devUrl
+		}
+		if devUrl := common.LOKI_DEV_URL; devUrl != "" {
+			lokiUrl = devUrl
+		}
 	}
 
 	// Update environment variables
@@ -343,17 +363,17 @@ func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName
 				} else if env.Name == "LOKI_PASSWORD" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_PASSWORD
 				} else if env.Name == "LOKI_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = lokiUrl
 				} else if env.Name == "LOKI_USERNAME" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_USERNAME
 				} else if env.Name == "MIMIR_PASSWORD" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_PASSWORD
 				} else if env.Name == "MIMIR_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = mimirUrl
 				} else if env.Name == "MIMIR_USERNAME" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_USERNAME
 				} else if env.Name == "HOSSTED_API_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_API_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedApiUrl
 
 				}
 			}
@@ -523,7 +543,7 @@ func installCve() {
 	})
 }
 
-func deployOperator(clusterName, emailID, orgID, JWT string) error {
+func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 
@@ -555,6 +575,24 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		fmt.Println(loggingEnabled)
 
 		//------------------------------ Helm Install Chart ----------------------------------
+
+		hosstedApiUrl := common.HOSSTED_API_URL
+		mimirUrl := common.MIMIR_URL
+		lokiUrl := common.LOKI_URL
+
+		if develMode {
+
+			if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
+				hosstedApiUrl = devUrl
+			}
+			if devUrl := common.MIMIR_DEV_URL; devUrl != "" {
+				mimirUrl = devUrl
+			}
+			if devUrl := common.LOKI_DEV_URL; devUrl != "" {
+				lokiUrl = devUrl
+			}
+		}
+
 		args := map[string]string{
 			"set": "env.EMAIL_ID=" + emailID +
 				",env.HOSSTED_ORG_ID=" + orgID +
@@ -562,13 +600,13 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
 				",logging.enable=" + loggingEnabled +
-				",env.LOKI_URL=" + common.LOKI_URL +
+				",env.LOKI_URL=" + lokiUrl +
 				",env.LOKI_USERNAME=" + common.LOKI_USERNAME +
 				",env.LOKI_PASSWORD=" + common.LOKI_PASSWORD +
-				",env.MIMIR_URL=" + common.MIMIR_URL +
+				",env.MIMIR_URL=" + mimirUrl +
 				",env.MIMIR_USERNAME=" + common.MIMIR_USERNAME +
 				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
-				",env.HOSSTED_API_URL=" + common.HOSSTED_API_URL +
+				",env.HOSSTED_API_URL=" + hosstedApiUrl +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 

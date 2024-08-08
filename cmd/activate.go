@@ -32,7 +32,7 @@ hossted activate
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if activate_type == "k8s" {
-			err := service.ActivateK8s(releaseName)
+			err := service.ActivateK8s(releaseName, develMode)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -67,8 +67,6 @@ hossted activate
 func init() {
 	rootCmd.AddCommand(activateCmd)
 	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|compose")
-	//activateCmd.Flags().StringVarP(&token, "token", "", "", "token for orgID")
-	activateCmd.Flags().StringVarP(&org_id, "org_id", "", "", "orgID")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
 	activateCmd.Flags().BoolVar(&develMode, "d", false, "Toggle development mode")
