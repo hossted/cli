@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -53,17 +52,8 @@ const (
 	grafanaAgentReleaseName    = "hossted-grafana-agent"
 )
 
-// Response represents the structure of the JSON response.
-type response struct {
-	Success bool                `json:"success"`
-	OrgIDs  []map[string]string `json:"org_ids"`
-	Token   string              `json:"token"`
-	Email   string              `json:"email"`
-	Message string              `json:"message"`
-}
-
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(releaseName, token, orgID string) error {
+func ActivateK8s(releaseName string, develMode bool) error {
 
 	// emailsID, err := getEmail()
 	// if err != nil {
@@ -100,11 +90,28 @@ func ActivateK8s(releaseName, token, orgID string) error {
 		//return err
 	}
 
+	tr, err := common.GetTokenResp()
+	if err != nil {
+		return err
+	}
+
+	orgs, err := common.GetOrgs(tr.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	orgID, err := common.OrgUseCases(orgs)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(orgID)
+
 	if isStandby {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID, develMode)
 		if err != nil {
 			return err
 		}
@@ -115,7 +122,7 @@ func ActivateK8s(releaseName, token, orgID string) error {
 		// }
 
 		fmt.Println("Updating secret....")
-		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", token)
+		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", tr.AccessToken)
 		if err != nil {
 			return err
 		}
@@ -149,7 +156,7 @@ func ActivateK8s(releaseName, token, orgID string) error {
 		return nil
 	}
 
-	err = deployOperator(clusterName, "", orgID, token)
+	err = deployOperator(clusterName, "", orgID, tr.AccessToken, develMode)
 	if err != nil {
 		return err
 	}
@@ -204,112 +211,56 @@ func isStandbyMode(releaseName string) (bool, error) {
 	return isStandby, nil
 }
 
-func getEmail() (string, error) {
-	config, err := readConfig()
-	if err != nil {
-		return "", err
-	}
-	return config.Email, nil
-}
+// func getEmail() (string, error) {
+// 	config, err := readConfig()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return config.Email, nil
+// }
 
-func readConfig() (response, error) {
-	var config response
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return config, err
-	}
-	folderPath := filepath.Join(homeDir, ".hossted")
-	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-	if err != nil {
-		return config, err
-	}
+// func readConfig() (response, error) {
+// 	var config response
+// 	homeDir, err := os.UserHomeDir()
+// 	if err != nil {
+// 		return config, err
+// 	}
+// 	folderPath := filepath.Join(homeDir, ".hossted")
+// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
+// 	if err != nil {
+// 		return config, err
+// 	}
 
-	// Parse the JSON data into Config struct
-	err = json.Unmarshal(fileData, &config)
-	if err != nil {
-		return config, err
-	}
-	return config, nil
-}
+// 	// Parse the JSON data into Config struct
+// 	err = json.Unmarshal(fileData, &config)
+// 	if err != nil {
+// 		return config, err
+// 	}
+// 	return config, nil
+// }
 
-func getLoginResponse() (response, error) {
-	//read file
-	homeDir, err := os.UserHomeDir()
+// func getLoginResponse() (response, error) {
+// 	//read file
+// 	homeDir, err := os.UserHomeDir()
 
-	folderPath := filepath.Join(homeDir, ".hossted")
-	if err != nil {
-		return response{}, err
-	}
+// 	folderPath := filepath.Join(homeDir, ".hossted")
+// 	if err != nil {
+// 		return response{}, err
+// 	}
 
-	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-	if err != nil {
-		return response{}, fmt.Errorf("User not registered, Please run hossted login to register")
-	}
+// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
+// 	if err != nil {
+// 		return response{}, fmt.Errorf("User not registered, Please run hossted login to register")
+// 	}
 
-	var resp response
-	err = json.Unmarshal(fileData, &resp)
-	if err != nil {
-		return response{}, err
-	}
+// 	var resp response
+// 	err = json.Unmarshal(fileData, &resp)
+// 	if err != nil {
+// 		return response{}, err
+// 	}
 
-	return resp, nil
-}
-
-func useCases(resp response) (orgID string, err error) {
-	if resp.Success {
-		if len(resp.OrgIDs) == 0 {
-			for orgID := range resp.OrgIDs[0] {
-				fmt.Println("We have just sent the confirmation link registered emailID", ". Once you confirm it, you'll be able to continue the activation.")
-				return orgID, nil
-			}
-		} else if len(resp.OrgIDs) > 1 {
-			fmt.Println("You have multiple organisations to choose from:")
-
-			var items []string
-			for i, info := range resp.OrgIDs {
-				for _, orgName := range info {
-					items = append(items, fmt.Sprintf("%d: %s", i+1, orgName))
-				}
-			}
-
-			prompt := promptui.Select{
-				Label: "Select Your Organisation",
-				Items: items,
-			}
-
-			_, result, err := prompt.Run()
-			if err != nil {
-				fmt.Println("Prompt failed:", err)
-				return "", err
-			}
-
-			userOrgName, err := removePrefix(result)
-			if err != nil {
-				return "", err
-			}
-			var selectedOrgID string
-
-			for _, info := range resp.OrgIDs {
-				for orgID, orgName := range info {
-					if orgName == userOrgName {
-						selectedOrgID = orgID
-					}
-				}
-			}
-
-			if selectedOrgID == "" {
-				return "", fmt.Errorf("selected organization not found")
-			}
-
-			return selectedOrgID, nil
-
-		}
-	} else {
-		return "", fmt.Errorf("Cluster registration failed to hossted platform")
-	}
-
-	return "", nil
-}
+// 	return resp, nil
+// }
 
 // promptK8sContext retrieves Kubernetes contexts from kubeconfig.
 func promptK8sContext() (clusterName string, err error) {
@@ -373,10 +324,30 @@ func getKubeClient() *kubernetes.Clientset {
 	return clientset
 }
 
-func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName, emailID, contextName, hosstedOrgID string) error {
+func updateDeployment(
+	clientset *kubernetes.Clientset,
+	namespace, deploymentName, emailID, contextName, hosstedOrgID string,
+	develMode bool) error {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		return err
+	}
+
+	hosstedApiUrl := common.HOSSTED_API_URL
+	mimirUrl := common.MIMIR_URL
+	lokiUrl := common.LOKI_URL
+
+	if develMode {
+
+		if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
+			hosstedApiUrl = devUrl
+		}
+		if devUrl := common.MIMIR_DEV_URL; devUrl != "" {
+			mimirUrl = devUrl
+		}
+		if devUrl := common.LOKI_DEV_URL; devUrl != "" {
+			lokiUrl = devUrl
+		}
 	}
 
 	// Update environment variables
@@ -392,17 +363,17 @@ func updateDeployment(clientset *kubernetes.Clientset, namespace, deploymentName
 				} else if env.Name == "LOKI_PASSWORD" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_PASSWORD
 				} else if env.Name == "LOKI_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = lokiUrl
 				} else if env.Name == "LOKI_USERNAME" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.LOKI_USERNAME
 				} else if env.Name == "MIMIR_PASSWORD" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_PASSWORD
 				} else if env.Name == "MIMIR_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = mimirUrl
 				} else if env.Name == "MIMIR_USERNAME" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_USERNAME
 				} else if env.Name == "HOSSTED_API_URL" {
-					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_API_URL
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedApiUrl
 
 				}
 			}
@@ -572,7 +543,7 @@ func installCve() {
 	})
 }
 
-func deployOperator(clusterName, emailID, orgID, JWT string) error {
+func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 
@@ -602,10 +573,26 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		RepoUpdate()
 
 		fmt.Println(loggingEnabled)
-		
-		
 
 		//------------------------------ Helm Install Chart ----------------------------------
+
+		hosstedApiUrl := common.HOSSTED_API_URL
+		mimirUrl := common.MIMIR_URL
+		lokiUrl := common.LOKI_URL
+
+		if develMode {
+
+			if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
+				hosstedApiUrl = devUrl
+			}
+			if devUrl := common.MIMIR_DEV_URL; devUrl != "" {
+				mimirUrl = devUrl
+			}
+			if devUrl := common.LOKI_DEV_URL; devUrl != "" {
+				lokiUrl = devUrl
+			}
+		}
+
 		args := map[string]string{
 			"set": "env.EMAIL_ID=" + emailID +
 				",env.HOSSTED_ORG_ID=" + orgID +
@@ -613,13 +600,13 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
 				",logging.enable=" + loggingEnabled +
-				",env.LOKI_URL=" + common.LOKI_URL +
+				",env.LOKI_URL=" + lokiUrl +
 				",env.LOKI_USERNAME=" + common.LOKI_USERNAME +
 				",env.LOKI_PASSWORD=" + common.LOKI_PASSWORD +
-				",env.MIMIR_URL=" + common.MIMIR_URL +
+				",env.MIMIR_URL=" + mimirUrl +
 				",env.MIMIR_USERNAME=" + common.MIMIR_USERNAME +
 				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
-				",env.HOSSTED_API_URL=" + common.HOSSTED_API_URL +
+				",env.HOSSTED_API_URL=" + hosstedApiUrl +
 				",env.CONTEXT_NAME=" + clusterName,
 		}
 
@@ -639,7 +626,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
 
 		//------------------------------ Add Events ----------------------------------
-		err = addEvents()
+		err = addEvents(JWT)
 		if err != nil {
 			return err
 		}
@@ -836,42 +823,28 @@ func debug(format string, v ...interface{}) {
 	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
-func removePrefix(text string) (string, error) {
-	// Define a regular expression to match a number followed by a colon and a space
-	regex := regexp.MustCompile(`^\d+:\s+`)
+func addEvents(token string) error {
 
-	match := regex.FindStringSubmatch(text)
-	if match != nil {
-		// Extract the captured prefix (number and colon)
-		prefix := match[0]
-		return strings.TrimPrefix(text, prefix), nil
-	}
-
-	return text, nil
-}
-
-func addEvents() error {
-
-	if err := eventOperator(); err != nil {
+	if err := eventOperator(token); err != nil {
 		return err
 	}
-	if err := eventCVE(); err != nil {
+	if err := eventCVE(token); err != nil {
 		return err
 	}
-	if err := eventMonitoring(); err != nil {
+	if err := eventMonitoring(token); err != nil {
 		return err
 	}
 	return nil
 }
 
-func eventMonitoring() error {
+func eventMonitoring(token string) error {
 	retries := 60
 	for i := 0; i < retries; i++ {
 		err := checkMonitoringStatus()
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := sendEvent("success", "Hossted Platform Monitoring started successfully")
+			err := sendEvent("success", "Hossted Platform Monitoring started successfully", token)
 			if err != nil {
 				return err
 			}
@@ -904,7 +877,7 @@ func checkMonitoringStatus() error {
 	return fmt.Errorf("Grafana Agent release not found")
 }
 
-func eventCVE() error {
+func eventCVE(token string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -922,7 +895,7 @@ func eventCVE() error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform CVE Scan started successfully")
+					err := sendEvent("success", "Hossted Platform CVE Scan started successfully", token)
 					if err != nil {
 						return err
 					}
@@ -935,7 +908,7 @@ func eventCVE() error {
 	}
 }
 
-func eventOperator() error {
+func eventOperator(token string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -953,7 +926,7 @@ func eventOperator() error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform operator installed successfully")
+					err := sendEvent("success", "Hossted Platform operator installed successfully", token)
 					if err != nil {
 						return err
 					}
@@ -1016,8 +989,7 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func sendEvent(eventType, message string) error {
-	authToken := common.HOSSTED_AUTH_TOKEN
+func sendEvent(eventType, message, token string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
@@ -1053,7 +1025,7 @@ func sendEvent(eventType, message string) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Add Authorization header with Basic authentication
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(token)))
 	// Perform the request
 	client := http.Client{}
 	resp, err := client.Do(req)
@@ -1101,56 +1073,56 @@ func getClusterUUIDFromK8s() (string, error) {
 	return clusterUUID, nil
 }
 
-func validateToken(res response) error {
+// func validateToken(res response) error {
 
-	type validationResp struct {
-		Success bool   `json:"success"`
-		Message string `json:"message"`
-	}
+// 	type validationResp struct {
+// 		Success bool   `json:"success"`
+// 		Message string `json:"message"`
+// 	}
 
-	authToken := common.HOSSTED_AUTH_TOKEN
-	url := common.HOSSTED_API_URL + "/cli/bearer"
+// 	authToken := common.HOSSTED_AUTH_TOKEN
+// 	url := common.HOSSTED_API_URL + "/cli/bearer"
 
-	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
-	// Create HTTP request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
-	if err != nil {
-		return err
-	}
+// 	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
+// 	// Create HTTP request
+// 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
+// 	if err != nil {
+// 		return err
+// 	}
 
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
+// 	// Set headers
+// 	req.Header.Set("Content-Type", "application/json")
 
-	// Add Authorization header with Basic authentication
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
+// 	// Add Authorization header with Basic authentication
+// 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
 
-	// Perform the request
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
+// 	// Perform the request
+// 	client := http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	defer resp.Body.Close()
+// 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	// check for non 200 status
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Token Validation Failed, Error %s", string(body))
-	}
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// check for non 200 status
+// 	if resp.StatusCode != 200 {
+// 		return fmt.Errorf("Token Validation Failed, Error %s", string(body))
+// 	}
 
-	var tresp validationResp
-	err = json.Unmarshal(body, &tresp)
-	if err != nil {
-		return err
-	}
-	if !tresp.Success {
-		return fmt.Errorf("Auth token is invalid, Please login again")
-	}
+// 	var tresp validationResp
+// 	err = json.Unmarshal(body, &tresp)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if !tresp.Success {
+// 		return fmt.Errorf("Auth token is invalid, Please login again")
+// 	}
 
-	return nil
+// 	return nil
 
-}
+// }
