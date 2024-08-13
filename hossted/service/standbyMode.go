@@ -18,6 +18,7 @@ func InstallOperatorStandbymode() error {
 			",cve.enable=" + "false" +
 			",monitoring.enable=" + "false" +
 			",logging.enable=" + "false" +
+			",ingress.enable=" + "false" +			
 			",stop=" + "true",
 		// ",env.LOKI_URL=" + os.Getenv("LOKI_URL") +
 		// ",env.LOKI_USERNAME=" + os.Getenv("LOKI_USERNAME") +
@@ -29,7 +30,7 @@ func InstallOperatorStandbymode() error {
 	}
 
 	yellow := color.New(color.FgYellow).SprintFunc()
-	fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform Operator in Standby Modee:"), hosstedPlatformNamespace)
+	fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform Operator in Standby Mode:"), hosstedPlatformNamespace)
 
 	bar := progressbar.DefaultBytes(
 		-1,

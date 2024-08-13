@@ -122,7 +122,7 @@ func ActivateK8s(releaseName, token, orgID string) error {
 
 		fmt.Println("Updated deployment and secret")
 
-		cveEnabled, monitoringEnabled, loggingEnabled, err := askPromptsToInstall()
+		cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err := askPromptsToInstall()
 		if err != nil {
 			return err
 		}
@@ -132,9 +132,9 @@ func ActivateK8s(releaseName, token, orgID string) error {
 			installCve()
 		}
 
-		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" {
+		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" || ingressEnabled == "true" {
 			fmt.Println("Patching 'hossted-operator-cr' CR")
-			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, releaseName)
+			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName)
 			if err != nil {
 				return err
 			}
@@ -191,13 +191,20 @@ func isStandbyMode(releaseName string) (bool, error) {
 	if err != nil {
 		return isStandby, err
 	}
-
+	ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
+	if err != nil {
+		return isStandby, err
+	}
+	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
+	if err != nil {
+		return isStandby, err
+	}	
 	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
 	if err != nil {
 		return isStandby, err
 	}
 
-	if !cveEnabled && !loggingEnabled && !monitoringEnabled && stop {
+	if !cveEnabled && !loggingEnabled && !monitoringEnabled && !ingressEnabled && stop {
 		isStandby = true
 	}
 
@@ -434,7 +441,7 @@ func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secret
 	return nil
 }
 
-func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, releaseName string) error {
+func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName string) error {
 	cr := getDynClient()
 	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
 	if err != nil {
@@ -452,6 +459,9 @@ func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, releaseName string) 
 			"monitoring": map[string]interface{}{
 				"enable": monitoringEnabled == "true",
 			},
+			"ingress": map[string]interface{}{
+				"enable": ingressEnabled == "true",
+			},			
 		},
 	}
 
@@ -496,12 +506,12 @@ func patchStopCR(releaseName string) error {
 	return nil
 }
 
-func askPromptsToInstall() (string, string, string, error) {
+func askPromptsToInstall() (string, string, string, string, error) {
 	green := color.New(color.FgGreen).SprintFunc()
 	cveEnabled := "false"
 	monitoringEnabled := "false"
 	loggingEnabled := "false"
-
+	ingressEnabled := "false"
 	//------------------------------ Monitoring ----------------------------------
 	monitoring := promptui.Select{
 		Label: "Do you wish to enable monitoring in hossted platform",
@@ -509,7 +519,7 @@ func askPromptsToInstall() (string, string, string, error) {
 	}
 	_, monitoringEnable, err := monitoring.Run()
 	if err != nil {
-		return cveEnabled, monitoringEnabled, loggingEnabled, err
+		return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err
 	}
 
 	if monitoringEnable == "Yes" {
@@ -524,7 +534,7 @@ func askPromptsToInstall() (string, string, string, error) {
 	}
 	_, loggingEnable, err := logging.Run()
 	if err != nil {
-		return cveEnabled, monitoringEnabled, loggingEnabled, err
+		return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err
 	}
 
 	if loggingEnable == "Yes" {
@@ -539,14 +549,28 @@ func askPromptsToInstall() (string, string, string, error) {
 	}
 	_, cveEnable, err := cve.Run()
 	if err != nil {
-		return cveEnabled, monitoringEnabled, loggingEnabled, err
+		return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err
 	}
 	if cveEnable == "Yes" {
-		fmt.Println("Enabled Logging:", green(loggingEnable))
+		fmt.Println("Enabled CVE:", green(cveEnable))
 		cveEnabled = "true"
 	}
 
-	return cveEnabled, monitoringEnabled, loggingEnabled, nil
+	//------------------------------ Ingress ----------------------------------
+	ingress := promptui.Select{
+		Label: "Do you wish to enable ingress in hossted-platform",
+		Items: []string{"Yes", "No"},
+	}
+	_, ingressEnable, err := ingress.Run()
+	if err != nil {
+		return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err
+	}
+
+	if ingressEnable == "Yes" {
+		ingressEnabled = "true"
+		fmt.Println("Enabled Ingress:", green(ingressEnabled))
+	}	
+	return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, nil
 }
 
 func installCve() {
@@ -586,7 +610,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 	}
 
 	if value == "Yes" {
-		cveEnabled, monitoringEnabled, loggingEnabled, err := askPromptsToInstall()
+		cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err := askPromptsToInstall()
 		if err != nil {
 			return err
 		}
@@ -599,6 +623,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 		//------------------------------ Helm Repo Add  ----------------------------------
 
 		RepoAdd("hossted", "https://charts.hossted.com")
+		RepoAdd("ingress-nginx", "https://kubernetes.github.io/ingress-nginx" )
 		RepoUpdate()
 
 		fmt.Println(loggingEnabled)
@@ -613,6 +638,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string) error {
 				",cve.enable=" + cveEnabled +
 				",monitoring.enable=" + monitoringEnabled +
 				",logging.enable=" + loggingEnabled +
+				",ingress.enable=" + ingressEnabled +
 				",env.LOKI_URL=" + common.LOKI_URL +
 				",env.LOKI_USERNAME=" + common.LOKI_USERNAME +
 				",env.LOKI_PASSWORD=" + common.LOKI_PASSWORD +
