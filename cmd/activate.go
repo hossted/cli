@@ -15,7 +15,7 @@ import (
 
 var (
 	activate_type, releaseName, composeFilePath, token, org_id string
-	develMode bool
+	develMode                                                  bool
 )
 
 // registerCmd represents the register command
@@ -30,6 +30,11 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		err := service.VerifyAuth(develMode)
+		if err != nil {
+			fmt.Println("Auth verification is failed, error", err)
+			return
+		}
 
 		if activate_type == "k8s" {
 			err := service.ActivateK8s(releaseName, token, org_id)

@@ -8,39 +8,50 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
-	"os/exec"
-	"runtime"
 
 	"github.com/hossted/cli/hossted/service/common"
 )
 
+type authLoginResp struct {
+	DeviceCode              string `json:"device_code,omitempty"`
+	UserCode                string `json:"user_code,omitempty"`
+	VerificationURI         string `json:"verification_uri,omitempty"`
+	VerificationURIComplete string `json:"verification_uri_complete,omitempty"`
+	ExpiresIn               int    `json:"expires_in,omitempty"`
+	Interval                int    `json:"interval,omitempty"`
+}
+
 type authResp struct {
-	DeviceCode              string `json:"device_code"`
-	UserCode                string `json:"user_code"`
-	VerificationURI         string `json:"verification_uri"`
-	VerificationURIComplete string `json:"verification_uri_complete"`
-	ExpiresIn               int    `json:"expires_in"`
-	Interval                int    `json:"interval"`
+	AccessToken           string `json:"access_token,omitempty"`
+	RefreshToken          string `json:"refresh_token,omitempty"`
+	TokenType             string `json:"token_type,omitempty"`
+	State                 string `json:"state,omitempty"`
+	ExpiresIn             int    `json:"expires_in,omitempty"`
+	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in,omitempty"`
+	AccessTokenTimestamp  int64  `json:"access_token_timestamp,omitempty"`
+	RefreshTokenTimestamp int64  `json:"refresh_token_timestamp,omitempty"`
 }
 
 func Login(develMode bool) error {
-	authResp, err := acquireDeviceCode(develMode)
+	loginResp, err := acquireDeviceCode(develMode)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("User Code: %s\n", authResp.UserCode)
-	fmt.Printf("Verification URL Complete: %s\n", authResp.VerificationURIComplete)
-	openBrowser(authResp.VerificationURIComplete)
-	// Schedule pollAccessToken after authResp.Interval seconds
+	fmt.Printf("User Code: %s\n", loginResp.UserCode)
+	fmt.Printf("Verification URL Complete: %s\n", loginResp.VerificationURIComplete)
+	openBrowser(loginResp.VerificationURIComplete)
+	// Schedule pollAccessToken after loginResp.Interval seconds
 
-	interval := time.Duration(authResp.Interval) * time.Second
+	interval := time.Duration(loginResp.Interval) * time.Second
 	for {
 		time.Sleep(interval)
-		err := pollAccessToken(develMode, authResp)
+		err := pollAccessToken(develMode, loginResp)
 		if err != nil {
 			log.Printf("Error polling access token: %v\n", err)
 		} else {
@@ -52,7 +63,7 @@ func Login(develMode bool) error {
 	return nil
 }
 
-func acquireDeviceCode(develMode bool) (authresp authResp, err error) {
+func acquireDeviceCode(develMode bool) (authloginresp authLoginResp, err error) {
 
 	var clientID, hosstedAuthUrl string
 
@@ -71,10 +82,10 @@ func acquireDeviceCode(develMode bool) (authresp authResp, err error) {
 
 	// Debugging prints
 	if hosstedAuthUrl == "" {
-		return authResp{}, fmt.Errorf("hosstedAuthUrl is not set")
+		return authLoginResp{}, fmt.Errorf("hosstedAuthUrl is not set")
 	}
 	if clientID == "" {
-		return authResp{}, fmt.Errorf("clientID is not set")
+		return authLoginResp{}, fmt.Errorf("clientID is not set")
 	}
 
 	data := url.Values{}
@@ -83,7 +94,7 @@ func acquireDeviceCode(develMode bool) (authresp authResp, err error) {
 	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return authResp{}, err
+		return authLoginResp{}, err
 	}
 
 	// Set headers
@@ -93,32 +104,32 @@ func acquireDeviceCode(develMode bool) (authresp authResp, err error) {
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return authResp{}, err
+		return authLoginResp{}, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return authResp{}, err
+		return authLoginResp{}, err
 	}
 
 	if resp.StatusCode != 200 {
-		return authResp{}, fmt.Errorf("Registration Failed, Error %s", string(body))
+		return authLoginResp{}, fmt.Errorf("Registration Failed, Error %s", string(body))
 	}
 
-	var authResp authResp
-	err = json.Unmarshal(body, &authResp)
+	var loginresp authLoginResp
+	err = json.Unmarshal(body, &loginresp)
 	if err != nil {
-		return authResp, err
+		return loginresp, err
 	}
 
 	err = saveResponse(body, "auth.json")
 	if err != nil {
-		return authResp, err
+		return loginresp, err
 	}
 
-	return authResp, nil
+	return loginresp, nil
 }
 
 func saveResponse(data []byte, fileName string) error {
@@ -137,7 +148,7 @@ func saveResponse(data []byte, fileName string) error {
 	return nil
 }
 
-func pollAccessToken(develMode bool, auth authResp) error {
+func pollAccessToken(develMode bool, loginResp authLoginResp) error {
 	var clientID, hosstedAuthUrl string
 
 	// Override values in development mode
@@ -162,7 +173,7 @@ func pollAccessToken(develMode bool, auth authResp) error {
 	data := url.Values{}
 	data.Set("client_id", clientID)
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
-	data.Set("device_code", auth.DeviceCode)
+	data.Set("device_code", loginResp.DeviceCode)
 
 	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
@@ -188,40 +199,123 @@ func pollAccessToken(develMode bool, auth authResp) error {
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Registration Failed, Error %s", string(body))
+		return fmt.Errorf("registration failed, error %s", string(body))
 	}
 
-	var authResp authResp
-	err = json.Unmarshal(body, &authResp)
+	var pollResp authResp
+	err = json.Unmarshal(body, &pollResp)
 	if err != nil {
 		return err
 	}
 
-	err = saveResponse(body, "authresp.json")
+	currentTimestamp := time.Now().Unix()
+	pollResp.AccessTokenTimestamp = currentTimestamp
+	pollResp.RefreshTokenTimestamp = currentTimestamp
+
+	modifiedData, err := json.Marshal(pollResp)
+	if err != nil {
+		return fmt.Errorf("error marshalling struct to JSON: %v", err)
+	}
+
+	err = saveResponse(modifiedData, "authresp.json")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+func refreshAccessToken(develMode bool, authPollResp authResp) error {
+	var clientID, hosstedAuthUrl string
+
+	// Override values in development mode
+	if develMode {
+		clientID = common.HOSSTED_DEV_CLIENT_ID
+		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/token"
+
+	} else {
+		clientID = common.HOSSTED_CLIENT_ID
+		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/token"
+	}
+
+	// Debugging prints
+	if hosstedAuthUrl == "" {
+		return fmt.Errorf("hosstedAuthUrl is not set")
+	}
+	if clientID == "" {
+		return fmt.Errorf("clientID is not set")
+	}
+
+	data := url.Values{}
+	data.Set("refresh_token", authPollResp.RefreshToken)
+	data.Set("grant_type", "refresh_token")
+	data.Set("state", authPollResp.State)
+
+	// Create HTTP request
+	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Perform the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("refresh access token failed, error %s", string(body))
+	}
+
+	var refreshTokenResp authResp
+	err = json.Unmarshal(body, &refreshTokenResp)
+	if err != nil {
+		return err
+	}
+
+	currentTimestamp := time.Now().Unix()
+	authPollResp.AccessToken = refreshTokenResp.AccessToken
+	authPollResp.AccessTokenTimestamp = currentTimestamp
+
+	modifiedData, err := json.Marshal(authPollResp)
+	if err != nil {
+		return fmt.Errorf("error marshalling struct to JSON: %v", err)
+	}
+
+	err = saveResponse(modifiedData, "authresp.json")
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func openBrowser(url string) error {
-    var cmd string
-    var args []string
+	var cmd string
+	var args []string
 
-    switch runtime.GOOS {
-    case "windows":
-        cmd = "rundll32"
-        args = append(args, "url.dll,FileProtocolHandler", url)
-    case "darwin":
-        cmd = "open"
-        args = append(args, url)
-    case "linux":
-        cmd = "xdg-open"
-        args = append(args, url)
-    default:
-        return fmt.Errorf("unsupported platform")
-    }
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "rundll32"
+		args = append(args, "url.dll,FileProtocolHandler", url)
+	case "darwin":
+		cmd = "open"
+		args = append(args, url)
+	case "linux":
+		cmd = "xdg-open"
+		args = append(args, url)
+	default:
+		return fmt.Errorf("unsupported platform")
+	}
 
-    return exec.Command(cmd, args...).Start()
+	return exec.Command(cmd, args...).Start()
 }
