@@ -30,6 +30,11 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		err := service.VerifyAuth(develMode)
+		if err != nil {
+			fmt.Println("Auth verification is failed, error", err)
+			return
+		}
 
 		if activate_type == "k8s" {
 			err := service.ActivateK8s(releaseName, develMode)
