@@ -287,6 +287,12 @@ func refreshAccessToken(develMode bool, authPollResp authResp) error {
 	authPollResp.AccessToken = refreshTokenResp.AccessToken
 	authPollResp.AccessTokenTimestamp = currentTimestamp
 
+	// check if received refresh_token is different from the old one
+	if refreshTokenResp.RefreshToken != authPollResp.RefreshToken {
+		authPollResp.RefreshToken = refreshTokenResp.RefreshToken
+		authPollResp.RefreshTokenTimestamp = currentTimestamp
+	}
+
 	modifiedData, err := json.Marshal(authPollResp)
 	if err != nil {
 		return fmt.Errorf("error marshalling struct to JSON: %v", err)
