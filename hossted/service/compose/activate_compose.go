@@ -60,37 +60,31 @@ type ContainerInfo struct {
 	DockerID   string      `json:"docker_id,omitempty"`
 }
 
-func ActivateCompose(composeFilePath, token, orgID string, develMode bool) error {
-
-	// emailID, err := common.GetEmail()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := common.GetLoginResponse()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // validate auth token
-	// err = common.ValidateToken(resp)
-	// if err != nil {
-	// 	return err
-	// }
-	// // handle usecases for orgID selection
-	// orgID, err := common.UseCases(resp)
-	// if err != nil {
-	// 	return err
-	// }
+func ActivateCompose(composeFilePath string, develMode bool) error {
 
 	osFilePath, err := getComposeFilePath("compose.yaml")
 	if err != nil {
 		return err
 	}
 
+	tr, err := common.GetTokenResp()
+	if err != nil {
+		return err
+	}
+
+	orgs, err := common.GetOrgs(tr.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	orgID, err := common.OrgUseCases(orgs)
+	if err != nil {
+		return err
+	}
+
 	osInfo := OsInfo{
 		OrgID:         orgID,
-		Token:         token,
+		Token:         tr.AccessToken,
 		ProjectName:   GetProjectName(composeFilePath),
 		HosstedApiUrl: common.HOSSTED_API_URL,
 		MimirUsername: common.MIMIR_USERNAME,
