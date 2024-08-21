@@ -22,7 +22,12 @@ func VerifyAuth(develMode bool) error {
 		// check refresh token expiry
 		isRefreshTokenExpired := checkRefreshTokenExpiration(authRes)
 		if isRefreshTokenExpired {
-			return fmt.Errorf("both access_token and refresh token are expired, please login again")
+			fmt.Println("Doing login again....")
+			err := Login(develMode)
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf("both access_token and refresh token were expired, please activate again")
 		} else {
 			// get new access_token using the existing refresh_token
 			err := refreshAccessToken(develMode, authRes)
