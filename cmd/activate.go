@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hossted/cli/hossted"
 	"github.com/hossted/cli/hossted/service"
@@ -43,6 +44,13 @@ hossted activate
 			}
 			return
 		} else if activate_type == "compose" {
+			if composeFilePath == "" {
+				dir, err := os.Getwd()
+				if err != nil {
+					fmt.Println("Error getting current working directory:", err)
+				}
+				composeFilePath = dir
+			}
 			err := compose.ActivateCompose(composeFilePath, develMode)
 			if err != nil {
 				fmt.Println(err)
@@ -71,6 +79,6 @@ func init() {
 	rootCmd.AddCommand(activateCmd)
 	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|compose")
 	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
-	activateCmd.Flags().StringVar(&composeFilePath, "compose_filepath", "", "compose filepath (optional)")
+	activateCmd.Flags().StringVarP(&composeFilePath, "compose_filepath", "f", "", "compose filepath (optional)")
 	activateCmd.Flags().BoolVar(&develMode, "d", false, "Toggle development mode")
 }
