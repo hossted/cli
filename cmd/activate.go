@@ -33,7 +33,7 @@ hossted activate
 	Run: func(cmd *cobra.Command, args []string) {
 		err := service.VerifyAuth(develMode)
 		if err != nil {
-			fmt.Println("Auth verification is failed, error", err)
+			fmt.Println("Auth verification is failed, error:", err)
 			return
 		}
 
