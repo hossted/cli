@@ -205,6 +205,25 @@ func isStandbyMode(releaseName string) (bool, error) {
 	// 	return isStandby, err
 	// }
 
+// <<<<<<< edge-standby
+// =======
+// 	monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
+// 	if err != nil {
+// 		return isStandby, err
+// 	}
+// 	monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
+// 	if err != nil {
+// 		return isStandby, err
+// 	}
+// 	ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
+// 	if err != nil {
+// 		return isStandby, err
+// 	}
+// 	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
+// 	if err != nil {
+// 		return isStandby, err
+// 	}
+// >>>>>>> dev
 	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
 	if err != nil {
 		return isStandby, err
@@ -869,7 +888,7 @@ func eventMonitoring(token string) error {
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := sendEvent("success", "Hossted Platform Monitoring started successfully", token)
+			err := SendEvent("success", "Hossted Platform Monitoring started successfully", token)
 			if err != nil {
 				return err
 			}
@@ -920,7 +939,7 @@ func eventCVE(token string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform CVE Scan started successfully", token)
+					err := SendEvent("success", "Hossted Platform CVE Scan started successfully", token)
 					if err != nil {
 						return err
 					}
@@ -951,7 +970,7 @@ func eventOperator(token string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform operator installed successfully", token)
+					err := SendEvent("success", "Hossted Platform operator installed successfully", token)
 					if err != nil {
 						return err
 					}
@@ -1014,7 +1033,7 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func sendEvent(eventType, message, token string) error {
+func SendEvent(eventType, message, token string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {

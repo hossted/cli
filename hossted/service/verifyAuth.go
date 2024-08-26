@@ -13,7 +13,16 @@ func VerifyAuth(develMode bool) error {
 	// read authresp.json file
 	authRes, err := readAuthRespFile()
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			fmt.Println("File ~/.hossted/authresp.json not found, doing login again...")
+			err := Login(develMode)
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf("could not read ~/.hossted/authresp.json, please activate again")
+		} else {
+			return err
+		}
 	}
 
 	// check access_token

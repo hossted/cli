@@ -31,9 +31,21 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := service.VerifyAuth(develMode)
+		// write activate_type to config file
+		config, _ := hossted.GetConfig() // Ignore error
+		// Assign back to config object
+		config.ActivateType = activate_type
+
+		// Write back to file
+		err := hossted.WriteConfigWrapper(config)
 		if err != nil {
-			fmt.Println("Auth verification is failed, error", err)
+			fmt.Println("Can not write ActivateType to config file. Please check.", err)
+			return
+		}
+
+		err = service.VerifyAuth(develMode)
+		if err != nil {
+			fmt.Println("Auth verification is failed, error:", err)
 			return
 		}
 
