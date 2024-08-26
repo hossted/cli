@@ -205,7 +205,7 @@ func isStandbyMode(releaseName string) (bool, error) {
 	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
 	if err != nil {
 		return isStandby, err
-	}	
+	}
 	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
 	if err != nil {
 		return isStandby, err
@@ -432,7 +432,7 @@ func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, rele
 			},
 			"ingress": map[string]interface{}{
 				"enable": ingressEnabled == "true",
-			},			
+			},
 		},
 	}
 
@@ -540,7 +540,7 @@ func askPromptsToInstall() (string, string, string, string, error) {
 	if ingressEnable == "Yes" {
 		ingressEnabled = "true"
 		fmt.Println("Enabled Ingress:", green(ingressEnabled))
-	}	
+	}
 	return cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, nil
 }
 
@@ -594,7 +594,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 		//------------------------------ Helm Repo Add  ----------------------------------
 
 		RepoAdd("hossted", "https://charts.hossted.com")
-		RepoAdd("ingress-nginx", "https://kubernetes.github.io/ingress-nginx" )
+		RepoAdd("ingress-nginx", "https://kubernetes.github.io/ingress-nginx")
 		RepoUpdate()
 
 		fmt.Println(loggingEnabled)
@@ -870,7 +870,7 @@ func eventMonitoring(token string) error {
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := sendEvent("success", "Hossted Platform Monitoring started successfully", token)
+			err := SendEvent("success", "Hossted Platform Monitoring started successfully", token)
 			if err != nil {
 				return err
 			}
@@ -921,7 +921,7 @@ func eventCVE(token string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform CVE Scan started successfully", token)
+					err := SendEvent("success", "Hossted Platform CVE Scan started successfully", token)
 					if err != nil {
 						return err
 					}
@@ -952,7 +952,7 @@ func eventOperator(token string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := sendEvent("success", "Hossted Platform operator installed successfully", token)
+					err := SendEvent("success", "Hossted Platform operator installed successfully", token)
 					if err != nil {
 						return err
 					}
@@ -1015,7 +1015,7 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func sendEvent(eventType, message, token string) error {
+func SendEvent(eventType, message, token string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {

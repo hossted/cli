@@ -17,6 +17,7 @@ type Config struct {
 	Update       bool                `yaml:"update"`
 	Monitoring   bool                `yaml:"monitoring"`
 	Applications []ConfigApplication `yaml:"applications"`
+	ActivateType string              `yaml:"activateType"`
 }
 
 // ConfigApplication is the applications installled in the vm.
@@ -133,16 +134,16 @@ type Instance struct {
 }
 
 type KCluster struct {
-	Uuid      string `json:"uuid,omitempty"`
-	Namespaces     []string `json:"namespaces"`
-	Name      string `json:"name,omitempty"`
-	User      string `json:"user,omitempty"`
-	Cloud     string `json:"cloud,omitempty"`
-	Status    string `json:"status,omitempty"`
-	Test_mode string `json:"test_mode,omitempty"`
-	Comment   string `json:"comment,omitempty"`
+	Uuid       string   `json:"uuid,omitempty"`
+	Namespaces []string `json:"namespaces"`
+	Name       string   `json:"name,omitempty"`
+	User       string   `json:"user,omitempty"`
+	Cloud      string   `json:"cloud,omitempty"`
+	Status     string   `json:"status,omitempty"`
+	Test_mode  string   `json:"test_mode,omitempty"`
+	Comment    string   `json:"comment,omitempty"`
 }
 
 type NameSpace struct {
-	Name        string             `json:"namespace"`
+	Name string `json:"namespace"`
 }
