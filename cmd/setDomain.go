@@ -34,9 +34,11 @@ var setDomainCmd = &cobra.Command{
 				return err
 			}
 
-			pwd := hossted.GetCurrentDirectory()
-			app, _ = config.GetDefaultApp(pwd)
-			domain = args[0]
+			if config.ActivateType != "k8s" {
+				pwd := hossted.GetCurrentDirectory()
+				app, _ = config.GetDefaultApp(pwd)
+				domain = args[0]
+			}
 
 		} else if len(args) == 2 {
 			app = args[0]
