@@ -45,7 +45,7 @@ hossted activate
 
 		err = service.VerifyAuth(develMode)
 		if err != nil {
-			fmt.Println("Auth verification is failed, error", err)
+			fmt.Println("Auth verification is failed, error:", err)
 			return
 		}
 
