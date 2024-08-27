@@ -1,0 +1,53 @@
+env:
+  HOSSTED_API_URL: "https://api.hossted.com/v1/instances"
+  EMAIL_ID: ""
+  RECONCILE_DURATION: "10s"
+  HOSSTED_ORG_ID: ""
+  CONTEXT_NAME: ""
+
+replicas: 1
+
+secret:
+  HOSSTED_AUTH_TOKEN: "notoken"
+
+stop: true
+
+cve:
+  enable: false
+monitoring:
+  enable: false
+logging:
+  enable: false
+ingress:
+  enable: false
+
+nameOverride: hossted
+
+operator:
+  image:
+    repository: hossted/operator
+    tag: edge
+
+primaryCreds:
+  namespace: "hossted-keycloak"
+  user: 
+    key: "KEYCLOAK_ADMIN"
+    configMap: "keycloak-env-vars"
+  password: 
+    key: "admin-password"
+    secretName: "keycloak"
+  
+
+helm:
+  - releaseName: "hossted-keycloak"
+    namespace: "hossted-keycloak"
+    values: 
+      - "ingress.enabled=true"
+      - "ingress.hostname=keycloak.hossted.app"
+      - "ingress.ingressClassName=hossted-operator"
+      - "ingress.tls=true"
+      - "auth.adminPassword=hossted-admin-password"
+      - "auth.adminUser=hossted-admin"
+    repoName: "keycloak"
+    chartName: "keycloak"
+    repoUrl: "https://charts.bitnami.com/bitnami"
