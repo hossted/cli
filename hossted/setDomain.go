@@ -78,14 +78,11 @@ func SetDomain(env, app, domain string) error {
 		}
 		fmt.Printf("domain %s set for %s ingress\n", updatedIngress.Spec.Rules[0].Host, app)
 
-		tr, err := common.GetTokenResp()
+		err = service.SendEvent("success", "Hossted Platform Domain set successfully", common.HOSSTED_AUTH_TOKEN)
 		if err != nil {
 			return err
 		}
-		err = service.SendEvent("success", "Hossted Platform Domain set successfully", tr.AccessToken)
-		if err != nil {
-			return err
-		}
+		fmt.Println("Hossted Platform Domain set successfully")
 
 	} else {
 		if !HasContainerRunning() {
