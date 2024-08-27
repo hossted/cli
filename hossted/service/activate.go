@@ -87,7 +87,7 @@ func ActivateK8s(releaseName string, develMode bool) error {
 
 	isStandby, err := isStandbyMode(releaseName)
 	if err != nil {
-		return err
+		//return err
 	}
 
 	tr, err := common.GetTokenResp()
@@ -205,25 +205,25 @@ func isStandbyMode(releaseName string) (bool, error) {
 	// 	return isStandby, err
 	// }
 
-// <<<<<<< edge-standby
-// =======
-// 	monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
-// 	if err != nil {
-// 		return isStandby, err
-// 	}
-// 	monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
-// 	if err != nil {
-// 		return isStandby, err
-// 	}
-// 	ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
-// 	if err != nil {
-// 		return isStandby, err
-// 	}
-// 	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
-// 	if err != nil {
-// 		return isStandby, err
-// 	}
-// >>>>>>> dev
+	// <<<<<<< edge-standby
+	// =======
+	// 	monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
+	// 	if err != nil {
+	// 		return isStandby, err
+	// 	}
+	// 	monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
+	// 	if err != nil {
+	// 		return isStandby, err
+	// 	}
+	// 	ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
+	// 	if err != nil {
+	// 		return isStandby, err
+	// 	}
+	// 	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
+	// 	if err != nil {
+	// 		return isStandby, err
+	// 	}
+	// >>>>>>> dev
 	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
 	if err != nil {
 		return isStandby, err
