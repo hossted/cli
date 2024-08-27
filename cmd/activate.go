@@ -43,19 +43,25 @@ hossted activate
 			return
 		}
 
-		err = service.VerifyAuth(develMode)
-		if err != nil {
-			fmt.Println("Auth verification is failed, error:", err)
-			return
-		}
-
 		if activate_type == "k8s" {
+			err = service.VerifyAuth(develMode)
+			if err != nil {
+				fmt.Println("Auth verification is failed, error:", err)
+				return
+			}
+
 			err := service.ActivateK8s(releaseName, develMode)
 			if err != nil {
 				fmt.Println(err)
 			}
 			return
 		} else if activate_type == "compose" {
+			err = service.VerifyAuth(develMode)
+			if err != nil {
+				fmt.Println("Auth verification is failed, error:", err)
+				return
+			}
+
 			if composeFilePath == "" {
 				dir, err := os.Getwd()
 				if err != nil {

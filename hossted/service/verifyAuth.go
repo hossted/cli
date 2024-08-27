@@ -19,7 +19,8 @@ func VerifyAuth(develMode bool) error {
 			if err != nil {
 				return err
 			}
-			return fmt.Errorf("could not read ~/.hossted/authresp.json, please activate again")
+			return nil
+			//fmt.Errorf("could not read ~/.hossted/authresp.json, please activate again")
 		} else {
 			return err
 		}
