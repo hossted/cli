@@ -85,10 +85,7 @@ func ActivateK8s(releaseName string, develMode bool) error {
 
 	fmt.Println("Your cluster name is ", clusterName)
 
-	isStandby, err := isStandbyMode(releaseName)
-	if err != nil {
-		//return err
-	}
+	isStandby, _ := isStandbyMode(releaseName)
 
 	tr, err := common.GetTokenResp()
 	if err != nil {
@@ -670,7 +667,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
 
 		//------------------------------ Add Events ----------------------------------
-		err = addEvents(JWT)
+		err = addEvents(common.HOSSTED_AUTH_TOKEN)
 		if err != nil {
 			return err
 		}
