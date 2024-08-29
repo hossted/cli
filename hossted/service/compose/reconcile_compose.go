@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,10 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 	if err != nil {
 		return err
 	}
-
+	err = sendComposeInfo(appFilePath, osInfo)
+	if err != nil {
+		return err
+	}	
 	if isComposeStateChange {
 		// send compose info
 		err = sendComposeInfo(appFilePath, osInfo)
@@ -53,7 +57,6 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 			return err
 		}
 	}
-
 	return nil
 
 }
@@ -191,6 +194,16 @@ type optionsState struct {
 	CVEScan    bool `json:"cve_scan"`
 }
 
+type URLInfo struct {
+	URL      string `json:"url"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+type AccessInfo struct {
+	URLs []URLInfo `json:"urls"`
+}
+
 type request struct {
 	UUID         string       `json:"uuid"`
 	OsUUID       string       `json:"osuuid"`
@@ -202,6 +215,7 @@ type request struct {
 	Memory       string       `json:"memory"`
 	OptionsState optionsState `json:"options_state"`
 	ComposeFile  string       `json:"compose_file"`
+	AccessInfo   AccessInfo    `json:"access_info"`
 }
 
 type dockerInstance struct {
@@ -230,6 +244,8 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
+	keycloak_file := "/opt/keycloak/.env"
+	access_info := getAccessInfo(keycloak_file)
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -250,6 +266,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 			UUID:    compose.AppAPIInfo.AppUUID,
 			OsUUID:  compose.AppAPIInfo.OsUUID,
 			Email:   compose.AppAPIInfo.EmailID,
+			AccessInfo: *access_info,		
 			OrgID:   orgID,
 			Type:    "compose",
 			Product: appName,
@@ -606,4 +623,47 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		fmt.Println("Docker Compose executed successfully")
 	}
 	return nil
+}
+
+func getAccessInfo(filepath string) *AccessInfo {
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open file:", err)
+	}
+	defer file.Close()
+
+	config := AccessInfo{
+		URLs: []URLInfo{
+			{},
+		},
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			fmt.Println("Invalid line:", line)
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		switch key {
+		case "PROJECT_BASE_URL":
+			config.URLs[0].URL = value
+		case "H_EMAIL":
+			config.URLs[0].User = value
+		case "APP_PASSWORD":
+			config.URLs[0].Password = value
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+	return &config
 }
