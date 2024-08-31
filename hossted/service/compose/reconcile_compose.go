@@ -611,7 +611,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		composeFile := os.Getenv("HOME") + "/.hossted/compose/monitoring/docker-compose.yaml"
 
 		// Create the command to run Docker Compose
-		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")
+		cmd := exec.Command("docker compose", "-f", composeFile, "up", "-d")
 
 		// Set the command's output to the standard output
 		cmd.Stdout = os.Stdout
