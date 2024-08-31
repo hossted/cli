@@ -53,7 +53,7 @@ const (
 )
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(releaseName string, develMode bool) error {
+func ActivateK8s(develMode bool) error {
 
 	// emailsID, err := getEmail()
 	// if err != nil {
@@ -85,7 +85,7 @@ func ActivateK8s(releaseName string, develMode bool) error {
 
 	fmt.Println("Your cluster name is ", clusterName)
 
-	isStandby, _ := isStandbyMode(releaseName)
+	isStandby, _ := isStandbyMode()
 
 	tr, err := common.GetTokenResp()
 	if err != nil {
@@ -108,7 +108,7 @@ func ActivateK8s(releaseName string, develMode bool) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID, develMode)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, hosstedOperatorReleaseName+"-controller-manager", "", clusterName, orgID, develMode)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func ActivateK8s(releaseName string, develMode bool) error {
 		// }
 
 		fmt.Println("Updating secret....")
-		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", tr.AccessToken)
+		err = updateSecret(clientset, hosstedPlatformNamespace, hosstedOperatorReleaseName+"-secret", "AUTH_TOKEN", tr.AccessToken)
 		if err != nil {
 			return err
 		}
@@ -138,13 +138,13 @@ func ActivateK8s(releaseName string, develMode bool) error {
 
 		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" || ingressEnabled == "true" {
 			fmt.Println("Patching 'hossted-operator-cr' CR")
-			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName)
+			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, hosstedOperatorReleaseName)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = patchStopCR(releaseName)
+		err = patchStopCR(hosstedOperatorReleaseName)
 		if err != nil {
 			return err
 		}
@@ -161,11 +161,11 @@ func ActivateK8s(releaseName string, develMode bool) error {
 	return nil
 }
 
-func isStandbyMode(releaseName string) (bool, error) {
+func isStandbyMode() (bool, error) {
 
 	isStandby := false
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), hosstedOperatorReleaseName+"-cr", metav1.GetOptions{})
 	if err != nil {
 		return isStandby, err
 	}

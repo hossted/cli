@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	activate_type, releaseName, composeFilePath, org_id string
-	develMode                                           bool
+	activate_type, composeFilePath, org_id string
+	develMode                              bool
 )
 
 // registerCmd represents the register command
@@ -50,7 +50,7 @@ hossted activate
 				return
 			}
 
-			err := service.ActivateK8s(releaseName, develMode)
+			err := service.ActivateK8s(develMode)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -96,7 +96,6 @@ hossted activate
 func init() {
 	rootCmd.AddCommand(activateCmd)
 	activateCmd.Flags().StringVarP(&activate_type, "type", "t", "", "supported env type k8s|compose")
-	activateCmd.Flags().StringVar(&releaseName, "release_name", "", "release name (optional)")
 	activateCmd.Flags().StringVarP(&composeFilePath, "compose_filepath", "f", "", "compose filepath (optional)")
 	activateCmd.Flags().BoolVar(&develMode, "d", false, "Toggle development mode")
 }
