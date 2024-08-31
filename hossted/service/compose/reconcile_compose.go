@@ -49,7 +49,7 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 	err = sendComposeInfo(appFilePath, osInfo)
 	if err != nil {
 		return err
-	}	
+	}
 	if isComposeStateChange {
 		// send compose info
 		err = sendComposeInfo(appFilePath, osInfo)
@@ -138,9 +138,10 @@ func setClusterInfo(osInfo OsInfo, osFilePath string) (OsInfo, error) {
 
 func checkUUID(osFilePath string) (string, error) {
 	var osData OsInfo
+
 	data, err := readFile(osFilePath)
 	if err != nil {
-		return "", err
+		//return "", err
 	}
 
 	err = yaml.Unmarshal(data, &osData)
@@ -215,7 +216,7 @@ type request struct {
 	Memory       string       `json:"memory"`
 	OptionsState optionsState `json:"options_state"`
 	ComposeFile  string       `json:"compose_file"`
-	AccessInfo   AccessInfo    `json:"access_info"`
+	AccessInfo   AccessInfo   `json:"access_info"`
 }
 
 type dockerInstance struct {
@@ -244,8 +245,8 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
-	keycloak_file := "/opt/keycloak/.env"
-	access_info := getAccessInfo(keycloak_file)
+
+	access_info := getAccessInfo(osInfo.ProjectName)
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -263,15 +264,15 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	}
 	for appName, compose := range data {
 		newReq := request{
-			UUID:    compose.AppAPIInfo.AppUUID,
-			OsUUID:  compose.AppAPIInfo.OsUUID,
-			Email:   compose.AppAPIInfo.EmailID,
-			AccessInfo: *access_info,		
-			OrgID:   orgID,
-			Type:    "compose",
-			Product: appName,
-			CPUNum:  cpu,
-			Memory:  mem,
+			UUID:       compose.AppAPIInfo.AppUUID,
+			OsUUID:     compose.AppAPIInfo.OsUUID,
+			Email:      compose.AppAPIInfo.EmailID,
+			AccessInfo: *access_info,
+			OrgID:      orgID,
+			Type:       "compose",
+			Product:    appName,
+			CPUNum:     cpu,
+			Memory:     mem,
 			OptionsState: optionsState{
 				Monitoring: true,
 				Logging:    true,
@@ -413,6 +414,8 @@ func prepareComposeRequest(
 	if err != nil {
 		return appsData, isComposeStateChange, err
 	}
+
+	fmt.Println(uniqueProjects)
 
 	// Create a slice of existing apps
 	existingApps := make(map[string]bool)
@@ -580,12 +583,12 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		configStr = strings.Replace(configStr, "${APP_UUID}", fmt.Sprintf("\"%s\"", appUUID), -1)
 
 		// Replace MIMIR_USERNAME and MIMIR_PASSWORD placeholders
-		mimirUsername := os.Getenv("MIMIR_USERNAME")
-		mimirPassword := os.Getenv("MIMIR_PASSWORD")
-		mimirURL := os.Getenv("MIMIR_URL")
-		lokiUsername := os.Getenv("LOKI_USERNAME")
-		lokiPassword := os.Getenv("LOKI_PASSWORD")
-		lokiURL := os.Getenv("LOKI_URL")
+		mimirUsername := common.MIMIR_USERNAME
+		mimirPassword := common.MIMIR_PASSWORD
+		mimirURL := common.MIMIR_URL
+		lokiUsername := common.LOKI_USERNAME
+		lokiPassword := common.LOKI_PASSWORD
+		lokiURL := common.LOKI_URL
 
 		if mimirUsername == "" || mimirPassword == "" || mimirURL == "" {
 			log.Fatalf("MIMIR_USERNAME, MIMIR_URL and  MIMIR_PASSWORD environment variables must be set")
@@ -608,7 +611,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		composeFile := os.Getenv("HOME") + "/.hossted/compose/monitoring/docker-compose.yaml"
 
 		// Create the command to run Docker Compose
-		cmd := exec.Command("docker compose", "-f", composeFile, "up", "-d")
+		cmd := exec.Command("docker-compose", "-f", composeFile, "up", "-d")
 
 		// Set the command's output to the standard output
 		cmd.Stdout = os.Stdout
@@ -628,7 +631,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 func getAccessInfo(filepath string) *AccessInfo {
 	file, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Failed to open file:", err)
+		log.Fatalf("Failed to open file for Access Info: %s", err)
 	}
 	defer file.Close()
 
