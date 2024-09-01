@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,10 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 	if err != nil {
 		return err
 	}
-
+	err = sendComposeInfo(appFilePath, osInfo)
+	if err != nil {
+		return err
+	}
 	if isComposeStateChange {
 		// send compose info
 		err = sendComposeInfo(appFilePath, osInfo)
@@ -53,7 +57,6 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 			return err
 		}
 	}
-
 	return nil
 
 }
@@ -135,9 +138,10 @@ func setClusterInfo(osInfo OsInfo, osFilePath string) (OsInfo, error) {
 
 func checkUUID(osFilePath string) (string, error) {
 	var osData OsInfo
+
 	data, err := readFile(osFilePath)
 	if err != nil {
-		return "", err
+		//return "", err
 	}
 
 	err = yaml.Unmarshal(data, &osData)
@@ -191,6 +195,16 @@ type optionsState struct {
 	CVEScan    bool `json:"cve_scan"`
 }
 
+type URLInfo struct {
+	URL      string `json:"url"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+type AccessInfo struct {
+	URLs []URLInfo `json:"urls"`
+}
+
 type request struct {
 	UUID         string       `json:"uuid"`
 	OsUUID       string       `json:"osuuid"`
@@ -202,6 +216,7 @@ type request struct {
 	Memory       string       `json:"memory"`
 	OptionsState optionsState `json:"options_state"`
 	ComposeFile  string       `json:"compose_file"`
+	AccessInfo   AccessInfo   `json:"access_info"`
 }
 
 type dockerInstance struct {
@@ -231,6 +246,8 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
 
+	access_info := getAccessInfo(osInfo.ProjectName)
+
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
 	if err != nil {
@@ -247,14 +264,15 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	}
 	for appName, compose := range data {
 		newReq := request{
-			UUID:    compose.AppAPIInfo.AppUUID,
-			OsUUID:  compose.AppAPIInfo.OsUUID,
-			Email:   compose.AppAPIInfo.EmailID,
-			OrgID:   orgID,
-			Type:    "compose",
-			Product: appName,
-			CPUNum:  cpu,
-			Memory:  mem,
+			UUID:       compose.AppAPIInfo.AppUUID,
+			OsUUID:     compose.AppAPIInfo.OsUUID,
+			Email:      compose.AppAPIInfo.EmailID,
+			AccessInfo: *access_info,
+			OrgID:      orgID,
+			Type:       "compose",
+			Product:    appName,
+			CPUNum:     cpu,
+			Memory:     mem,
 			OptionsState: optionsState{
 				Monitoring: true,
 				Logging:    true,
@@ -396,6 +414,8 @@ func prepareComposeRequest(
 	if err != nil {
 		return appsData, isComposeStateChange, err
 	}
+
+	fmt.Println(uniqueProjects)
 
 	// Create a slice of existing apps
 	existingApps := make(map[string]bool)
@@ -563,12 +583,12 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		configStr = strings.Replace(configStr, "${APP_UUID}", fmt.Sprintf("\"%s\"", appUUID), -1)
 
 		// Replace MIMIR_USERNAME and MIMIR_PASSWORD placeholders
-		mimirUsername := os.Getenv("MIMIR_USERNAME")
-		mimirPassword := os.Getenv("MIMIR_PASSWORD")
-		mimirURL := os.Getenv("MIMIR_URL")
-		lokiUsername := os.Getenv("LOKI_USERNAME")
-		lokiPassword := os.Getenv("LOKI_PASSWORD")
-		lokiURL := os.Getenv("LOKI_URL")
+		mimirUsername := common.MIMIR_USERNAME
+		mimirPassword := common.MIMIR_PASSWORD
+		mimirURL := common.MIMIR_URL
+		lokiUsername := common.LOKI_USERNAME
+		lokiPassword := common.LOKI_PASSWORD
+		lokiURL := common.LOKI_URL
 
 		if mimirUsername == "" || mimirPassword == "" || mimirURL == "" {
 			log.Fatalf("MIMIR_USERNAME, MIMIR_URL and  MIMIR_PASSWORD environment variables must be set")
@@ -606,4 +626,47 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		fmt.Println("Docker Compose executed successfully")
 	}
 	return nil
+}
+
+func getAccessInfo(filepath string) *AccessInfo {
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open file for Access Info: %s", err)
+	}
+	defer file.Close()
+
+	config := AccessInfo{
+		URLs: []URLInfo{
+			{},
+		},
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			fmt.Println("Invalid line:", line)
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		switch key {
+		case "PROJECT_BASE_URL":
+			config.URLs[0].URL = value
+		case "H_EMAIL":
+			config.URLs[0].User = value
+		case "APP_PASSWORD":
+			config.URLs[0].Password = value
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+	return &config
 }

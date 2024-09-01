@@ -50,10 +50,11 @@ const (
 	hosstedOperatorReleaseName = "hossted-operator"
 	trivyOperatorReleaseName   = "trivy-operator"
 	grafanaAgentReleaseName    = "hossted-grafana-agent"
+	releaseName                = "hossted-platform"
 )
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(releaseName string, develMode bool) error {
+func ActivateK8s(develMode bool) error {
 
 	// emailsID, err := getEmail()
 	// if err != nil {
