@@ -109,7 +109,7 @@ func ActivateK8s(develMode bool) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, releaseName+"-controller-manager", "", clusterName, orgID, develMode)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, develMode)
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func ActivateK8s(develMode bool) error {
 		// }
 
 		fmt.Println("Updating secret....")
-		err = updateSecret(clientset, hosstedPlatformNamespace, releaseName+"-secret", "AUTH_TOKEN", tr.AccessToken)
+		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator"+"-secret", "AUTH_TOKEN", tr.AccessToken)
 		if err != nil {
 			return err
 		}
@@ -166,7 +166,7 @@ func isStandbyMode(releaseName string) (bool, error) {
 
 	isStandby := false
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
 	if err != nil {
 		return isStandby, err
 	}
@@ -468,7 +468,7 @@ func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, rele
 
 func patchStopCR(releaseName string) error {
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator"+"-cr", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
