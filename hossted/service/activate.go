@@ -50,7 +50,7 @@ const (
 	hosstedOperatorReleaseName = "hossted-operator"
 	trivyOperatorReleaseName   = "trivy-operator"
 	grafanaAgentReleaseName    = "hossted-grafana-agent"
-	releaseName                = "hossted-platform"
+	releaseName                = "hossted-operator-cr"
 )
 
 // ActivateK8s imports Kubernetes clusters.
@@ -166,7 +166,7 @@ func isStandbyMode(releaseName string) (bool, error) {
 
 	isStandby := false
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName, metav1.GetOptions{})
 	if err != nil {
 		return isStandby, err
 	}
@@ -430,7 +430,7 @@ func updateSecret(clientset *kubernetes.Clientset, namespace, secretName, secret
 
 func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName string) error {
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName+"-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator-cr", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, rele
 
 func patchStopCR(releaseName string) error {
 	cr := getDynClient()
-	hp, err := cr.Resource(hpGVK).Get(context.TODO(), "hossted-operator"+"-cr", metav1.GetOptions{})
+	hp, err := cr.Resource(hpGVK).Get(context.TODO(), releaseName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
