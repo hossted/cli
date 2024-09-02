@@ -291,8 +291,6 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 			return err
 		}
 
-		fmt.Println(string(body))
-
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 	}
 
