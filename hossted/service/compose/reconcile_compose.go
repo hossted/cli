@@ -133,7 +133,7 @@ func setClusterInfo(osInfo OsInfo, osFilePath string) (OsInfo, error) {
 		return info, err
 	}
 
-	return osInfo, nil
+	return info, nil
 }
 
 func checkUUID(osFilePath string) (string, error) {
@@ -246,7 +246,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
 
-	access_info := getAccessInfo(osInfo.ProjectName)
+	access_info := getAccessInfo("/opt/" + osInfo.ProjectName + "/.env")
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -290,6 +290,8 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 		if err != nil {
 			return err
 		}
+
+		fmt.Println(string(body))
 
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 	}
@@ -414,8 +416,6 @@ func prepareComposeRequest(
 	if err != nil {
 		return appsData, isComposeStateChange, err
 	}
-
-	fmt.Println(uniqueProjects)
 
 	// Create a slice of existing apps
 	existingApps := make(map[string]bool)
