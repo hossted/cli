@@ -95,7 +95,6 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		LokiUrl:       common.LOKI_URL,
 	}
 
-	fmt.Println(osInfo)
 	// Override values in development mode
 	if develMode {
 		fmt.Printf("dev->osInfo: %+v\n", osInfo)
