@@ -27,8 +27,8 @@ var (
 	MIMIR_USERNAME     = "-"
 	HOSSTED_API_URL    = "-"
 	HOSSTED_AUTH_TOKEN = "-"
-	HOSSTED_CLIENT_ID  = "-"
 	HOSSTED_AUTH_URL   = "-"
+	HOSSTED_CLIENT_ID  = "-"
 	///////////////////////////
 	HOSSTED_DEV_API_URL   = "-"
 	MIMIR_DEV_URL         = "-"

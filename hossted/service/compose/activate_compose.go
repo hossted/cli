@@ -110,6 +110,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		}
 	}
 
+	fmt.Println(osFilePath)
 	osData, err := setClusterInfo(osInfo, osFilePath)
 	if err != nil {
 		return err
