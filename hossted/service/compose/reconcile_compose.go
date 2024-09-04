@@ -245,18 +245,37 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
 
-	var access_info = &AccessInfo{}
-	path, err := getSoftwarePath()
+	projectName, err := getProjectName()
 	if err != nil {
-		fmt.Println("Error getting software path", err)
+		return err
 	}
 
+	access_info := getAccessInfo("/opt/" + projectName + "/.env")
+
 	// its a market place VM, access info object will exist
-	if path == "/opt/hossted/run/software.txt" {
-		access_info = getAccessInfo("/opt/" + osInfo.ProjectName + "/.env")
-	} else if path == "" {
-		fmt.Println("Contact hossted support to make add Access Info object")
-	}
+	// if path == "/opt/hossted/run/software.txt" {
+	// 	// read the file in this path
+	// 	// file will have this convention - Linnovate-AWS-keycloak
+	// 	// capture the last word ie keycloak in this case.
+	// 	// and use this last work ie instead of osInfo.ProjectName
+	// 	data, err := os.ReadFile(path)
+	// 	if err != nil {
+	// 		fmt.Println("Error reading file:", err)
+	// 		return err
+	// 	}
+
+	// 	// The file will have the convention Linnovate-AWS-keycloak
+	// 	// Capture the last word (i.e., keycloak in this case)
+	// 	softwareName := strings.TrimSpace(string(data))
+	// 	words := strings.Split(softwareName, "-")
+	// 	if len(words) > 0 {
+	// 		projectName := words[len(words)-1]
+	// 		// Use this last word (i.e., keycloak) instead of osInfo.ProjectName
+	// 		access_info = getAccessInfo("/opt/" + projectName + "/.env")
+	// 	}
+	// } else if path == "" {
+	// 	fmt.Println("Contact Hossted support to add Access Info object")
+	// }
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -639,7 +658,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 func getAccessInfo(filepath string) *AccessInfo {
 	file, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Failed to open file for Access Info: %s", err)
+		return &AccessInfo{}
 	}
 	defer file.Close()
 
@@ -687,4 +706,38 @@ func getSoftwarePath() (string, error) {
 		return path, nil
 	}
 
+}
+
+func getProjectName() (string, error) {
+	path, err := getSoftwarePath()
+	if err != nil {
+		fmt.Println("Error getting software path", err)
+	}
+
+	// its a market place VM, access info object will exist
+	if path == "/opt/hossted/run/software.txt" {
+		// read the file in this path
+		// file will have this convention - Linnovate-AWS-keycloak
+		// capture the last word ie keycloak in this case.
+		// and use this last work ie instead of osInfo.ProjectName
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			return "", err
+		}
+
+		// The file will have the convention Linnovate-AWS-keycloak
+		// Capture the last word (i.e., keycloak in this case)
+		softwareName := strings.TrimSpace(string(data))
+		words := strings.Split(softwareName, "-")
+		if len(words) > 0 {
+			projectName := words[len(words)-1]
+			// Use this last word (i.e., keycloak) instead of osInfo.ProjectName
+			return projectName, nil
+		}
+	} else if path == "" {
+		fmt.Println("Contact Hossted support to add Access Info object")
+		return "", nil
+	}
+	return "", nil
 }

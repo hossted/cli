@@ -19,22 +19,22 @@ import (
 )
 
 var (
-	LOKI_PASSWORD      = "-"
-	LOKI_URL           = "-"
-	LOKI_USERNAME      = "-"
-	MIMIR_PASSWORD     = "-"
-	MIMIR_URL          = "-"
-	MIMIR_USERNAME     = "-"
-	HOSSTED_API_URL    = "-"
-	HOSSTED_AUTH_TOKEN = "-"
-	HOSSTED_AUTH_URL   = "-"
+	LOKI_PASSWORD      = "b10igI1R09MlUmz"
+	LOKI_URL           = "https://loki.hossted.com/loki/api/v1/push"
+	LOKI_USERNAME      = "loki"
+	MIMIR_PASSWORD     = "955nBgWBsqqZfYE"
+	MIMIR_URL          = "https://mimir.hossted.com/api/v1/push"
+	MIMIR_USERNAME     = "mimir"
+	HOSSTED_API_URL    = "https://api.hossted.com/v1/instances"
+	HOSSTED_AUTH_TOKEN = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
 	HOSSTED_CLIENT_ID  = "-"
+	HOSSTED_AUTH_URL   = "https://auth.hossted.com/oauth2"
 	///////////////////////////
-	HOSSTED_DEV_API_URL   = "-"
-	MIMIR_DEV_URL         = "-"
-	LOKI_DEV_URL          = "-"
-	HOSSTED_DEV_CLIENT_ID = "-"
-	HOSSTED_DEV_AUTH_URL  = "-"
+	HOSSTED_DEV_API_URL   = "https://api.dev.hossted.com/v1/instances"
+	MIMIR_DEV_URL         = "https://mimir.hossted.com/api/v1/push"
+	LOKI_DEV_URL          = "https://loki.dev.hossted.com/loki/api/v1/push"
+	HOSSTED_DEV_CLIENT_ID = "01J41H827VX5D2RJC37H5P5Q9F"
+	HOSSTED_DEV_AUTH_URL  = "https://auth.dev.hossted.com/oauth2"
 )
 
 func HttpRequest(method, url, token string, body []byte) error {
