@@ -97,7 +97,6 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 
 	// Override values in development mode
 	if develMode {
-		fmt.Printf("dev->osInfo: %+v\n", osInfo)
 
 		if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
 			osInfo.HosstedApiUrl = devUrl

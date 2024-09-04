@@ -150,7 +150,6 @@ func checkUUID(osFilePath string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("Registering cluster with UUID: ", osData.OsUUID)
 	return osData.OsUUID, nil
 }
 
@@ -246,7 +245,18 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	composeUrl := hosstedAPIUrl + "/compose/hosts"
 	containersUrl := hosstedAPIUrl + "/compose/containers"
 
-	access_info := getAccessInfo("/opt/" + osInfo.ProjectName + "/.env")
+	var access_info = &AccessInfo{}
+	path, err := getSoftwarePath()
+	if err != nil {
+		fmt.Println("Error getting software path", err)
+	}
+
+	// its a market place VM, access info object will exist
+	if path == "/opt/hossted/run/software.txt" {
+		access_info = getAccessInfo("/opt/" + osInfo.ProjectName + "/.env")
+	} else if path == "" {
+		fmt.Println("Contact hossted support to make add Access Info object")
+	}
 
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
@@ -667,4 +677,14 @@ func getAccessInfo(filepath string) *AccessInfo {
 		fmt.Println("Error reading file:", err)
 	}
 	return &config
+}
+
+func getSoftwarePath() (string, error) {
+	path := "/opt/hossted/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", nil
+	} else {
+		return path, nil
+	}
+
 }

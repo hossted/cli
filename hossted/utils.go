@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 
@@ -491,7 +492,6 @@ func GetSoftwarePath() (string, error) {
 		return path, nil
 	}
 
-	return path, nil
 }
 
 // GetUUIDPath is similar to GetSoftwarePath
