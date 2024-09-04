@@ -150,7 +150,6 @@ func checkUUID(osFilePath string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("Registering cluster with UUID: ", osData.OsUUID)
 	return osData.OsUUID, nil
 }
 
@@ -249,11 +248,14 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	var access_info = &AccessInfo{}
 	path, err := getSoftwarePath()
 	if err != nil {
-		fmt.Errorf("Error getting software path: %s", err)
+		fmt.Println("Error getting software path", err)
 	}
 
+	// its a market place VM, access info object will exist
 	if path == "/opt/hossted/run/software.txt" {
 		access_info = getAccessInfo("/opt/" + osInfo.ProjectName + "/.env")
+	} else if path == "" {
+		fmt.Println("Contact hossted support to make add Access Info object")
 	}
 
 	var data map[string]AppRequest
@@ -680,14 +682,7 @@ func getAccessInfo(filepath string) *AccessInfo {
 func getSoftwarePath() (string, error) {
 	path := "/opt/hossted/run/software.txt"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// pass
-	} else {
-		return path, nil
-	}
-	// Try another path
-	path = "/opt/linnovate/run/software.txt"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+		return "", nil
 	} else {
 		return path, nil
 	}
