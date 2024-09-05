@@ -87,6 +87,8 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
+	fmt.Println("ProjectName: ", projectName)
+
 	osInfo := OsInfo{
 		OrgID:         orgID,
 		Token:         tr.AccessToken,
