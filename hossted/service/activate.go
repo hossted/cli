@@ -197,7 +197,8 @@ func waitForDeploymentAvailability(clientset *kubernetes.Clientset, namespace, d
 	startTime := time.Now()
 
 	for {
-		time.Sleep(10 * time.Second)
+		fmt.Println("Waiting for deployments to be active....")
+		time.Sleep(15 * time.Second)
 		// Get the latest version of the deployment
 		deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 		if err != nil {
