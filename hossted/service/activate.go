@@ -114,11 +114,6 @@ func ActivateK8s(develMode bool) error {
 			return err
 		}
 
-		// config, err := readConfig()
-		// if err != nil {
-		// 	return err
-		// }
-
 		fmt.Println("Updating secret....")
 		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator"+"-secret", "AUTH_TOKEN", tr.AccessToken)
 		if err != nil {
@@ -126,6 +121,20 @@ func ActivateK8s(develMode bool) error {
 		}
 
 		fmt.Println("Updated deployment and secret")
+
+		// Check if deployment is fully available
+		deploymentName := "hossted-operator-controller-manager"
+		namespace := hosstedPlatformNamespace
+		timeout := 5 * time.Minute        // Set a timeout period
+		checkInterval := 10 * time.Second // Poll every 10 seconds
+
+		err = waitForDeploymentAvailability(clientset, namespace, deploymentName, timeout, checkInterval)
+		if err != nil {
+			fmt.Printf("Deployment not available after 5 min: %v\n", err)
+			return err
+		}
+
+		fmt.Println("Deployment is fully available. Proceeding...")
 
 		cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err := askPromptsToInstall()
 		if err != nil {
@@ -171,57 +180,6 @@ func isStandbyMode(releaseName string) (bool, error) {
 		return isStandby, err
 	}
 
-	// fmt.Println(hp)
-	// cve, _, err := unstructured.NestedMap(hp.Object, "spec", "cve")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-	// cveEnabled, _, err := unstructured.NestedBool(cve, "enable")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-
-	// logging, _, err := unstructured.NestedMap(hp.Object, "spec", "logging")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-	// loggingEnabled, _, err := unstructured.NestedBool(logging, "enable")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-
-	// monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-	// monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-	// ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
-	// if err != nil {
-	// 	return isStandby, err
-	// }
-
-	// <<<<<<< edge-standby
-	// =======
-	// 	monitoring, _, err := unstructured.NestedMap(hp.Object, "spec", "monitoring")
-	// 	if err != nil {
-	// 		return isStandby, err
-	// 	}
-	// 	monitoringEnabled, _, err := unstructured.NestedBool(monitoring, "enable")
-	// 	if err != nil {
-	// 		return isStandby, err
-	// 	}
-	// 	ingress, _, err := unstructured.NestedMap(hp.Object, "spec", "ingress")
-	// 	if err != nil {
-	// 		return isStandby, err
-	// 	}
-	// 	ingressEnabled, _, err := unstructured.NestedBool(ingress, "enable")
-	// 	if err != nil {
-	// 		return isStandby, err
-	// 	}
-	// >>>>>>> dev
 	stop, _, err := unstructured.NestedBool(hp.Object, "spec", "stop")
 	if err != nil {
 		return isStandby, err
@@ -234,56 +192,33 @@ func isStandbyMode(releaseName string) (bool, error) {
 	return isStandby, nil
 }
 
-// func getEmail() (string, error) {
-// 	config, err := readConfig()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return config.Email, nil
-// }
+// waitForDeploymentAvailability checks if the deployment is fully available
+func waitForDeploymentAvailability(clientset *kubernetes.Clientset, namespace, deploymentName string, timeout, interval time.Duration) error {
+	startTime := time.Now()
 
-// func readConfig() (response, error) {
-// 	var config response
-// 	homeDir, err := os.UserHomeDir()
-// 	if err != nil {
-// 		return config, err
-// 	}
-// 	folderPath := filepath.Join(homeDir, ".hossted")
-// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-// 	if err != nil {
-// 		return config, err
-// 	}
+	for {
+		time.Sleep(10 * time.Second)
+		// Get the latest version of the deployment
+		deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get deployment: %v", err)
+		}
 
-// 	// Parse the JSON data into Config struct
-// 	err = json.Unmarshal(fileData, &config)
-// 	if err != nil {
-// 		return config, err
-// 	}
-// 	return config, nil
-// }
+		// Check if the deployment is fully available
+		if deployment.Status.AvailableReplicas == *deployment.Spec.Replicas {
+			fmt.Println("hossted operator controller manager deployment is fully available")
+			return nil // Deployment is fully available
+		}
 
-// func getLoginResponse() (response, error) {
-// 	//read file
-// 	homeDir, err := os.UserHomeDir()
+		// Check if the timeout has been reached
+		if time.Since(startTime) > timeout {
+			return fmt.Errorf("timeout waiting for deployment to become available")
+		}
 
-// 	folderPath := filepath.Join(homeDir, ".hossted")
-// 	if err != nil {
-// 		return response{}, err
-// 	}
-
-// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-// 	if err != nil {
-// 		return response{}, fmt.Errorf("User not registered, Please run hossted login to register")
-// 	}
-
-// 	var resp response
-// 	err = json.Unmarshal(fileData, &resp)
-// 	if err != nil {
-// 		return response{}, err
-// 	}
-
-// 	return resp, nil
-// }
+		// Wait for the next check
+		time.Sleep(interval)
+	}
+}
 
 // promptK8sContext retrieves Kubernetes contexts from kubeconfig.
 func promptK8sContext() (clusterName string, err error) {
