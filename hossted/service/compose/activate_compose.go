@@ -82,10 +82,17 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
+	projectName, err := getProjectName()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("ProjectName: ", projectName)
+
 	osInfo := OsInfo{
 		OrgID:         orgID,
 		Token:         tr.AccessToken,
-		ProjectName:   GetProjectName(composeFilePath),
+		ProjectName:   projectName,
 		HosstedApiUrl: common.HOSSTED_API_URL,
 		MimirUsername: common.MIMIR_USERNAME,
 		MimirPassword: common.MIMIR_PASSWORD,
