@@ -122,7 +122,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
-	enableMonitoring, err := askPromptsToInstall()
+	enableMonitoring, err := askPromptsToInstall(develMode)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 
 }
 
-func askPromptsToInstall() (string, error) {
+func askPromptsToInstall(develMode bool) (string, error) {
 	green := color.New(color.FgGreen).SprintFunc()
 
 	monitoringEnabled := "false"
@@ -154,7 +154,7 @@ func askPromptsToInstall() (string, error) {
 	if monitoringEnable == "Yes" {
 		fmt.Println("Enabled Monitoring :", green(monitoringEnable))
 		monitoringEnabled = "true"
-		AddComposeFile()
+		AddComposeFile(develMode)
 	}
 
 	return monitoringEnabled, nil
@@ -169,10 +169,20 @@ func GetProjectName(filePath string) string {
 	return filepath.Base(cleanPath)
 }
 
-func AddComposeFile() {
+func GetMode(develMode bool) string {
+	if develMode {
+		return "dev"
+	} else {
+		return "main"
+	}
+}
+
+func AddComposeFile(develMode bool) {
+	// Set your environment to "prod" or "dev"
+	branch := GetMode(develMode)
 	files := map[string]string{
-		"https://raw.githubusercontent.com/hossted/cli/main/compose/monitoring/config.river":        "config.river",
-		"https://raw.githubusercontent.com/hossted/cli/main/compose/monitoring/docker-compose.yaml": "docker-compose.yaml",
+		fmt.Sprintf("https://raw.githubusercontent.com/hossted/cli/%s/compose/monitoring/config.river", branch):        "config.river",
+		fmt.Sprintf("https://raw.githubusercontent.com/hossted/cli/%s/compose/monitoring/docker-compose.yaml", branch): "docker-compose.yaml",
 	}
 
 	// Define the base directory where the files will be saved
