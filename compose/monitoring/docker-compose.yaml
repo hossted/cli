@@ -4,8 +4,8 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     container_name: hossted_cadvisor
-    ports:
-      - "8082:8080"
+    #ports:
+    #  - "8082:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -17,8 +17,8 @@ services:
   node_exporter:
     image: prom/node-exporter:latest
     container_name: hossted_node_exporter
-    ports:
-      - "9100:9100"
+    #ports:
+    #  - "9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
