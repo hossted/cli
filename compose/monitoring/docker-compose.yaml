@@ -3,7 +3,7 @@ version: '3.8'
 services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
-    container_name: cadvisor
+    container_name: hossted_cadvisor
     ports:
       - "8082:8080"
     volumes:
@@ -16,7 +16,7 @@ services:
 
   node_exporter:
     image: prom/node-exporter:latest
-    container_name: node_exporter
+    container_name: hossted_node_exporter
     ports:
       - "9100:9100"
     volumes:
@@ -31,7 +31,7 @@ services:
 
   grafana_agent:
     image: grafana/agent:v0.41.1
-    container_name: grafana_agent
+    container_name: hossted_grafana_agent
     entrypoint: |
       /bin/bash -c '
       AGENT_MODE=flow grafana-agent run /etc/config.river

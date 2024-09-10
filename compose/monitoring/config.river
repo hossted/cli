@@ -1,6 +1,6 @@
 prometheus.scrape "metrics_integrations_cadvisor" {
 	targets = [{
-		__address__ = "cadvisor:8080",
+		__address__ = "hossted_cadvisor:8080",
 	}]
 	forward_to      = [prometheus.remote_write.metrics_integrations.receiver]
 	job_name        = "cadvisor"
@@ -9,7 +9,7 @@ prometheus.scrape "metrics_integrations_cadvisor" {
 
 prometheus.scrape "metrics_integrations_node_exporter" {
 	targets = [{
-		__address__ = "node_exporter:9100",
+		__address__ = "hossted_node_exporter:9100",
 	}]
 	forward_to      = [prometheus.remote_write.metrics_integrations.receiver]
 	job_name        = "node_exporter"
