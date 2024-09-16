@@ -532,11 +532,6 @@ func prepareComposeRequest(
 					}
 				}
 
-				// name := container.Names[0]
-				// if strings.HasPrefix(container.Names[0], "/") {
-				// 	name = container.Names[0][1:]
-				// }
-
 				meta, err := cli.ContainerInspect(context.Background(), container.ID)
 				if err != nil {
 					return appsData, isComposeStateChange, err
