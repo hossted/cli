@@ -169,6 +169,7 @@ func writeComposeRequest2File(
 		enableMonitoring,
 		projectName,
 	)
+
 	if err != nil {
 		return isComposeStateChange, err
 	}
@@ -225,11 +226,12 @@ type dockerInstance struct {
 	Ports      interface{} `json:"ports"`
 	Status     string      `json:"status"`
 	Size       int64       `json:"size"`
-	Names      string      `json:"names"`
+	Names      []string    `json:"names"`
 	Mounts     interface{} `json:"mounts"`
 	Networks   string      `json:"networks"`
-	Tag        string      `json:"tag"`
+	Tag        interface{} `json:"tag"`
 	Image      string      `json:"image"`
+	CreatedAt  string      `json:"created_at"`
 }
 
 func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
@@ -252,31 +254,6 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 
 	access_info := getAccessInfo("/opt/" + projectName + "/.env")
 
-	// its a market place VM, access info object will exist
-	// if path == "/opt/hossted/run/software.txt" {
-	// 	// read the file in this path
-	// 	// file will have this convention - Linnovate-AWS-keycloak
-	// 	// capture the last word ie keycloak in this case.
-	// 	// and use this last work ie instead of osInfo.ProjectName
-	// 	data, err := os.ReadFile(path)
-	// 	if err != nil {
-	// 		fmt.Println("Error reading file:", err)
-	// 		return err
-	// 	}
-
-	// 	// The file will have the convention Linnovate-AWS-keycloak
-	// 	// Capture the last word (i.e., keycloak in this case)
-	// 	softwareName := strings.TrimSpace(string(data))
-	// 	words := strings.Split(softwareName, "-")
-	// 	if len(words) > 0 {
-	// 		projectName := words[len(words)-1]
-	// 		// Use this last word (i.e., keycloak) instead of osInfo.ProjectName
-	// 		access_info = getAccessInfo("/opt/" + projectName + "/.env")
-	// 	}
-	// } else if path == "" {
-	// 	fmt.Println("Contact Hossted support to add Access Info object")
-	// }
-
 	var data map[string]AppRequest
 	err = json.Unmarshal(composeInfo, &data)
 	if err != nil {
@@ -291,6 +268,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	if err != nil {
 		return err
 	}
+
 	for appName, compose := range data {
 		newReq := request{
 			UUID:       compose.AppAPIInfo.AppUUID,
@@ -325,6 +303,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 
 	for appName, info := range data {
 		for _, ci := range info.AppInfo.DockerInstance {
+
 			newDI := dockerInstance{
 				DockerID:   ci.DockerID,
 				InstanceID: info.AppAPIInfo.AppUUID,
@@ -336,11 +315,15 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 				Networks:   ci.Networks,
 				Image:      ci.Image,
 				Mounts:     ci.Mounts,
+				Tag:        ci.Tag,
+				CreatedAt:  ci.CreatedAt,
 			}
 			newDIBody, err := json.Marshal(newDI)
 			if err != nil {
 				return err
 			}
+
+			fmt.Println(string(newDIBody))
 			err = common.HttpRequest("POST", containersUrl, token, newDIBody)
 			if err != nil {
 				return err
@@ -359,8 +342,6 @@ func listAllContainers(projectName string) ([]types.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Define context
-	ctx := context.Background()
 
 	// Define filters to list only running containers
 	filter := filters.NewArgs()
@@ -371,7 +352,7 @@ func listAllContainers(projectName string) ([]types.Container, error) {
 	filter.Add("label", "com.docker.compose.project")
 	filter.Add("label", "com.docker.compose.config-hash")
 
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true, Filters: filter})
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Filters: filter})
 
 	if err != nil {
 		return nil, err
@@ -450,6 +431,11 @@ func prepareComposeRequest(
 		existingApps[app] = true
 	}
 
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return appsData, isComposeStateChange, err
+	}
+
 	for project := range uniqueProjects {
 		var composeFileContent string
 		list, err := listProjectContainers(project)
@@ -477,21 +463,30 @@ func prepareComposeRequest(
 					}
 				}
 
-				name := container.Names[0]
-				if strings.HasPrefix(container.Names[0], "/") {
-					name = container.Names[0][1:]
+				meta, err := cli.ContainerInspect(context.Background(), container.ID)
+				if err != nil {
+					return appsData, isComposeStateChange, err
 				}
+
+				imagemeta, _, err := cli.ImageInspectWithRaw(context.Background(), container.ImageID)
+				if err != nil {
+					return appsData, isComposeStateChange, err
+				}
+
 				containerInfo := dockerInstance{
-					Names:    name,
-					Status:   container.State,
-					Image:    container.Image,
-					ImageID:  container.ImageID,
-					Ports:    container.Ports,
-					Size:     container.SizeRw,
-					Networks: container.HostConfig.NetworkMode,
-					DockerID: container.ID,
-					Mounts:   container.Mounts,
+					Names:     container.Names,
+					Status:    container.State,
+					Image:     container.Image,
+					ImageID:   container.ImageID,
+					Ports:     container.Ports,
+					Size:      imagemeta.Size,
+					Networks:  container.HostConfig.NetworkMode,
+					DockerID:  container.ID,
+					Mounts:    container.Mounts,
+					Tag:       container.Labels,
+					CreatedAt: meta.Created,
 				}
+
 				dockerInstances = append(dockerInstances, containerInfo)
 			}
 
@@ -537,20 +532,28 @@ func prepareComposeRequest(
 					}
 				}
 
-				name := container.Names[0]
-				if strings.HasPrefix(container.Names[0], "/") {
-					name = container.Names[0][1:]
+				meta, err := cli.ContainerInspect(context.Background(), container.ID)
+				if err != nil {
+					return appsData, isComposeStateChange, err
 				}
+
+				imagemeta, _, err := cli.ImageInspectWithRaw(context.Background(), container.ImageID)
+				if err != nil {
+					return appsData, isComposeStateChange, err
+				}
+
 				dockerInfo := dockerInstance{
-					Names:    name,
-					Status:   container.State,
-					Image:    container.Image,
-					ImageID:  container.ImageID,
-					Ports:    container.Ports,
-					Size:     container.SizeRw,
-					Networks: container.HostConfig.NetworkMode,
-					DockerID: container.ID,
-					Mounts:   container.Mounts,
+					Names:     container.Names,
+					Status:    container.State,
+					Image:     container.Image,
+					ImageID:   container.ImageID,
+					Ports:     container.Ports,
+					Size:      imagemeta.Size,
+					Networks:  container.HostConfig.NetworkMode,
+					DockerID:  container.ID,
+					Mounts:    container.Mounts,
+					Tag:       container.Labels,
+					CreatedAt: meta.Created,
 				}
 				dockerInstances = append(dockerInstances, dockerInfo)
 			}
