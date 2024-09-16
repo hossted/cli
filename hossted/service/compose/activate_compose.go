@@ -116,7 +116,19 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		}
 	}
 
-	osData, err := setClusterInfo(osInfo, osFilePath)
+	osUUID, err := setClusterInfo(osFilePath)
+	if err != nil {
+		return err
+	}
+
+	osInfo.OsUUID = osUUID
+
+	yamlData, err := yaml.Marshal(osInfo)
+	if err != nil {
+		return fmt.Errorf("error in YAML marshaling: %s\n", err)
+	}
+
+	err = writeFile(osFilePath, yamlData)
 	if err != nil {
 		return err
 	}
@@ -126,7 +138,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
-	err = ReconcileCompose(osData, enableMonitoring)
+	err = ReconcileCompose(osInfo, enableMonitoring)
 	if err != nil {
 		return err
 	}
