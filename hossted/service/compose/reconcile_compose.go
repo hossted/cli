@@ -109,31 +109,20 @@ func writeFile(filePath string, data []byte) error {
 
 }
 
-func setClusterInfo(osInfo OsInfo, osFilePath string) (OsInfo, error) {
-	info := osInfo
+func setClusterInfo(osFilePath string) (string, error) {
+
 	osUUID, err := checkUUID(osFilePath)
 	if err != nil {
-		return info, err
+		return "", err
 	}
 
 	if osUUID == "" {
 		osUUID := "D-" + uuid.NewString()
 		fmt.Println("Generating UUID for cluster: ", osUUID)
-		info.OsUUID = osUUID
+		return osUUID, nil
 	}
 
-	yamlData, err := yaml.Marshal(info)
-	if err != nil {
-		fmt.Printf("error in YAML marshaling: %s\n", err)
-		return info, err
-	}
-
-	err = writeFile(osFilePath, yamlData)
-	if err != nil {
-		return info, err
-	}
-
-	return info, nil
+	return osUUID, nil
 }
 
 func checkUUID(osFilePath string) (string, error) {
@@ -323,7 +312,6 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 				return err
 			}
 
-			fmt.Println(string(newDIBody))
 			err = common.HttpRequest("POST", containersUrl, token, newDIBody)
 			if err != nil {
 				return err
@@ -609,6 +597,8 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 
 		// Replace the UUID placeholder with the actual UUID
 		configStr := string(configData)
+
+		fmt.Println(osUUID, appUUID)
 		configStr = strings.Replace(configStr, "${UUID}", fmt.Sprintf("\"%s\"", osUUID), -1)
 		configStr = strings.Replace(configStr, "${APP_UUID}", fmt.Sprintf("\"%s\"", appUUID), -1)
 
