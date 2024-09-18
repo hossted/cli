@@ -56,28 +56,6 @@ const (
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s(develMode bool) error {
 
-	// emailsID, err := getEmail()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// getResponse from reading file in .hossted/config.json
-	// resp, err := getLoginResponse()
-	// if err != nil {
-	// 	return err
-	// }
-	// validate auth token
-
-	// err = validateToken(resp)
-	// if err != nil {
-	// 	return err
-	// }
-	// handle usecases for orgID selection
-	// orgID, err := useCases(resp)
-	// if err != nil {
-	// 	return err
-	// }
-
 	// prompt user for k8s context
 	clusterName, err := promptK8sContext()
 	if err != nil {
@@ -103,8 +81,6 @@ func ActivateK8s(develMode bool) error {
 		return err
 	}
 
-	fmt.Println(orgID)
-
 	if isStandby {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
@@ -113,11 +89,6 @@ func ActivateK8s(develMode bool) error {
 		if err != nil {
 			return err
 		}
-
-		// config, err := readConfig()
-		// if err != nil {
-		// 	return err
-		// }
 
 		fmt.Println("Updating secret....")
 		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator"+"-secret", "AUTH_TOKEN", tr.AccessToken)
@@ -233,57 +204,6 @@ func isStandbyMode(releaseName string) (bool, error) {
 
 	return isStandby, nil
 }
-
-// func getEmail() (string, error) {
-// 	config, err := readConfig()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return config.Email, nil
-// }
-
-// func readConfig() (response, error) {
-// 	var config response
-// 	homeDir, err := os.UserHomeDir()
-// 	if err != nil {
-// 		return config, err
-// 	}
-// 	folderPath := filepath.Join(homeDir, ".hossted")
-// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-// 	if err != nil {
-// 		return config, err
-// 	}
-
-// 	// Parse the JSON data into Config struct
-// 	err = json.Unmarshal(fileData, &config)
-// 	if err != nil {
-// 		return config, err
-// 	}
-// 	return config, nil
-// }
-
-// func getLoginResponse() (response, error) {
-// 	//read file
-// 	homeDir, err := os.UserHomeDir()
-
-// 	folderPath := filepath.Join(homeDir, ".hossted")
-// 	if err != nil {
-// 		return response{}, err
-// 	}
-
-// 	fileData, err := os.ReadFile(folderPath + "/" + "config.json")
-// 	if err != nil {
-// 		return response{}, fmt.Errorf("User not registered, Please run hossted login to register")
-// 	}
-
-// 	var resp response
-// 	err = json.Unmarshal(fileData, &resp)
-// 	if err != nil {
-// 		return response{}, err
-// 	}
-
-// 	return resp, nil
-// }
 
 // promptK8sContext retrieves Kubernetes contexts from kubeconfig.
 func promptK8sContext() (clusterName string, err error) {
