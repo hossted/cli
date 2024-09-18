@@ -240,6 +240,8 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 		fmt.Printf("OrgName: %s\n", orgName)
 		return orgs[0].ID, nil
 	}
+
+	return "", nil
 }
 
 func removePrefix(text string) (string, error) {
