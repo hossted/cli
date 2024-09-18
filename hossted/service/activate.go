@@ -56,28 +56,6 @@ const (
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s(develMode bool) error {
 
-	// emailsID, err := getEmail()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// getResponse from reading file in .hossted/config.json
-	// resp, err := getLoginResponse()
-	// if err != nil {
-	// 	return err
-	// }
-	// validate auth token
-
-	// err = validateToken(resp)
-	// if err != nil {
-	// 	return err
-	// }
-	// handle usecases for orgID selection
-	// orgID, err := useCases(resp)
-	// if err != nil {
-	// 	return err
-	// }
-
 	// prompt user for k8s context
 	clusterName, err := promptK8sContext()
 	if err != nil {
@@ -102,8 +80,6 @@ func ActivateK8s(develMode bool) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(orgID)
 
 	if isStandby {
 		fmt.Println("Standby mode detected")
