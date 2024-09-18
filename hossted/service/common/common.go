@@ -232,7 +232,14 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 
 	}
 
-	return "", nil
+	if orgs != nil && len(orgs) == 1 {
+		orgName, err := base64.StdEncoding.DecodeString(orgs[0].Name)
+		if err != nil {
+			return "", err
+		}
+		fmt.Printf("OrgName: %s\n", orgName)
+		return orgs[0].ID, nil
+	}
 }
 
 func removePrefix(text string) (string, error) {
