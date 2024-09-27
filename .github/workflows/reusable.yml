@@ -46,9 +46,11 @@ jobs:
         if [ "${{ inputs.is-production }}" == "true" ]; then
           make -f Makefile linux && cp bin/linux/hossted-linux-amd64 bin/linux/hossted-${{ inputs.version }}-linux-amd64
           make -f Makefile osx && cp bin/osx/hossted-darwin-amd64 bin/osx/hossted-${{ inputs.version }}-darwin-amd64
+          make -f Makefile windows && cp bin/windows/hossted.exe bin/windows/hossted-${{ inputs.version }}.exe
         else
           make -f Makefile linux-dev
           make -f Makefile osx-dev
+          make -f Makefile windows-dev
         fi
     
     - name: Test Version of binary file
@@ -75,6 +77,14 @@ jobs:
         name: hossted-${{ inputs.version }}-darwin-amd64
         path: ./bin/osx/hossted-${{ inputs.version }}-darwin-amd64
         if-no-files-found: error
+
+    - name: Upload Windowsx binary
+      if: ${{ inputs.is-production }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted-${{ inputs.version }}.exe
+        path: ./bin/windows/hossted-${{ inputs.version }}.exe
+        if-no-files-found: error
     
     - name: Upload Linux DEV binary
       if: ${{ !inputs.is-production }}
@@ -90,6 +100,14 @@ jobs:
       with:
         name: hossted-dev-darwin-amd64
         path: ./bin/dev/hossted-dev-darwin-amd64
+        if-no-files-found: error
+
+    - name: Upload Windowsx DEV binary
+      if: ${{ !inputs.is-production }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: hossted-dev.exe
+        path: ./bin/dev/hossted-dev.exe
         if-no-files-found: error
     
     - name: Create GitHub Release

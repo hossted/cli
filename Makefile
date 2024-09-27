@@ -58,5 +58,8 @@ linux-dev: main.go
 osx-dev: main.go
 	GOOS=darwin GOARCH=amd64 go build -o bin/dev/hossted-dev-darwin-amd64 -v -ldflags=${DEVFLAGS}
 
+windows-dev: main.go
+	GOOS=windows GOARCH=386 go build -o bin/windows/hossted-dev.exe -v -ldflags=${DEVFLAGS}
+
 test: main.go
 	go test -v ./... -short
