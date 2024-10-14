@@ -53,6 +53,17 @@ const (
 	releaseName                = "hossted-operator-cr"
 )
 
+var AUTH_TOKEN = common.HOSSTED_AUTH_TOKEN
+
+const (
+	init_operator       = "_HSTD_INIT_OPERATOR"
+	init_cve            = "_HSTD_INIT_CVE"
+	init_monitoring     = "_HSTD_INIT_MONITORING"
+	deployed_operator   = "_HSTD_DEPLOYED_OPERATOR"
+	deployed_cve        = "_HSTD_DEPLOYED_CVE"
+	deployed_monitoring = "_HSTD_DEPLOYED_MONITORING"
+)
+
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s(develMode bool) error {
 
@@ -137,6 +148,11 @@ func ActivateK8s(develMode bool) error {
 
 		fmt.Println("Patch'hossted-operator-cr' CR completed")
 		return nil
+	}
+
+	err = SendEvent(init_operator, "initalising operator", AUTH_TOKEN, orgID)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	err = deployOperator(clusterName, "", orgID, tr.AccessToken, develMode)
@@ -516,6 +532,10 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
+			err = SendEvent(init_cve, "initalising cve", AUTH_TOKEN, orgID)
+			if err != nil {
+				fmt.Println(err)
+			}
 			installCve()
 		}
 
@@ -580,7 +600,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
 
 		//------------------------------ Add Events ----------------------------------
-		err = addEvents(common.HOSSTED_AUTH_TOKEN)
+		err = addEvents(AUTH_TOKEN, orgID)
 		if err != nil {
 			return err
 		}
@@ -777,28 +797,28 @@ func debug(format string, v ...interface{}) {
 	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
-func addEvents(token string) error {
+func addEvents(token, orgID string) error {
 
-	if err := eventOperator(token); err != nil {
+	if err := eventOperator(token, orgID); err != nil {
 		return err
 	}
-	if err := eventCVE(token); err != nil {
+	if err := eventCVE(token, orgID); err != nil {
 		return err
 	}
-	if err := eventMonitoring(token); err != nil {
+	if err := eventMonitoring(token, orgID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func eventMonitoring(token string) error {
+func eventMonitoring(token, orgID string) error {
 	retries := 60
 	for i := 0; i < retries; i++ {
 		err := checkMonitoringStatus()
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent("success", "Hossted Platform Monitoring started successfully", token)
+			err := SendEvent(deployed_monitoring, "Hossted Platform Monitoring started successfully", token, orgID)
 			if err != nil {
 				return err
 			}
@@ -831,7 +851,7 @@ func checkMonitoringStatus() error {
 	return fmt.Errorf("Grafana Agent release not found")
 }
 
-func eventCVE(token string) error {
+func eventCVE(token, orgID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -849,7 +869,7 @@ func eventCVE(token string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent("success", "Hossted Platform CVE Scan started successfully", token)
+					err := SendEvent(deployed_cve, "Hossted Platform CVE Scan started successfully", token, orgID)
 					if err != nil {
 						return err
 					}
@@ -862,7 +882,7 @@ func eventCVE(token string) error {
 	}
 }
 
-func eventOperator(token string) error {
+func eventOperator(token, orgID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -880,7 +900,7 @@ func eventOperator(token string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent("success", "Hossted Platform operator installed successfully", token)
+					err := SendEvent(deployed_operator, "Hossted Platform operator installed successfully", token, orgID)
 					if err != nil {
 						return err
 					}
@@ -943,25 +963,27 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func SendEvent(eventType, message, token string) error {
+func SendEvent(eventType, message, token, orgID string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
 		WareType string `json:"ware_type"`
 		Type     string `json:"type"`
 		UUID     string `json:"uuid"`
+		OrgID    string `json:"org_id"`
 		Message  string `json:"message"`
 	}
 
 	clusterUUID, err := getClusterUUID()
 	if err != nil {
-		return err
+		//return err
 	}
 
 	newEvent := event{
 		WareType: "k8s",
 		Type:     eventType,
 		UUID:     clusterUUID,
+		OrgID:    orgID,
 		Message:  message,
 	}
 
@@ -1026,57 +1048,3 @@ func getClusterUUIDFromK8s() (string, error) {
 	}
 	return clusterUUID, nil
 }
-
-// func validateToken(res response) error {
-
-// 	type validationResp struct {
-// 		Success bool   `json:"success"`
-// 		Message string `json:"message"`
-// 	}
-
-// 	authToken := common.HOSSTED_AUTH_TOKEN
-// 	url := common.HOSSTED_API_URL + "/cli/bearer"
-
-// 	payloadStr := fmt.Sprintf(`{"email": "%s", "token": "%s"}`, res.Email, res.Token)
-// 	// Create HTTP request
-// 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payloadStr)))
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Set headers
-// 	req.Header.Set("Content-Type", "application/json")
-
-// 	// Add Authorization header with Basic authentication
-// 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(authToken)))
-
-// 	// Perform the request
-// 	client := http.Client{}
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	defer resp.Body.Close()
-
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// check for non 200 status
-// 	if resp.StatusCode != 200 {
-// 		return fmt.Errorf("Token Validation Failed, Error %s", string(body))
-// 	}
-
-// 	var tresp validationResp
-// 	err = json.Unmarshal(body, &tresp)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !tresp.Success {
-// 		return fmt.Errorf("Auth token is invalid, Please login again")
-// 	}
-
-// 	return nil
-
-// }
