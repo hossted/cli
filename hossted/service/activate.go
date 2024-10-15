@@ -139,6 +139,10 @@ func ActivateK8s(develMode bool) error {
 			if err != nil {
 				return err
 			}
+			err := SendEvent(init_monitoring, "initalised monitoring", AUTH_TOKEN, orgID)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = patchStopCR(releaseName)
