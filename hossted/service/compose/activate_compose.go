@@ -62,7 +62,7 @@ type ContainerInfo struct {
 
 func ActivateCompose(composeFilePath string, develMode bool) error {
 
-	osFilePath, err := getComposeFilePath("compose.yaml")
+	osFilePath, err := getHosstedComposeFilePath("compose.yaml")
 	if err != nil {
 		return err
 	}
