@@ -141,7 +141,7 @@ func ActivateK8s(develMode bool) error {
 			if err != nil {
 				return err
 			}
-			err := SendEvent(init_monitoring, "initalised monitoring", AUTH_TOKEN, orgID, "")
+			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "")
 			if err != nil {
 				return err
 			}
@@ -156,7 +156,7 @@ func ActivateK8s(develMode bool) error {
 		return nil
 	}
 
-	err = SendEvent(init_operator, "initalising operator", AUTH_TOKEN, orgID, "")
+	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -538,7 +538,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-			err = SendEvent(init_cve, "initalising cve", AUTH_TOKEN, orgID, "")
+			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "")
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -829,7 +829,7 @@ func eventMonitoring(token, orgID, clusterUUID string) error {
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent(deployed_monitoring, "Hossted Platform Monitoring started successfully", token, orgID, clusterUUID)
+			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID)
 			if err != nil {
 				return err
 			}
@@ -880,7 +880,7 @@ func eventCVE(token, orgID, clusterUUID string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent(deployed_cve, "Hossted Platform CVE Scan started successfully", token, orgID, clusterUUID)
+					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID)
 					if err != nil {
 						return err
 					}
@@ -911,7 +911,7 @@ func eventOperator(token, orgID, clusterUUID string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent(deployed_operator, "Hossted Platform operator installed successfully", token, orgID, clusterUUID)
+					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID)
 					if err != nil {
 						return err
 					}
