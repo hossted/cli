@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -139,6 +141,10 @@ func ActivateK8s(develMode bool) error {
 			if err != nil {
 				return err
 			}
+			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "")
+			if err != nil {
+				return err
+			}
 		}
 
 		err = patchStopCR(releaseName)
@@ -150,7 +156,7 @@ func ActivateK8s(develMode bool) error {
 		return nil
 	}
 
-	err = SendEvent(init_operator, "initalising operator", AUTH_TOKEN, orgID)
+	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -532,7 +538,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-			err = SendEvent(init_cve, "initalising cve", AUTH_TOKEN, orgID)
+			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "")
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -600,7 +606,12 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
 
 		//------------------------------ Add Events ----------------------------------
-		err = addEvents(AUTH_TOKEN, orgID)
+		clusterUUID, err := getClusterUUIDPolling()
+		if err != nil {
+			return err
+		}
+
+		err = addEvents(AUTH_TOKEN, orgID, clusterUUID)
 		if err != nil {
 			return err
 		}
@@ -797,28 +808,28 @@ func debug(format string, v ...interface{}) {
 	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
-func addEvents(token, orgID string) error {
+func addEvents(token, orgID, clusterUUID string) error {
 
-	if err := eventOperator(token, orgID); err != nil {
+	if err := eventOperator(token, orgID, clusterUUID); err != nil {
 		return err
 	}
-	if err := eventCVE(token, orgID); err != nil {
+	if err := eventCVE(token, orgID, clusterUUID); err != nil {
 		return err
 	}
-	if err := eventMonitoring(token, orgID); err != nil {
+	if err := eventMonitoring(token, orgID, clusterUUID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func eventMonitoring(token, orgID string) error {
+func eventMonitoring(token, orgID, clusterUUID string) error {
 	retries := 60
 	for i := 0; i < retries; i++ {
 		err := checkMonitoringStatus()
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent(deployed_monitoring, "Hossted Platform Monitoring started successfully", token, orgID)
+			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID)
 			if err != nil {
 				return err
 			}
@@ -851,7 +862,7 @@ func checkMonitoringStatus() error {
 	return fmt.Errorf("Grafana Agent release not found")
 }
 
-func eventCVE(token, orgID string) error {
+func eventCVE(token, orgID, clusterUUID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -869,7 +880,7 @@ func eventCVE(token, orgID string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent(deployed_cve, "Hossted Platform CVE Scan started successfully", token, orgID)
+					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID)
 					if err != nil {
 						return err
 					}
@@ -882,7 +893,7 @@ func eventCVE(token, orgID string) error {
 	}
 }
 
-func eventOperator(token, orgID string) error {
+func eventOperator(token, orgID, clusterUUID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -900,7 +911,7 @@ func eventOperator(token, orgID string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent(deployed_operator, "Hossted Platform operator installed successfully", token, orgID)
+					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID)
 					if err != nil {
 						return err
 					}
@@ -963,20 +974,15 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func SendEvent(eventType, message, token, orgID string) error {
+func SendEvent(eventType, message, token, orgID, clusterUUID string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
 		WareType string `json:"ware_type"`
 		Type     string `json:"type"`
-		UUID     string `json:"uuid"`
+		UUID     string `json:"uuid,omitempty"`
 		OrgID    string `json:"org_id"`
 		Message  string `json:"message"`
-	}
-
-	clusterUUID, err := getClusterUUID()
-	if err != nil {
-		//return err
 	}
 
 	newEvent := event{
@@ -986,11 +992,11 @@ func SendEvent(eventType, message, token, orgID string) error {
 		OrgID:    orgID,
 		Message:  message,
 	}
-
-	eventByte, err := json.Marshal(newEvent)
+	eventByte, err := json.MarshalIndent(newEvent, "", "  ")
 	if err != nil {
 		return err
 	}
+
 	// Create HTTP request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(eventByte)))
 	if err != nil {
@@ -1015,15 +1021,17 @@ func SendEvent(eventType, message, token, orgID string) error {
 		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
 	}
 
+	fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
+
 	return nil
 }
 
-func getClusterUUID() (string, error) {
+func getClusterUUIDPolling() (string, error) {
 	var clusterUUID string
 	var err error
 	yellow := color.New(color.FgYellow).SprintFunc()
 
-	// Retry for 120 seconds
+	//Retry for 120 seconds
 	for i := 0; i < 120; i++ {
 		clusterUUID, err = getClusterUUIDFromK8s()
 		if err == nil {
@@ -1047,4 +1055,16 @@ func getClusterUUIDFromK8s() (string, error) {
 		return "", fmt.Errorf("ClusterUUID is nil, func errored")
 	}
 	return clusterUUID, nil
+}
+
+// hack for now
+func generateRandom4DigitString() string {
+	// Seed the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	// Generate a random 4-digit number between 1000 and 9999
+	randomNumber := rand.Intn(9000) + 1000
+
+	// Convert the number to a string and return it
+	return strconv.Itoa(randomNumber)
 }
