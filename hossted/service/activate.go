@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -587,7 +585,8 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 				",env.MIMIR_USERNAME=" + common.MIMIR_USERNAME +
 				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
 				",env.HOSSTED_API_URL=" + hosstedApiUrl +
-				",env.CONTEXT_NAME=" + clusterName,
+				",env.CONTEXT_NAME=" + clusterName +
+				",env.HOSSTED_TOKEN=" + common.HOSSTED_AUTH_TOKEN,
 		}
 
 		fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform Operator:"), hosstedPlatformNamespace)
@@ -843,8 +842,8 @@ func eventMonitoring(token, orgID, clusterUUID string) error {
 	}
 
 	red := color.New(color.FgRed).SprintFunc()
-	fmt.Printf("%s Timeout reached. Hossted Platform Monitoring installation failed.\n", red("Error:"))
-	return fmt.Errorf("Hossted Platform Monitoring installation failed after %d retries", retries)
+	fmt.Printf("%s timeout reached. Hossted Platform Monitoring installation failed.\n", red("Error:"))
+	return fmt.Errorf("hossted Platform Monitoring installation failed after %d retries", retries)
 }
 
 func checkMonitoringStatus() error {
@@ -859,7 +858,7 @@ func checkMonitoringStatus() error {
 		}
 	}
 
-	return fmt.Errorf("Grafana Agent release not found")
+	return fmt.Errorf("grafana Agent release not found")
 }
 
 func eventCVE(token, orgID, clusterUUID string) error {
@@ -1018,7 +1017,7 @@ func SendEvent(eventType, message, token, orgID, clusterUUID string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
+		return fmt.Errorf("error sending event, errcode: %d", resp.StatusCode)
 	}
 
 	fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
@@ -1041,7 +1040,7 @@ func getClusterUUIDPolling() (string, error) {
 		time.Sleep(4 * time.Second) // Wait for 1 second before retrying
 	}
 
-	return "", fmt.Errorf("Failed to get ClusterUUID after 120 seconds: %v", err)
+	return "", fmt.Errorf("failed to get ClusterUUID after 120 seconds: %v", err)
 }
 
 func getClusterUUIDFromK8s() (string, error) {
@@ -1055,16 +1054,4 @@ func getClusterUUIDFromK8s() (string, error) {
 		return "", fmt.Errorf("ClusterUUID is nil, func errored")
 	}
 	return clusterUUID, nil
-}
-
-// hack for now
-func generateRandom4DigitString() string {
-	// Seed the random number generator
-	rand.Seed(time.Now().UnixNano())
-
-	// Generate a random 4-digit number between 1000 and 9999
-	randomNumber := rand.Intn(9000) + 1000
-
-	// Convert the number to a string and return it
-	return strconv.Itoa(randomNumber)
 }
