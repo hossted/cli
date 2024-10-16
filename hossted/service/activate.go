@@ -985,10 +985,6 @@ func SendEvent(eventType, message, token, orgID, clusterUUID string) error {
 		Message  string `json:"message"`
 	}
 
-	if clusterUUID == "" {
-		clusterUUID = generateRandom4DigitString()
-	}
-
 	newEvent := event{
 		WareType: "k8s",
 		Type:     eventType,
