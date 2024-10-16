@@ -53,7 +53,7 @@ func Login(develMode bool) error {
 		time.Sleep(interval)
 		err := pollAccessToken(develMode, loginResp)
 		if err != nil {
-			log.Printf("Error polling access token: %v\n", err)
+			log.Println("Please visit the above verfication url to complete sign in")
 		} else {
 			log.Println("Access token polled successfully.")
 			break // Exit the loop if polling is successful

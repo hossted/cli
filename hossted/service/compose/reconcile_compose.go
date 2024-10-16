@@ -26,7 +26,7 @@ import (
 
 func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 
-	appFilePath, err := getComposeFilePath("compose-request.json")
+	appFilePath, err := getHosstedComposeFilePath("compose-request.json")
 	if err != nil {
 		return err
 	}
@@ -46,10 +46,7 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 	if err != nil {
 		return err
 	}
-	err = sendComposeInfo(appFilePath, osInfo)
-	if err != nil {
-		return err
-	}
+
 	if isComposeStateChange {
 		// send compose info
 		err = sendComposeInfo(appFilePath, osInfo)
@@ -61,7 +58,7 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 
 }
 
-func getComposeFilePath(filename string) (string, error) {
+func getHosstedComposeFilePath(filename string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("Error getting home directory: %s\n", err)
@@ -218,7 +215,7 @@ type dockerInstance struct {
 	Names      []string    `json:"names"`
 	Mounts     interface{} `json:"mounts"`
 	Networks   string      `json:"networks"`
-	Tag        interface{} `json:"tag"`
+	Tag        string      `json:"tag"`
 	Image      string      `json:"image"`
 	CreatedAt  string      `json:"created_at"`
 }
@@ -227,7 +224,6 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	hosstedAPIUrl := osInfo.HosstedApiUrl
 	orgID := osInfo.OrgID
 	token := osInfo.Token
-
 	composeInfo, err := readFile(appFilePath)
 	if err != nil {
 		return err
@@ -441,11 +437,10 @@ func prepareComposeRequest(
 				if i == 0 {
 					// Extract compose file content
 					if _, ok := container.Labels["com.docker.compose.project.config_files"]; ok {
-						composeFiles := container.Labels["com.docker.compose.project.config_files"]
-						composeFilePath := strings.Split(composeFiles, ",")[0]
-						data, err := readFile(composeFilePath)
+						composeDir := container.Labels["com.docker.compose.project.working_dir"]
+						data, err := readFile(composeDir + "/docker-compose.yml")
 						if err != nil {
-							fmt.Printf("Error in reading compose file %s: %s\n", composeFilePath, err)
+							fmt.Printf("Error in reading compose here file %s: %s\n", composeDir, err)
 						}
 						composeFileContent = string(data)
 					}
@@ -471,7 +466,7 @@ func prepareComposeRequest(
 					Networks:  container.HostConfig.NetworkMode,
 					DockerID:  container.ID,
 					Mounts:    container.Mounts,
-					Tag:       container.Labels,
+					Tag:       container.Image,
 					CreatedAt: meta.Created,
 				}
 
@@ -510,11 +505,10 @@ func prepareComposeRequest(
 				if i == 0 {
 					// Extract compose file content
 					if _, ok := container.Labels["com.docker.compose.project.config_files"]; ok {
-						composeFiles := container.Labels["com.docker.compose.project.config_files"]
-						composeFilePath := strings.Split(composeFiles, ",")[0]
-						data, err := readFile(composeFilePath)
+						composeDir := container.Labels["com.docker.compose.project.working_dir"]
+						data, err := readFile(composeDir + "/docker-compose.yml")
 						if err != nil {
-							fmt.Printf("Error in reading compose file %s: %s\n", composeFilePath, err)
+							fmt.Printf("Error in reading compose file %s: %s\n", composeDir, err)
 						}
 						composeFileContent = string(data)
 					}
@@ -540,7 +534,7 @@ func prepareComposeRequest(
 					Networks:  container.HostConfig.NetworkMode,
 					DockerID:  container.ID,
 					Mounts:    container.Mounts,
-					Tag:       container.Labels,
+					Tag:       container.Image,
 					CreatedAt: meta.Created,
 				}
 				dockerInstances = append(dockerInstances, dockerInfo)
