@@ -14,9 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/hossted/cli/hossted/service"
-	"github.com/hossted/cli/hossted/service/common"
 )
 
 // SetDomain set the domain for different apps
@@ -78,10 +75,10 @@ func SetDomain(env, app, domain string) error {
 		}
 		fmt.Printf("domain %s set for %s ingress\n", updatedIngress.Spec.Rules[0].Host, app)
 
-		err = service.SendEvent("success", "Hossted Platform Domain set successfully", common.HOSSTED_AUTH_TOKEN)
-		if err != nil {
-			return err
-		}
+		// err = service.SendEvent("success", "Hossted Platform Domain set successfully", common.HOSSTED_AUTH_TOKEN)
+		// if err != nil {
+		// 	return err
+		// }
 		fmt.Println("Hossted Platform Domain set successfully")
 
 	} else {
