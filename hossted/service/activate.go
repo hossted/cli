@@ -56,12 +56,13 @@ const (
 var AUTH_TOKEN = common.HOSSTED_AUTH_TOKEN
 
 const (
-	init_operator       = "_HSTD_INIT_OPERATOR"
-	init_cve            = "_HSTD_INIT_CVE"
-	init_monitoring     = "_HSTD_INIT_MONITORING"
-	deployed_operator   = "_HSTD_DEPLOYED_OPERATOR"
-	deployed_cve        = "_HSTD_DEPLOYED_CVE"
-	deployed_monitoring = "_HSTD_DEPLOYED_MONITORING"
+	init_activation_started = "_HSTD_ACTIVATION_STARTED"
+	init_operator           = "_HSTD_INIT_OPERATOR"
+	init_cve                = "_HSTD_INIT_CVE"
+	init_monitoring         = "_HSTD_INIT_MONITORING"
+	deployed_operator       = "_HSTD_DEPLOYED_OPERATOR"
+	deployed_cve            = "_HSTD_DEPLOYED_CVE"
+	deployed_monitoring     = "_HSTD_DEPLOYED_MONITORING"
 )
 
 // ActivateK8s imports Kubernetes clusters.
@@ -90,6 +91,11 @@ func ActivateK8s(develMode bool) error {
 	orgID, err := common.OrgUseCases(orgs)
 	if err != nil {
 		return err
+	}
+
+	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "")
+	if err != nil {
+		log.Println(err)
 	}
 
 	if isStandby {
@@ -586,7 +592,8 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 				",env.MIMIR_PASSWORD=" + common.MIMIR_PASSWORD +
 				",env.HOSSTED_API_URL=" + hosstedApiUrl +
 				",env.CONTEXT_NAME=" + clusterName +
-				",env.HOSSTED_TOKEN=" + common.HOSSTED_AUTH_TOKEN,
+				",env.HOSSTED_TOKEN=" + common.HOSSTED_AUTH_TOKEN +
+				",serviceAccount.create=" + "true",
 		}
 
 		fmt.Printf("%s Deploying in namespace %s\n", yellow("Hossted Platform Operator:"), hosstedPlatformNamespace)
