@@ -42,7 +42,7 @@ DEVFLAGS="-X '${PACKAGE}/cmd.VERSION=dev' \
          -X '${SERVICE_COMMON_PACKAGE}.MIMIR_DEV_URL=${MIMIR_DEV_URL}'"
 
 linux: main.go
-	GOOS=linux GOARCH=amd64 go build -o bin/linux/hossted-linux-amd64 -v -ldflags=${LDFLAGS}
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0  go build -o bin/linux/hossted-linux-amd64 -v -ldflags=${LDFLAGS}
 
 windows: main.go
 	GOOS=windows GOARCH=386 go build -o bin/windows/hossted.exe -v -ldflags=${LDFLAGS} 
@@ -54,7 +54,7 @@ dev: main.go
 	go build -o bin/dev/hossted -v -ldflags=${DEVFLAGS}
 
 linux-dev: main.go
-	GOOS=linux GOARCH=amd64 go build -o bin/dev/hossted-dev-linux-amd64 -v -ldflags=${DEVFLAGS}
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0  go build -o bin/dev/hossted-dev-linux-amd64 -v -ldflags=${DEVFLAGS}
 
 osx-dev: main.go
 	GOOS=darwin GOARCH=amd64 go build -o bin/dev/hossted-dev-darwin-amd64 -v -ldflags=${DEVFLAGS}
