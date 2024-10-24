@@ -335,8 +335,10 @@ func updateDeployment(
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.MIMIR_USERNAME
 				} else if env.Name == "HOSSTED_API_URL" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedApiUrl
-
+				} else if env.Name == "HOSSTED_TOKEN" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_AUTH_TOKEN
 				}
+
 			}
 		}
 	}
