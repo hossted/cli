@@ -44,7 +44,7 @@ func init() {
 	_, err = checkConfigFilePath()
 
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 	}
 
 	// Set greetings
@@ -135,7 +135,7 @@ func checkConfigFilePath() (string, error) {
 			return "", err
 		}
 
-		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
+		//fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
 
 	} else {
 		// Normal case
