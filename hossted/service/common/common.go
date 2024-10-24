@@ -8,10 +8,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -27,8 +25,8 @@ var (
 	MIMIR_USERNAME     = "-"
 	HOSSTED_API_URL    = "-"
 	HOSSTED_AUTH_TOKEN = "-"
-	HOSSTED_AUTH_URL   = "-"
 	HOSSTED_CLIENT_ID  = "-"
+	HOSSTED_AUTH_URL   = "-"
 	///////////////////////////
 	HOSSTED_DEV_API_URL   = "-"
 	MIMIR_DEV_URL         = "-"
@@ -64,7 +62,7 @@ func HttpRequest(method, url, token string, body []byte) error {
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error sending event, errcode: %d", resp.StatusCode)
+		return fmt.Errorf("rrror sending event, errcode: %d", resp.StatusCode)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -79,31 +77,10 @@ func HttpRequest(method, url, token string, body []byte) error {
 	}
 
 	if !apiResponse.Success {
-		return fmt.Errorf("API response indicates failure: %v\n", apiResponse)
+		return fmt.Errorf("api response indicates failure: %v", apiResponse)
 	}
 
 	return nil
-}
-
-func openBrowser(url string) error {
-	var cmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "rundll32"
-		args = append(args, "url.dll,FileProtocolHandler", url)
-	case "darwin":
-		cmd = "open"
-		args = append(args, url)
-	case "linux":
-		cmd = "xdg-open"
-		args = append(args, url)
-	default:
-		return fmt.Errorf("unsupported platform")
-	}
-
-	return exec.Command(cmd, args...).Start()
 }
 
 type org struct {
@@ -157,17 +134,17 @@ func GetOrgs(tokenString string) ([]org, error) {
 	parts := strings.Split(tokenString, ".")
 	if len(parts) != 3 {
 
-		return nil, fmt.Errorf("Invalid token format")
+		return nil, fmt.Errorf("invalid token format")
 	}
 
 	decodedPayload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding payload: %s", err)
+		return nil, fmt.Errorf("error decoding payload: %s", err)
 	}
 
 	var claims JWTClaims
 	if err := json.Unmarshal(decodedPayload, &claims); err != nil {
-		return nil, fmt.Errorf("Error unmarshalling payload: %s", err)
+		return nil, fmt.Errorf("error unmarshalling payload: %s", err)
 
 	}
 
@@ -232,7 +209,7 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 
 	}
 
-	if orgs != nil && len(orgs) == 1 {
+	if len(orgs) == 1 {
 		orgName, err := base64.StdEncoding.DecodeString(orgs[0].Name)
 		if err != nil {
 			return "", err

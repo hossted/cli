@@ -31,6 +31,18 @@ Hossted activate connects you're instance to the hossted platform and sends inst
 hossted activate
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		validTypes := map[string]bool{
+			"k8s":     true,
+			"compose": true,
+			"standby": true,
+		}
+
+		if !validTypes[activate_type] {
+			fmt.Printf("\033[31mInvalid type: %s. Valid types are: k8s, compose\033[0m\n", activate_type)
+			os.Exit(1) // Exit the program with an error
+		}
+
 		// write activate_type to config file
 		config, _ := hossted.GetConfig() // Ignore error
 		// Assign back to config object

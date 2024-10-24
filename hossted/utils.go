@@ -95,7 +95,7 @@ func WriteConfigWrapper(config Config) error {
 			os.MkdirAll(folder, os.ModePerm)
 		}
 
-		fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
+		//fmt.Printf("\nNo existing config file. \nNew config file is created  - %s \n\n", cfgPath)
 
 		return err
 	}
@@ -132,7 +132,7 @@ func WriteConfig(w io.Writer, config Config) error {
 	writer := bufio.NewWriter(w)
 	err = writer.Flush()
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 	}
 
 	return nil
@@ -487,7 +487,8 @@ func GetSoftwarePath() (string, error) {
 	// Try another path
 	path = "/opt/linnovate/run/software.txt"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+		//return "", fmt.Errorf("Config file does not exists in both /opt/hossted/run/software.txt or /opt/linnovate/run/software.txt. Please check.\n%w\n", err)
+		return "", err
 	} else {
 		return path, nil
 	}

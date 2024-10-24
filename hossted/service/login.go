@@ -43,8 +43,8 @@ func Login(develMode bool) error {
 		return err
 	}
 
-	fmt.Printf("User Code: %s\n", loginResp.UserCode)
-	fmt.Printf("Verification URL Complete: %s\n", loginResp.VerificationURIComplete)
+	log.Printf("\033[32mVerification URL: %s\033[0m", loginResp.VerificationURIComplete)
+	log.Printf("\033[32mUser Code: %s\033[0m", loginResp.UserCode)
 	openBrowser(loginResp.VerificationURIComplete)
 	// Schedule pollAccessToken after loginResp.Interval seconds
 
@@ -53,9 +53,9 @@ func Login(develMode bool) error {
 		time.Sleep(interval)
 		err := pollAccessToken(develMode, loginResp)
 		if err != nil {
-			log.Println("Please visit the above verfication url to complete sign in")
+			log.Println("\033[33m Please visit the above verification URL to complete sign in and paste the user code\033[0m")
 		} else {
-			log.Println("Access token polled successfully.")
+			log.Println("\033[32m Access token polled successfully.\033[0m")
 			break // Exit the loop if polling is successful
 		}
 	}
@@ -115,7 +115,7 @@ func acquireDeviceCode(develMode bool) (authloginresp authLoginResp, err error) 
 	}
 
 	if resp.StatusCode != 200 {
-		return authLoginResp{}, fmt.Errorf("Registration Failed, Error %s", string(body))
+		return authLoginResp{}, fmt.Errorf("registration failed, error %s", string(body))
 	}
 
 	var loginresp authLoginResp
