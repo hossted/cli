@@ -72,7 +72,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
-	orgs, err := common.GetOrgs(tr.AccessToken)
+	orgs, _, err := common.GetOrgs(tr.AccessToken)
 	if err != nil {
 		return err
 	}
