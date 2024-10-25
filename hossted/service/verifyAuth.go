@@ -14,7 +14,7 @@ func VerifyAuth(develMode bool) error {
 	authRes, err := readAuthRespFile()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("File ~/.hossted/authresp.json not found, doing login again...")
+			fmt.Println("existing auth token not found, doing login again...")
 			err := Login(develMode)
 			if err != nil {
 				return err

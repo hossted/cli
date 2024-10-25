@@ -102,7 +102,7 @@ func ActivateK8s(develMode bool) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, develMode)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, userID, develMode)
 		if err != nil {
 			return err
 		}
@@ -287,7 +287,7 @@ func getKubeClient() *kubernetes.Clientset {
 
 func updateDeployment(
 	clientset *kubernetes.Clientset,
-	namespace, deploymentName, emailID, contextName, hosstedOrgID string,
+	namespace, deploymentName, emailID, contextName, hosstedOrgID, userID string,
 	develMode bool) error {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
@@ -337,6 +337,8 @@ func updateDeployment(
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedApiUrl
 				} else if env.Name == "HOSSTED_TOKEN" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_AUTH_TOKEN
+				} else if env.Name == "HOSSTED_USER_ID" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = userID
 				}
 
 			}
@@ -595,6 +597,7 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 				",env.HOSSTED_API_URL=" + hosstedApiUrl +
 				",env.CONTEXT_NAME=" + clusterName +
 				",env.HOSSTED_TOKEN=" + common.HOSSTED_AUTH_TOKEN +
+				",env.HOSSTED_USER_ID=" + userID +
 				",serviceAccount.create=" + "true",
 		}
 

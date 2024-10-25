@@ -129,26 +129,26 @@ type JWTClaims struct {
 	Iss    string `json:"iss"`
 }
 
-func GetOrgs(tokenString string) ([]org, error) {
+func GetOrgs(tokenString string) ([]org, string, error) {
 
 	parts := strings.Split(tokenString, ".")
 	if len(parts) != 3 {
 
-		return nil, fmt.Errorf("invalid token format")
+		return nil, "", fmt.Errorf("invalid token format")
 	}
 
 	decodedPayload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("error decoding payload: %s", err)
+		return nil, "", fmt.Errorf("error decoding payload: %s", err)
 	}
 
 	var claims JWTClaims
 	if err := json.Unmarshal(decodedPayload, &claims); err != nil {
-		return nil, fmt.Errorf("error unmarshalling payload: %s", err)
+		return nil, "", fmt.Errorf("error unmarshalling payload: %s", err)
 
 	}
 
-	return claims.Orgs, nil
+	return claims.Orgs, claims.UserID, nil
 }
 
 func OrgUseCases(orgs []org) (orgID string, err error) {
