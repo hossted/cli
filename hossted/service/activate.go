@@ -83,7 +83,7 @@ func ActivateK8s(develMode bool) error {
 		return err
 	}
 
-	orgs, err := common.GetOrgs(tr.AccessToken)
+	orgs, userID, err := common.GetOrgs(tr.AccessToken)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func ActivateK8s(develMode bool) error {
 		return err
 	}
 
-	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "")
+	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
 	if err != nil {
 		log.Println(err)
 	}
@@ -102,7 +102,7 @@ func ActivateK8s(develMode bool) error {
 		fmt.Println("Standby mode detected")
 		clientset := getKubeClient()
 		fmt.Println("Updating deployment....")
-		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, develMode)
+		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, userID, develMode)
 		if err != nil {
 			return err
 		}
@@ -145,7 +145,7 @@ func ActivateK8s(develMode bool) error {
 			if err != nil {
 				return err
 			}
-			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "")
+			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID)
 			if err != nil {
 				return err
 			}
@@ -160,12 +160,12 @@ func ActivateK8s(develMode bool) error {
 		return nil
 	}
 
-	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "")
+	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = deployOperator(clusterName, "", orgID, tr.AccessToken, develMode)
+	err = deployOperator(clusterName, "", orgID, tr.AccessToken, userID, develMode)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func getKubeClient() *kubernetes.Clientset {
 
 func updateDeployment(
 	clientset *kubernetes.Clientset,
-	namespace, deploymentName, emailID, contextName, hosstedOrgID string,
+	namespace, deploymentName, emailID, contextName, hosstedOrgID, userID string,
 	develMode bool) error {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
@@ -337,6 +337,8 @@ func updateDeployment(
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = hosstedApiUrl
 				} else if env.Name == "HOSSTED_TOKEN" {
 					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = common.HOSSTED_AUTH_TOKEN
+				} else if env.Name == "HOSSTED_USER_ID" {
+					deployment.Spec.Template.Spec.Containers[i].Env[j].Value = userID
 				}
 
 			}
@@ -523,7 +525,7 @@ func installCve() {
 	})
 }
 
-func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) error {
+func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode bool) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 
@@ -544,7 +546,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "")
+			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -595,6 +597,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 				",env.HOSSTED_API_URL=" + hosstedApiUrl +
 				",env.CONTEXT_NAME=" + clusterName +
 				",env.HOSSTED_TOKEN=" + common.HOSSTED_AUTH_TOKEN +
+				",env.HOSSTED_USER_ID=" + userID +
 				",serviceAccount.create=" + "true",
 		}
 
@@ -619,7 +622,7 @@ func deployOperator(clusterName, emailID, orgID, JWT string, develMode bool) err
 			return err
 		}
 
-		err = addEvents(AUTH_TOKEN, orgID, clusterUUID)
+		err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID)
 		if err != nil {
 			return err
 		}
@@ -816,28 +819,28 @@ func debug(format string, v ...interface{}) {
 	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
-func addEvents(token, orgID, clusterUUID string) error {
+func addEvents(token, orgID, clusterUUID, userID string) error {
 
-	if err := eventOperator(token, orgID, clusterUUID); err != nil {
+	if err := eventOperator(token, orgID, clusterUUID, userID); err != nil {
 		return err
 	}
-	if err := eventCVE(token, orgID, clusterUUID); err != nil {
+	if err := eventCVE(token, orgID, clusterUUID, userID); err != nil {
 		return err
 	}
-	if err := eventMonitoring(token, orgID, clusterUUID); err != nil {
+	if err := eventMonitoring(token, orgID, clusterUUID, userID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func eventMonitoring(token, orgID, clusterUUID string) error {
+func eventMonitoring(token, orgID, clusterUUID, userID string) error {
 	retries := 60
 	for i := 0; i < retries; i++ {
 		err := checkMonitoringStatus()
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID)
+			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID, userID)
 			if err != nil {
 				return err
 			}
@@ -870,7 +873,7 @@ func checkMonitoringStatus() error {
 	return fmt.Errorf("grafana Agent release not found")
 }
 
-func eventCVE(token, orgID, clusterUUID string) error {
+func eventCVE(token, orgID, clusterUUID, userID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -888,7 +891,7 @@ func eventCVE(token, orgID, clusterUUID string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID)
+					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID, userID)
 					if err != nil {
 						return err
 					}
@@ -901,7 +904,7 @@ func eventCVE(token, orgID, clusterUUID string) error {
 	}
 }
 
-func eventOperator(token, orgID, clusterUUID string) error {
+func eventOperator(token, orgID, clusterUUID, userID string) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -919,7 +922,7 @@ func eventOperator(token, orgID, clusterUUID string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID)
+					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID, userID)
 					if err != nil {
 						return err
 					}
@@ -982,13 +985,14 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func SendEvent(eventType, message, token, orgID, clusterUUID string) error {
+func SendEvent(eventType, message, token, orgID, clusterUUID, userID string) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
 		WareType string `json:"ware_type"`
 		Type     string `json:"type"`
 		UUID     string `json:"uuid,omitempty"`
+		UserID   string `json:"user_id"`
 		OrgID    string `json:"org_id"`
 		Message  string `json:"message"`
 	}
@@ -997,6 +1001,7 @@ func SendEvent(eventType, message, token, orgID, clusterUUID string) error {
 		WareType: "k8s",
 		Type:     eventType,
 		UUID:     clusterUUID,
+		UserID:   userID,
 		OrgID:    orgID,
 		Message:  message,
 	}
