@@ -14,15 +14,14 @@ func VerifyAuth(develMode bool) error {
 	authRes, err := readAuthRespFile()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("existing auth token not found, doing login again...")
+			fmt.Println("\033[33mExisting auth token not found, proceeding with login...\033[0m")
 			err := Login(develMode)
 			if err != nil {
-				return err
+				return fmt.Errorf("\033[31m%v\033[0m", err)
 			}
 			return nil
-			//fmt.Errorf("could not read ~/.hossted/authresp.json, please activate again")
 		} else {
-			return err
+			return fmt.Errorf("\033[31m%v\033[0m", err)
 		}
 	}
 
@@ -32,19 +31,19 @@ func VerifyAuth(develMode bool) error {
 		// check refresh token expiry
 		isRefreshTokenExpired := checkRefreshTokenExpiration(authRes)
 		if isRefreshTokenExpired {
-			fmt.Println("Doing login again....")
+			fmt.Println("\033[31mDoing login again....\033[0m")
 			err := Login(develMode)
 			if err != nil {
-				return err
+				return fmt.Errorf("\033[31m%v\033[0m", err)
 			}
-			return fmt.Errorf("both access_token and refresh token were expired, please activate again")
+			return fmt.Errorf("\033[31mboth access_token and refresh token were expired, please activate again\033[0m")
 		} else {
 			// get new access_token using the existing refresh_token
 			err := refreshAccessToken(develMode, authRes)
 			if err != nil {
-				return err
+				return fmt.Errorf("\033[31m%v\033[0m", err)
 			}
-			fmt.Println("Refreshed access token")
+			fmt.Println("\033[32mRefreshed access token\033[0m")
 		}
 	}
 
@@ -55,17 +54,17 @@ func readAuthRespFile() (authResp, error) {
 	var authRespFileData authResp
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return authRespFileData, err
+		return authRespFileData, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 	folderPath := filepath.Join(homeDir, ".hossted")
 	fileData, err := os.ReadFile(folderPath + "/" + "authresp.json")
 	if err != nil {
-		return authRespFileData, err
+		return authRespFileData, err // no error color added to allow caller to check os.IsNotExist
 	}
 
 	err = json.Unmarshal(fileData, &authRespFileData)
 	if err != nil {
-		return authRespFileData, err
+		return authRespFileData, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	return authRespFileData, nil
@@ -85,7 +84,7 @@ func checkAccessTokenExpiration(authres authResp) bool {
 	if currentTimestamp < expirationTime {
 		expired = false
 	} else {
-		fmt.Println("access token has expired, going to refresh access token")
+		fmt.Println("\033[31maccess token has expired, going to refresh access token\033[0m")
 	}
 	return expired
 }
@@ -101,10 +100,8 @@ func checkRefreshTokenExpiration(authres authResp) bool {
 	expirationTime := refreshTokenTS + int64(refreshTokenExpiry)
 
 	// Check if the token has expired
-	if currentTimestamp < expirationTime {
-		expired = false
-	} else {
-		fmt.Println("refresh token has also expired")
+	if currentTimestamp >= expirationTime {
+		fmt.Println("\033[31mrefresh token has also expired\033[0m")
 	}
 	return expired
 }

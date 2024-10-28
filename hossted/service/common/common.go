@@ -23,16 +23,16 @@ var (
 	MIMIR_PASSWORD     = "-"
 	MIMIR_URL          = "-"
 	MIMIR_USERNAME     = "-"
-	HOSSTED_API_URL    = "-"
-	HOSSTED_AUTH_TOKEN = "-"
-	HOSSTED_CLIENT_ID  = "-"
-	HOSSTED_AUTH_URL   = "-"
+	HOSSTED_API_URL    = "https://api.hossted.com/v1/instances"
+	HOSSTED_AUTH_TOKEN = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
+	HOSSTED_CLIENT_ID  = "kxWDd9bGgyNprKkAdL8QSTMKd1"
+	HOSSTED_AUTH_URL   = "https://auth.hossted.com/oauth2"
 	///////////////////////////
-	HOSSTED_DEV_API_URL   = "-"
+	HOSSTED_DEV_API_URL   = "https://api.dev.hossted.com/v1/instances"
 	MIMIR_DEV_URL         = "-"
 	LOKI_DEV_URL          = "-"
-	HOSSTED_DEV_CLIENT_ID = "-"
-	HOSSTED_DEV_AUTH_URL  = "-"
+	HOSSTED_DEV_CLIENT_ID = "01J41H827VX5D2RJC37H5P5Q9F"
+	HOSSTED_DEV_AUTH_URL  = "https://auth.dev.hossted.com/oauth2"
 )
 
 func HttpRequest(method, url, token string, body []byte) error {
@@ -151,15 +151,20 @@ func GetOrgs(tokenString string) ([]org, string, error) {
 	return claims.Orgs, claims.UserID, nil
 }
 
+// OrgUseCases prompts the user to select an organization from a list.
 func OrgUseCases(orgs []org) (orgID string, err error) {
-
 	if len(orgs) == 0 {
-		for _, orgID := range orgs {
-			fmt.Println("We have just sent the confirmation link registered emailID", ". Once you confirm it, you'll be able to continue the activation.")
-			return orgID.ID, nil
+		fmt.Println("\033[31mNo organizations available.\033[0m")
+		return "", fmt.Errorf("no organizations available")
+	} else if len(orgs) == 1 {
+		orgName, err := base64.StdEncoding.DecodeString(orgs[0].Name)
+		if err != nil {
+			return "", err
 		}
-	} else if len(orgs) > 1 {
-		fmt.Println("You have multiple organisations to choose from:")
+		fmt.Printf("OrgName: \033[32m%s\033[0m\n", orgName) // Green for single org name
+		return orgs[0].ID, nil
+	} else {
+		fmt.Println("\033[33mYou have multiple organisations to choose from:\033[0m") // Yellow header
 
 		var items []string
 		for i, org := range orgs {
@@ -171,13 +176,18 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 		}
 
 		prompt := promptui.Select{
-			Label: "Select Your Organisation",
+			Label: "\033[32mSelect Your Organisation:\033[0m", // Green prompt label
 			Items: items,
+			Templates: &promptui.SelectTemplates{
+				Active:   "\033[33m▸ {{ . }}\033[0m", // Yellow arrow for active selection
+				Inactive: "{{ . }}",                  // Default color for inactive items
+				Selected: "\033[33m{{ . }}\033[0m",   // Yellow for selected item
+			},
 		}
 
 		_, result, err := prompt.Run()
 		if err != nil {
-			fmt.Println("Prompt failed:", err)
+			fmt.Println("\033[31mPrompt failed:\033[0m", err) // Red for prompt failure
 			return "", err
 		}
 
@@ -186,7 +196,7 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 			return "", err
 		}
 
-		fmt.Printf("OrgName: %s\n", userOrgName)
+		fmt.Printf("OrgName: \033[32m%s\033[0m\n", userOrgName) // Green for the selected organization name
 
 		var selectedOrgID string
 
@@ -206,19 +216,7 @@ func OrgUseCases(orgs []org) (orgID string, err error) {
 		}
 
 		return selectedOrgID, nil
-
 	}
-
-	if len(orgs) == 1 {
-		orgName, err := base64.StdEncoding.DecodeString(orgs[0].Name)
-		if err != nil {
-			return "", err
-		}
-		fmt.Printf("OrgName: %s\n", orgName)
-		return orgs[0].ID, nil
-	}
-
-	return "", nil
 }
 
 func removePrefix(text string) (string, error) {

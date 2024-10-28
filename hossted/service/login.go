@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -40,22 +39,21 @@ type authResp struct {
 func Login(develMode bool) error {
 	loginResp, err := acquireDeviceCode(develMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
-	log.Printf("\033[32mVerification URL: %s\033[0m", loginResp.VerificationURIComplete)
-	log.Printf("\033[32mUser Code: %s\033[0m", loginResp.UserCode)
+	fmt.Println("\033[32mVerification URL:", loginResp.VerificationURIComplete, "\033[0m")
+	fmt.Println("\033[32mUser Code:", loginResp.UserCode, "\033[0m")
 	openBrowser(loginResp.VerificationURIComplete)
-	// Schedule pollAccessToken after loginResp.Interval seconds
 
 	interval := time.Duration(loginResp.Interval) * time.Second
 	for {
 		time.Sleep(interval)
 		err := pollAccessToken(develMode, loginResp)
 		if err != nil {
-			log.Println("\033[33m Please visit the above verification URL to complete sign in and paste the user code\033[0m")
+			fmt.Println("\033[33m Please visit the above verification URL to complete sign in and paste the user code\033[0m")
 		} else {
-			log.Println("\033[32m Access token polled successfully.\033[0m")
+			fmt.Println("\033[32mAccess token polled successfully.\033[0m")
 			break // Exit the loop if polling is successful
 		}
 	}
@@ -64,69 +62,62 @@ func Login(develMode bool) error {
 }
 
 func acquireDeviceCode(develMode bool) (authloginresp authLoginResp, err error) {
-
 	var clientID, hosstedAuthUrl string
 
-	// Override values in development mode
 	if develMode {
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/authorize"
-		fmt.Printf("devel mode: true \nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
+		fmt.Println("devel mode: true")
+		fmt.Printf("clientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
 		fmt.Println("------------------------------------------------------------------------------")
 
 	} else {
 		clientID = common.HOSSTED_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/authorize"
-		//fmt.Printf("production mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
 	}
 
-	// Debugging prints
 	if hosstedAuthUrl == "" {
-		return authLoginResp{}, fmt.Errorf("hosstedAuthUrl is not set")
+		return authLoginResp{}, fmt.Errorf("\033[31mhosstedAuthUrl is not set\033[0m")
 	}
 	if clientID == "" {
-		return authLoginResp{}, fmt.Errorf("clientID is not set")
+		return authLoginResp{}, fmt.Errorf("\033[31mclientID is not set\033[0m")
 	}
 
 	data := url.Values{}
 	data.Set("client_id", clientID)
 
-	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return authLoginResp{}, err
+		return authLoginResp{}, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
-	// Set headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Perform the request
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return authLoginResp{}, err
+		return authLoginResp{}, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
-
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return authLoginResp{}, err
+		return authLoginResp{}, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	if resp.StatusCode != 200 {
-		return authLoginResp{}, fmt.Errorf("registration failed, error %s", string(body))
+		return authLoginResp{}, fmt.Errorf("\033[31mregistration failed, error %s\033[0m", string(body))
 	}
 
 	var loginresp authLoginResp
 	err = json.Unmarshal(body, &loginresp)
 	if err != nil {
-		return loginresp, err
+		return loginresp, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	err = saveResponse(body, "auth.json")
 	if err != nil {
-		return loginresp, err
+		return loginresp, fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	return loginresp, nil
@@ -134,15 +125,14 @@ func acquireDeviceCode(develMode bool) (authloginresp authLoginResp, err error) 
 
 func saveResponse(data []byte, fileName string) error {
 	homeDir, err := os.UserHomeDir()
-
 	folderPath := filepath.Join(homeDir, ".hossted")
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	err = os.WriteFile(folderPath+"/"+fileName, data, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	return nil
@@ -151,23 +141,19 @@ func saveResponse(data []byte, fileName string) error {
 func pollAccessToken(develMode bool, loginResp authLoginResp) error {
 	var clientID, hosstedAuthUrl string
 
-	// Override values in development mode
 	if develMode {
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/token"
-
 	} else {
 		clientID = common.HOSSTED_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/token"
-		//fmt.Printf("production mode:\nclientID: %s\nhosstedAuthUrl: %s\n", clientID, hosstedAuthUrl)
 	}
 
-	// Debugging prints
 	if hosstedAuthUrl == "" {
-		return fmt.Errorf("hosstedAuthUrl is not set")
+		return fmt.Errorf("\033[31mhosstedAuthUrl is not set\033[0m")
 	}
 	if clientID == "" {
-		return fmt.Errorf("clientID is not set")
+		return fmt.Errorf("\033[31mclientID is not set\033[0m")
 	}
 
 	data := url.Values{}
@@ -175,37 +161,33 @@ func pollAccessToken(develMode bool, loginResp authLoginResp) error {
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
 	data.Set("device_code", loginResp.DeviceCode)
 
-	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
-	// Set headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Perform the request
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
-
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("registration failed, error %s", string(body))
+		return fmt.Errorf("\033[31mregistration failed, error %s\033[0m", string(body))
 	}
 
 	var pollResp authResp
 	err = json.Unmarshal(body, &pollResp)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	currentTimestamp := time.Now().Unix()
@@ -214,12 +196,12 @@ func pollAccessToken(develMode bool, loginResp authLoginResp) error {
 
 	modifiedData, err := json.Marshal(pollResp)
 	if err != nil {
-		return fmt.Errorf("error marshalling struct to JSON: %v", err)
+		return fmt.Errorf("\033[31merror marshalling struct to JSON: %v\033[0m", err)
 	}
 
 	err = saveResponse(modifiedData, "authresp.json")
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 	return nil
 }
@@ -227,22 +209,19 @@ func pollAccessToken(develMode bool, loginResp authLoginResp) error {
 func refreshAccessToken(develMode bool, authPollResp authResp) error {
 	var clientID, hosstedAuthUrl string
 
-	// Override values in development mode
 	if develMode {
 		clientID = common.HOSSTED_DEV_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_DEV_AUTH_URL + "/device/token"
-
 	} else {
 		clientID = common.HOSSTED_CLIENT_ID
 		hosstedAuthUrl = common.HOSSTED_AUTH_URL + "/device/token"
 	}
 
-	// Debugging prints
 	if hosstedAuthUrl == "" {
-		return fmt.Errorf("hosstedAuthUrl is not set")
+		return fmt.Errorf("\033[31mhosstedAuthUrl is not set\033[0m")
 	}
 	if clientID == "" {
-		return fmt.Errorf("clientID is not set")
+		return fmt.Errorf("\033[31mclientID is not set\033[0m")
 	}
 
 	data := url.Values{}
@@ -250,37 +229,33 @@ func refreshAccessToken(develMode bool, authPollResp authResp) error {
 	data.Set("grant_type", "refresh_token")
 	data.Set("state", authPollResp.State)
 
-	// Create HTTP request
 	req, err := http.NewRequest(http.MethodPost, hosstedAuthUrl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
-	// Set headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Perform the request
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
-
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("refresh access token failed, error %s", string(body))
+		return fmt.Errorf("\033[31mrefresh access token failed, error %s\033[0m", string(body))
 	}
 
 	var refreshTokenResp authResp
 	err = json.Unmarshal(body, &refreshTokenResp)
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 
 	currentTimestamp := time.Now().Unix()
@@ -289,12 +264,12 @@ func refreshAccessToken(develMode bool, authPollResp authResp) error {
 
 	modifiedData, err := json.Marshal(authPollResp)
 	if err != nil {
-		return fmt.Errorf("error marshalling struct to JSON: %v", err)
+		return fmt.Errorf("\033[31merror marshalling struct to JSON: %v\033[0m", err)
 	}
 
 	err = saveResponse(modifiedData, "authresp.json")
 	if err != nil {
-		return err
+		return fmt.Errorf("\033[31m%v\033[0m", err)
 	}
 	return nil
 }
@@ -314,7 +289,7 @@ func openBrowser(url string) error {
 		cmd = "xdg-open"
 		args = append(args, url)
 	default:
-		return fmt.Errorf("unsupported platform")
+		return fmt.Errorf("\033[31munsupported platform\033[0m")
 	}
 
 	return exec.Command(cmd, args...).Start()

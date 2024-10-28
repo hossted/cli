@@ -66,15 +66,12 @@ const (
 )
 
 // ActivateK8s imports Kubernetes clusters.
-func ActivateK8s(develMode bool) error {
-
-	// prompt user for k8s context
+func ActivateK8s(develMode, verbose bool) error {
+	// Prompt user for k8s context
 	clusterName, err := promptK8sContext()
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("Your cluster name is ", clusterName)
 
 	isStandby, _ := isStandbyMode(releaseName)
 
@@ -93,27 +90,27 @@ func ActivateK8s(develMode bool) error {
 		return err
 	}
 
-	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
+	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID, verbose)
 	if err != nil {
-		log.Println(err)
+		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 	}
 
 	if isStandby {
-		fmt.Println("Standby mode detected")
+		fmt.Println("\033[33mStandby mode detected\033[0m") // Yellow for standby detection
 		clientset := getKubeClient()
-		fmt.Println("Updating deployment....")
+		fmt.Println("\033[33mUpdating deployment....\033[0m") // Yellow for update status
 		err := updateDeployment(clientset, hosstedPlatformNamespace, "hossted-operator"+"-controller-manager", "", clusterName, orgID, userID, develMode)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Updating secret....")
+		fmt.Println("\033[33mUpdating secret....\033[0m") // Yellow for secret update
 		err = updateSecret(clientset, hosstedPlatformNamespace, "hossted-operator"+"-secret", "AUTH_TOKEN", tr.AccessToken)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Updated deployment and secret")
+		fmt.Println("\033[32mUpdated deployment and secret\033[0m") // Green for successful update
 
 		// Check if deployment is fully available
 		deploymentName := "hossted-operator-controller-manager"
@@ -123,11 +120,11 @@ func ActivateK8s(develMode bool) error {
 
 		err = waitForDeploymentAvailability(clientset, namespace, deploymentName, timeout, checkInterval)
 		if err != nil {
-			fmt.Printf("Deployment not available after 5 min: %v\n", err)
+			fmt.Printf("\033[31mDeployment not available after 5 min: %v\033[0m\n", err) // Red for error message
 			return err
 		}
 
-		fmt.Println("Deployment is fully available. Proceeding...")
+		fmt.Println("\033[32mDeployment is fully available. Proceeding...\033[0m") // Green for success
 
 		cveEnabled, monitoringEnabled, loggingEnabled, ingressEnabled, err := askPromptsToInstall()
 		if err != nil {
@@ -135,17 +132,17 @@ func ActivateK8s(develMode bool) error {
 		}
 
 		if cveEnabled == "true" {
-			fmt.Println("Enabled CVE Scan:", cveEnabled)
+			fmt.Println("\033[32mEnabled CVE Scan:\033[0m", cveEnabled) // Green for CVE scan
 			installCve()
 		}
 
 		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" || ingressEnabled == "true" {
-			fmt.Println("Patching 'hossted-operator-cr' CR")
+			fmt.Println("\033[33mPatching 'hossted-operator-cr' CR\033[0m") // Yellow for patching
 			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName)
 			if err != nil {
 				return err
 			}
-			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID)
+			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID, verbose)
 			if err != nil {
 				return err
 			}
@@ -156,16 +153,16 @@ func ActivateK8s(develMode bool) error {
 			return err
 		}
 
-		fmt.Println("Patch'hossted-operator-cr' CR completed")
+		fmt.Println("\033[32mPatch 'hossted-operator-cr' CR completed\033[0m") // Green for completion
 		return nil
 	}
 
-	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID)
+	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID, verbose)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 	}
 
-	err = deployOperator(clusterName, "", orgID, tr.AccessToken, userID, develMode)
+	err = deployOperator(clusterName, "", orgID, tr.AccessToken, userID, develMode, verbose)
 	if err != nil {
 		return err
 	}
@@ -199,23 +196,23 @@ func waitForDeploymentAvailability(clientset *kubernetes.Clientset, namespace, d
 	startTime := time.Now()
 
 	for {
-		fmt.Println("Waiting for deployments to be active....")
+		fmt.Println("\033[33mWaiting for deployments to be active....\033[0m") // Yellow message
 		time.Sleep(15 * time.Second)
 		// Get the latest version of the deployment
 		deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to get deployment: %v", err)
+			return fmt.Errorf("\033[31mfailed to get deployment: %v\033[0m", err) // Red error message
 		}
 
 		// Check if the deployment is fully available
 		if deployment.Status.AvailableReplicas == *deployment.Spec.Replicas {
-			fmt.Println("hossted operator controller manager deployment is fully available")
-			return nil // Deployment is fully available
+			fmt.Println("\033[32mhossted operator controller manager deployment is fully available\033[0m") // Green success message
+			return nil                                                                                      // Deployment is fully available
 		}
 
 		// Check if the timeout has been reached
 		if time.Since(startTime) > timeout {
-			return fmt.Errorf("timeout waiting for deployment to become available")
+			return fmt.Errorf("\033[31mtimeout waiting for deployment to become available\033[0m") // Red error message
 		}
 
 		// Wait for the next check
@@ -233,21 +230,26 @@ func promptK8sContext() (clusterName string, err error) {
 	// Load kubeconfig file
 	config, err := clientcmd.LoadFromFile(kubeconfigPath)
 	if err != nil {
-		fmt.Printf("Error loading kubeconfig: %v\n", err)
+		fmt.Printf("\033[31mError loading kubeconfig: %v\033[0m\n", err)
 		os.Exit(1)
 	}
 
-	// Get current context
+	// Get current contexts
 	currentContext := config.Contexts
 	var contexts []string
 	for i := range currentContext {
 		contexts = append(contexts, i)
 	}
 
-	// // Prompt user to select Kubernetes context
+	// Prompt user to select Kubernetes context
 	promptK8s := promptui.Select{
-		Label: "Select your Kubernetes context:",
+		Label: "\033[32mSelect your Kubernetes context:\033[0m",
 		Items: contexts,
+		Templates: &promptui.SelectTemplates{
+			Active:   "\033[33m▸ {{ . }}\033[0m", // Yellow arrow and context name for active selection
+			Inactive: "{{ . }}",                  // Default color for inactive items
+			Selected: "\033[32mKubernetes context '{{ . }}' selected successfully.\033[0m",
+		},
 	}
 
 	_, clusterName, err = promptK8s.Run()
@@ -255,7 +257,7 @@ func promptK8sContext() (clusterName string, err error) {
 		return "", err
 	}
 
-	// set current context as selected
+	// Set current context as selected
 	config.CurrentContext = clusterName
 	err = clientcmd.WriteToFile(*config, kubeconfigPath)
 	if err != nil {
@@ -441,6 +443,7 @@ func askPromptsToInstall() (string, string, string, string, error) {
 	monitoringEnabled := "false"
 	loggingEnabled := "false"
 	ingressEnabled := "false"
+
 	//------------------------------ Monitoring ----------------------------------
 	monitoring := promptui.Select{
 		Label: "Do you wish to enable monitoring in hossted platform",
@@ -452,7 +455,7 @@ func askPromptsToInstall() (string, string, string, string, error) {
 	}
 
 	if monitoringEnable == "Yes" {
-		fmt.Println("Enabled Monitoring :", green(monitoringEnable))
+		fmt.Println("Enabled Monitoring:", green(monitoringEnable))
 		monitoringEnabled = "true"
 	}
 
@@ -525,7 +528,7 @@ func installCve() {
 	})
 }
 
-func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode bool) error {
+func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode, verbose bool) error {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 
@@ -546,7 +549,7 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID)
+			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID, verbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -568,7 +571,6 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 		lokiUrl := common.LOKI_URL
 
 		if develMode {
-
 			if devUrl := common.HOSSTED_DEV_API_URL; devUrl != "" {
 				hosstedApiUrl = devUrl
 			}
@@ -622,12 +624,12 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 			return err
 		}
 
-		err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID)
+		err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID, verbose)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(green("Success: "), "Hossted Platfrom components deployed")
+		fmt.Println(green("Success: "), "Hossted Platform components deployed")
 	}
 	return nil
 }
@@ -819,28 +821,28 @@ func debug(format string, v ...interface{}) {
 	//log.Output(2, fmt.Sprintf(format, v...))
 }
 
-func addEvents(token, orgID, clusterUUID, userID string) error {
+func addEvents(token, orgID, clusterUUID, userID string, verbose bool) error {
 
-	if err := eventOperator(token, orgID, clusterUUID, userID); err != nil {
+	if err := eventOperator(token, orgID, clusterUUID, userID, verbose); err != nil {
 		return err
 	}
-	if err := eventCVE(token, orgID, clusterUUID, userID); err != nil {
+	if err := eventCVE(token, orgID, clusterUUID, userID, verbose); err != nil {
 		return err
 	}
-	if err := eventMonitoring(token, orgID, clusterUUID, userID); err != nil {
+	if err := eventMonitoring(token, orgID, clusterUUID, userID, verbose); err != nil {
 		return err
 	}
 	return nil
 }
 
-func eventMonitoring(token, orgID, clusterUUID, userID string) error {
+func eventMonitoring(token, orgID, clusterUUID, userID string, verbose bool) error {
 	retries := 60
 	for i := 0; i < retries; i++ {
 		err := checkMonitoringStatus()
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID, userID)
+			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID, userID, verbose)
 			if err != nil {
 				return err
 			}
@@ -873,7 +875,7 @@ func checkMonitoringStatus() error {
 	return fmt.Errorf("grafana Agent release not found")
 }
 
-func eventCVE(token, orgID, clusterUUID, userID string) error {
+func eventCVE(token, orgID, clusterUUID, userID string, verbose bool) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -891,7 +893,7 @@ func eventCVE(token, orgID, clusterUUID, userID string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID, userID)
+					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID, userID, verbose)
 					if err != nil {
 						return err
 					}
@@ -904,7 +906,7 @@ func eventCVE(token, orgID, clusterUUID, userID string) error {
 	}
 }
 
-func eventOperator(token, orgID, clusterUUID, userID string) error {
+func eventOperator(token, orgID, clusterUUID, userID string, verbose bool) error {
 	releases, err := listReleases()
 	if err != nil {
 		return err
@@ -922,7 +924,7 @@ func eventOperator(token, orgID, clusterUUID, userID string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID, userID)
+					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID, userID, verbose)
 					if err != nil {
 						return err
 					}
@@ -985,7 +987,7 @@ var hpGVK = schema.GroupVersionResource{
 	Resource: "hosstedprojects",
 }
 
-func SendEvent(eventType, message, token, orgID, clusterUUID, userID string) error {
+func SendEvent(eventType, message, token, orgID, clusterUUID, userID string, verbose bool) error {
 	url := common.HOSSTED_API_URL + "/statuses"
 
 	type event struct {
@@ -1034,7 +1036,9 @@ func SendEvent(eventType, message, token, orgID, clusterUUID, userID string) err
 		return fmt.Errorf("error sending event, errcode: %d", resp.StatusCode)
 	}
 
-	fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
+	if verbose {
+		fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
+	}
 
 	return nil
 }
