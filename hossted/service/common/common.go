@@ -23,16 +23,16 @@ var (
 	MIMIR_PASSWORD     = "-"
 	MIMIR_URL          = "-"
 	MIMIR_USERNAME     = "-"
-	HOSSTED_API_URL    = "https://api.hossted.com/v1/instances"
-	HOSSTED_AUTH_TOKEN = "FrTc3TlygOaFDQOGmteaQ7LRwKOx8XNIGfmLa5NA"
-	HOSSTED_CLIENT_ID  = "kxWDd9bGgyNprKkAdL8QSTMKd1"
-	HOSSTED_AUTH_URL   = "https://auth.hossted.com/oauth2"
+	HOSSTED_API_URL    = "-"
+	HOSSTED_AUTH_TOKEN = "-"
+	HOSSTED_CLIENT_ID  = "-"
+	HOSSTED_AUTH_URL   = "-"
 	///////////////////////////
-	HOSSTED_DEV_API_URL   = "https://api.dev.hossted.com/v1/instances"
+	HOSSTED_DEV_API_URL   = "-"
 	MIMIR_DEV_URL         = "-"
 	LOKI_DEV_URL          = "-"
-	HOSSTED_DEV_CLIENT_ID = "01J41H827VX5D2RJC37H5P5Q9F"
-	HOSSTED_DEV_AUTH_URL  = "https://auth.dev.hossted.com/oauth2"
+	HOSSTED_DEV_CLIENT_ID = "-"
+	HOSSTED_DEV_AUTH_URL  = "-"
 )
 
 func HttpRequest(method, url, token string, body []byte) error {
