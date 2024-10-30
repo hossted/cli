@@ -35,6 +35,9 @@ var (
 	HOSSTED_DEV_AUTH_URL  = "-"
 )
 
+
+
+
 func HttpRequest(method, url, token string, body []byte) error {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
@@ -233,4 +236,58 @@ func removePrefix(text string) (string, error) {
 	}
 
 	return text, nil
+}
+
+func SendEvent(eventType, message, token, orgID, clusterUUID, userID string) error {
+	url := HOSSTED_API_URL + "/statuses"
+
+	type event struct {
+		WareType string `json:"ware_type"`
+		Type     string `json:"type"`
+		UUID     string `json:"uuid,omitempty"`
+		UserID   string `json:"user_id"`
+		OrgID    string `json:"org_id"`
+		Message  string `json:"message"`
+	}
+
+	newEvent := event{
+		WareType: "k8s",
+		Type:     eventType,
+		UUID:     clusterUUID,
+		UserID:   userID,
+		OrgID:    orgID,
+		Message:  message,
+	}
+	eventByte, err := json.MarshalIndent(newEvent, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(eventByte)))
+	if err != nil {
+		return err
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add Authorization header with Basic authentication
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(token)))
+	// Perform the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("error sending event, errcode: %d", resp.StatusCode)
+	}
+
+	fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
+
+	return nil
 }

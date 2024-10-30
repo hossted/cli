@@ -13,6 +13,15 @@ import (
 	"github.com/manifoldco/promptui"
 	"gopkg.in/yaml.v2"
 )
+const (
+	init_activation_started = "_HSTD_ACTIVATION_STARTED"
+	init_operator           = "_HSTD_INIT_OPERATOR"
+	init_cve                = "_HSTD_INIT_CVE"
+	init_monitoring         = "_HSTD_INIT_MONITORING"
+	deployed_operator       = "_HSTD_DEPLOYED_OPERATOR"
+	deployed_cve            = "_HSTD_DEPLOYED_CVE"
+	deployed_monitoring     = "_HSTD_DEPLOYED_MONITORING"
+)
 
 type OsInfo struct {
 	OsUUID               string `yaml:"osUUID,omitempty"`
@@ -142,7 +151,18 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 	if err != nil {
 		return err
 	}
-
+	// Send monitoring event on successful activation
+	// TODO: refactor send message code and move to share li
+	
+	_, userID, err := common.GetOrgs(tr.AccessToken)
+	if err != nil {
+		return err
+	}
+	err = common.SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
+	
+	if err != nil {
+		log.Println(err)
+	}
 	return nil
 
 }

@@ -1,13 +1,10 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,17 +41,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-const (
-	hosstedPlatformNamespace   = "hossted-platform"
-	hosstedOperatorReleaseName = "hossted-operator"
-	trivyOperatorReleaseName   = "trivy-operator"
-	grafanaAgentReleaseName    = "hossted-grafana-agent"
-	releaseName                = "hossted-operator-cr"
-)
-
-var AUTH_TOKEN = common.HOSSTED_AUTH_TOKEN
-
 const (
 	init_activation_started = "_HSTD_ACTIVATION_STARTED"
 	init_operator           = "_HSTD_INIT_OPERATOR"
@@ -63,7 +49,17 @@ const (
 	deployed_operator       = "_HSTD_DEPLOYED_OPERATOR"
 	deployed_cve            = "_HSTD_DEPLOYED_CVE"
 	deployed_monitoring     = "_HSTD_DEPLOYED_MONITORING"
+) 
+const (
+	hosstedPlatformNamespace   = "hossted-platform"
+	hosstedOperatorReleaseName = "hossted-operator"
+	trivyOperatorReleaseName   = "trivy-operator"
+	grafanaAgentReleaseName    = "hossted-grafana-agent"
+	releaseName                = "hossted-operator-cr"
 )
+
+
+
 
 // ActivateK8s imports Kubernetes clusters.
 func ActivateK8s(develMode bool) error {
@@ -93,7 +89,7 @@ func ActivateK8s(develMode bool) error {
 		return err
 	}
 
-	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
+	err = common.SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
 	if err != nil {
 		log.Println(err)
 	}
@@ -145,7 +141,7 @@ func ActivateK8s(develMode bool) error {
 			if err != nil {
 				return err
 			}
-			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID)
+			err = common.SendEvent("info", init_monitoring, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
 			if err != nil {
 				return err
 			}
@@ -160,7 +156,7 @@ func ActivateK8s(develMode bool) error {
 		return nil
 	}
 
-	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID)
+	err = common.SendEvent("info", init_operator, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -546,7 +542,7 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
-			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID)
+			err = common.SendEvent("info", init_cve, common.HOSSTED_AUTH_TOKEN, orgID, "", userID)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -622,7 +618,7 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode b
 			return err
 		}
 
-		err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID)
+		err = addEvents(common.HOSSTED_AUTH_TOKEN, orgID, clusterUUID, userID)
 		if err != nil {
 			return err
 		}
@@ -658,7 +654,7 @@ func RepoAdd(name, url string) {
 		log.Fatal(err)
 	}
 
-	b, err := ioutil.ReadFile(repoFile)
+	b, err := os.ReadFile(repoFile)
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
@@ -840,7 +836,7 @@ func eventMonitoring(token, orgID, clusterUUID, userID string) error {
 		if err == nil {
 			green := color.New(color.FgGreen).SprintFunc()
 			fmt.Printf("%s Hossted Platform Monitoring started successfully\n", green("Success:"))
-			err := SendEvent("info", deployed_monitoring, token, orgID, clusterUUID, userID)
+			err := common.SendEvent("info", deployed_monitoring, token, orgID, clusterUUID, userID)
 			if err != nil {
 				return err
 			}
@@ -891,7 +887,7 @@ func eventCVE(token, orgID, clusterUUID, userID string) error {
 				if release.Name == trivyOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform CVE Scan started successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_cve, token, orgID, clusterUUID, userID)
+					err := common.SendEvent("info", deployed_cve, token, orgID, clusterUUID, userID)
 					if err != nil {
 						return err
 					}
@@ -922,7 +918,7 @@ func eventOperator(token, orgID, clusterUUID, userID string) error {
 				if release.Name == hosstedOperatorReleaseName {
 					green := color.New(color.FgGreen).SprintFunc()
 					fmt.Printf("%s Hossted Platform operator installed successfully\n", green("Success:"))
-					err := SendEvent("info", deployed_operator, token, orgID, clusterUUID, userID)
+					err := common.SendEvent("info", deployed_operator, token, orgID, clusterUUID, userID)
 					if err != nil {
 						return err
 					}
@@ -983,60 +979,6 @@ var hpGVK = schema.GroupVersionResource{
 	Group:    "hossted.com",
 	Version:  "v1",
 	Resource: "hosstedprojects",
-}
-
-func SendEvent(eventType, message, token, orgID, clusterUUID, userID string) error {
-	url := common.HOSSTED_API_URL + "/statuses"
-
-	type event struct {
-		WareType string `json:"ware_type"`
-		Type     string `json:"type"`
-		UUID     string `json:"uuid,omitempty"`
-		UserID   string `json:"user_id"`
-		OrgID    string `json:"org_id"`
-		Message  string `json:"message"`
-	}
-
-	newEvent := event{
-		WareType: "k8s",
-		Type:     eventType,
-		UUID:     clusterUUID,
-		UserID:   userID,
-		OrgID:    orgID,
-		Message:  message,
-	}
-	eventByte, err := json.MarshalIndent(newEvent, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	// Create HTTP request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(eventByte)))
-	if err != nil {
-		return err
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-
-	// Add Authorization header with Basic authentication
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", []byte(token)))
-	// Perform the request
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("error sending event, errcode: %d", resp.StatusCode)
-	}
-
-	fmt.Printf("\033[32mSuccess: Event '%s' sent successfully! Message: %s\033[0m\n", eventType, message)
-
-	return nil
 }
 
 func getClusterUUIDPolling() (string, error) {
