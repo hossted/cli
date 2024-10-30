@@ -16,6 +16,7 @@ import (
 
 type OsInfo struct {
 	OsUUID               string `yaml:"osUUID,omitempty"`
+	AppUUID              string `yaml:"appUUID,omitempty"`
 	EmailID              string `yaml:"emailId,omitempty"`
 	ClusterRegisteration bool   `yaml:"clusterRegisteration,omitempty"`
 	OrgID                string `yaml:"orgID,omitempty"`
@@ -116,12 +117,18 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		}
 	}
 
-	osUUID, err := setClusterInfo(osFilePath)
+	osUUID, err := getOSUUID()
 	if err != nil {
 		return err
 	}
 
+	appUUID, err := getMarketplaceAppUUID(osInfo.ProjectName)
+	if err != nil {
+		return fmt.Errorf("failed to get appUUID, err: %v", appUUID)
+	}
+
 	osInfo.OsUUID = osUUID
+	osInfo.AppUUID = appUUID
 
 	yamlData, err := yaml.Marshal(osInfo)
 	if err != nil {
