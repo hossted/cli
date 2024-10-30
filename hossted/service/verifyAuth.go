@@ -10,40 +10,33 @@ import (
 
 // Verify auth tokens
 func VerifyAuth(develMode bool) error {
-	// read authresp.json file
+	// Read authresp.json file
 	authRes, err := readAuthRespFile()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("\033[33mExisting auth token not found, proceeding with login...\033[0m")
-			err := Login(develMode)
-			if err != nil {
-				return fmt.Errorf("\033[31m%v\033[0m", err)
+			fmt.Println("\033[33mExisting auth token not found. Proceeding with login...\033[0m")
+			if loginErr := Login(develMode); loginErr != nil {
+				return fmt.Errorf("\033[31mLogin failed: %v\033[0m", loginErr)
 			}
 			return nil
-		} else {
-			return fmt.Errorf("\033[31m%v\033[0m", err)
 		}
+		return fmt.Errorf("\033[31mError reading auth response file: %v\033[0m", err)
 	}
 
-	// check access_token
-	isAccessTokenExpired := checkAccessTokenExpiration(authRes)
-	if isAccessTokenExpired {
-		// check refresh token expiry
-		isRefreshTokenExpired := checkRefreshTokenExpiration(authRes)
-		if isRefreshTokenExpired {
-			fmt.Println("\033[31mDoing login again....\033[0m")
-			err := Login(develMode)
-			if err != nil {
-				return fmt.Errorf("\033[31m%v\033[0m", err)
+	// Check if access token is expired
+	if checkAccessTokenExpiration(authRes) {
+		// If access token expired, check refresh token expiration
+		if checkRefreshTokenExpiration(authRes) {
+			fmt.Println("\033[31mBoth tokens expired. Logging in again...\033[0m")
+			if loginErr := Login(develMode); loginErr != nil {
+				return fmt.Errorf("\033[31mLogin failed: %v\033[0m", loginErr)
 			}
-			return fmt.Errorf("\033[31mboth access_token and refresh token were expired, please activate again\033[0m")
 		} else {
-			// get new access_token using the existing refresh_token
-			err := refreshAccessToken(develMode, authRes)
-			if err != nil {
-				return fmt.Errorf("\033[31m%v\033[0m", err)
+			// Get new access token using existing refresh token
+			if refreshErr := refreshAccessToken(develMode, authRes); refreshErr != nil {
+				return fmt.Errorf("\033[31mError refreshing access token: %v\033[0m", refreshErr)
 			}
-			fmt.Println("\033[32mRefreshed access token\033[0m")
+			fmt.Println("\033[32mAccess token refreshed successfully.\033[0m")
 		}
 	}
 

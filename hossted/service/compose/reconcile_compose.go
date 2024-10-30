@@ -40,6 +40,7 @@ func ReconcileCompose(osInfo OsInfo, enableMonitoring string) error {
 		appFilePath,
 		list,
 		osInfo.OsUUID,
+		osInfo.AppUUID,
 		osInfo.EmailID,
 		enableMonitoring,
 		osInfo.ProjectName)
@@ -106,20 +107,18 @@ func writeFile(filePath string, data []byte) error {
 
 }
 
-func setClusterInfo(osFilePath string) (string, error) {
+func getOSUUID() (string, error) {
 
-	osUUID, err := checkUUID(osFilePath)
-	if err != nil {
-		return "", err
-	}
-
-	if osUUID == "" {
+	ok, _ := isMarketplaceVM()
+	if ok {
+		osUUID, _ := getMarketplaceOSUUID()
+		fmt.Println("Found existing osUUID for marketplace VM: ", osUUID)
+		return osUUID, nil
+	} else {
 		osUUID := "D-" + uuid.NewString()
-		fmt.Println("Generating UUID for cluster: ", osUUID)
+		fmt.Println("Generating osUUID for VM: ", osUUID)
 		return osUUID, nil
 	}
-
-	return osUUID, nil
 }
 
 func checkUUID(osFilePath string) (string, error) {
@@ -142,7 +141,8 @@ func checkUUID(osFilePath string) (string, error) {
 func writeComposeRequest2File(
 	appFilePath string,
 	containerList []types.Container,
-	osUuid,
+	osUUID,
+	appUUID,
 	email,
 	enableMonitoring,
 	projectName string) (bool, error) {
@@ -150,7 +150,8 @@ func writeComposeRequest2File(
 	appRequest, isComposeStateChange, err := prepareComposeRequest(
 		appFilePath,
 		containerList,
-		osUuid,
+		osUUID,
+		appUUID,
 		email,
 		enableMonitoring,
 		projectName,
@@ -382,7 +383,8 @@ func getUniqueComposeProjects(containerList []types.Container) (map[string]bool,
 func prepareComposeRequest(
 	appFilePath string,
 	containerList []types.Container,
-	osUuid,
+	osUUID,
+	appUUID,
 	email,
 	enableMonitoring,
 	projectName string) (map[string]AppRequest, bool, error) {
@@ -489,11 +491,9 @@ func prepareComposeRequest(
 				isComposeStateChange = true
 			}
 		} else {
-			// create AppAPIInfo
-			appUUID := "A-" + uuid.NewString()
 			appAPIInfo := AppAPIInfo{
 				AppUUID: appUUID,
-				OsUUID:  osUuid,
+				OsUUID:  osUUID,
 				EmailID: email,
 			}
 
@@ -550,7 +550,7 @@ func prepareComposeRequest(
 		}
 	}
 
-	runMonitoringCompose(enableMonitoring, osUuid, appsData[projectName].AppAPIInfo.AppUUID)
+	runMonitoringCompose(enableMonitoring, osUUID, appUUID)
 	return appsData, isComposeStateChange, nil
 }
 
@@ -727,4 +727,45 @@ func getProjectName() (string, error) {
 		return "", nil
 	}
 	return "", nil
+}
+
+func isMarketplaceVM() (bool, error) {
+	path, err := getSoftwarePath()
+	if err != nil {
+		return false, err
+	}
+	return path == "/opt/hossted/run/software.txt", nil
+}
+
+func getMarketplaceOSUUID() (string, error) {
+	path := "/opt/hossted/run/uuid.txt"
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("error reading UUID file: %w", err)
+	}
+
+	uuid := strings.TrimSpace(string(data))
+	return uuid, nil
+}
+
+func getMarketplaceAppUUID(projectName string) (string, error) {
+
+	ok, err := isMarketplaceVM()
+	if err != nil {
+		return "", err
+	}
+	if ok {
+		path := "/opt/" + projectName + "/hossted/uuid.txt"
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", fmt.Errorf("error reading UUID file: %w", err)
+		}
+
+		uuid := strings.TrimSpace(string(data))
+		fmt.Println("Found existing appUUID for marketplace VM: ", uuid)
+		return uuid, nil
+	} else {
+		fmt.Println("Generating appUUID for marketplace VM")
+		return "A-" + uuid.NewString(), nil
+	}
 }

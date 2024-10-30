@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -660,7 +659,7 @@ func RepoAdd(name, url string) {
 		log.Fatal(err)
 	}
 
-	b, err := ioutil.ReadFile(repoFile)
+	b, err := os.ReadFile(repoFile)
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
