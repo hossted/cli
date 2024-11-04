@@ -1,12 +1,15 @@
 package compose
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/hossted/cli/hossted/service/common"
@@ -132,7 +135,7 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 
 	yamlData, err := yaml.Marshal(osInfo)
 	if err != nil {
-		return fmt.Errorf("error in YAML marshaling: %s\n", err)
+		return fmt.Errorf("error in YAML marshaling: %s", err)
 	}
 
 	err = writeFile(osFilePath, yamlData)
@@ -143,6 +146,17 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 	enableMonitoring, err := askPromptsToInstall(develMode)
 	if err != nil {
 		return err
+	}
+
+	ok, err := isMarketplaceVM()
+	if err != nil {
+		return fmt.Errorf("isMarketplaceVM func errored: %v", err)
+	}
+	if ok {
+		if err := submitPatchRequest(osInfo); err != nil {
+			return fmt.Errorf("error in patch request: %v", err)
+		}
+		fmt.Println("Successfully submitted PATCH request if marketplace VM")
 	}
 
 	err = ReconcileCompose(osInfo, enableMonitoring)
@@ -271,6 +285,49 @@ func GetClusterInfo() (OsInfo, error) {
 	}
 
 	return osInfo, nil
+}
+
+func submitPatchRequest(osInfo OsInfo) error {
+
+	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
+
+	// Body of the request
+	body := map[string]interface{}{
+		"uuid": osInfo.OsUUID,
+		"organization": map[string]string{
+			"organization_id": osInfo.OrgID,
+		},
+	}
+
+	// Serialize body to JSON
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	// Create HTTP client and PATCH request
+	client := &http.Client{Timeout: 60 * time.Second}
+	req, err := http.NewRequest(http.MethodPatch, composeUrl, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return fmt.Errorf("failed to create PATCH request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute PATCH request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if the request was successful
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("PATCH request failed with status: %s", resp.Status)
+	}
+
+	fmt.Println("PATCH request successful")
+
+	return nil
 }
 
 // provide prompt to enable monitoring and vulnerability scan
