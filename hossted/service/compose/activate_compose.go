@@ -1,7 +1,6 @@
 package compose
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/hossted/cli/hossted/service/common"
@@ -305,27 +303,10 @@ func submitPatchRequest(osInfo OsInfo) error {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
 
-	// Create HTTP client and PATCH request
-	client := &http.Client{Timeout: 60 * time.Second}
-	req, err := http.NewRequest(http.MethodPatch, composeUrl, bytes.NewBuffer(jsonBody))
+	err = common.HttpRequest(http.MethodPatch, composeUrl, osInfo.Token, jsonBody)
 	if err != nil {
-		return fmt.Errorf("failed to create PATCH request: %v", err)
+		return fmt.Errorf("error activating compose for marketplace %v", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute PATCH request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Check if the request was successful
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("PATCH request failed with status: %s", resp.Status)
-	}
-
-	fmt.Println("PATCH request successful")
 
 	return nil
 }
