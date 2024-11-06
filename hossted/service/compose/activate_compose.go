@@ -146,17 +146,6 @@ func ActivateCompose(composeFilePath string, develMode bool) error {
 		return err
 	}
 
-	ok, err := isMarketplaceVM()
-	if err != nil {
-		return fmt.Errorf("isMarketplaceVM func errored: %v", err)
-	}
-	if ok {
-		if err := submitPatchRequest(osInfo); err != nil {
-			return fmt.Errorf("error in patch request: %v", err)
-		}
-		fmt.Println("Successfully submitted PATCH request if marketplace VM")
-	}
-
 	err = ReconcileCompose(osInfo, enableMonitoring)
 	if err != nil {
 		return err
@@ -290,10 +279,16 @@ func submitPatchRequest(osInfo OsInfo) error {
 	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
 
 	// Body of the request
+
 	body := map[string]interface{}{
-		"uuid": osInfo.OsUUID,
-		"organization": map[string]string{
-			"organization_id": osInfo.OrgID,
+		"uuid":   osInfo.AppUUID,
+		"osuuid": osInfo.OsUUID,
+		"org_id": osInfo.OrgID,
+		"type":   "vm",
+		"options_state": map[string]bool{
+			"monitoring": true,
+			"logging":    true,
+			"cve_scan":   false,
 		},
 	}
 
@@ -302,6 +297,8 @@ func submitPatchRequest(osInfo OsInfo) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
+
+	fmt.Println(string(jsonBody), http.MethodPatch, composeUrl)
 
 	err = common.HttpRequest(http.MethodPatch, composeUrl, osInfo.Token, jsonBody)
 	if err != nil {

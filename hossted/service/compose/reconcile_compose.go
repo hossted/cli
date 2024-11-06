@@ -255,69 +255,82 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 		return err
 	}
 
-	for appName, compose := range data {
-		newReq := request{
-			UUID:       compose.AppAPIInfo.AppUUID,
-			OsUUID:     compose.AppAPIInfo.OsUUID,
-			Email:      compose.AppAPIInfo.EmailID,
-			AccessInfo: *access_info,
-			OrgID:      orgID,
-			Type:       "compose",
-			Product:    appName,
-			CPUNum:     cpu,
-			Memory:     mem,
-			OptionsState: optionsState{
-				Monitoring: true,
-				Logging:    true,
-				CVEScan:    true,
-			},
-			ComposeFile: compose.AppInfo.ComposeFile,
-		}
-
-		body, err := json.Marshal(newReq)
-		if err != nil {
-			return err
-		}
-
-		err = common.HttpRequest("POST", composeUrl, token, body)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
+	ok, err := isMarketplaceVM()
+	if err != nil {
+		return fmt.Errorf("isMarketplaceVM func errored: %v", err)
 	}
+	if ok {
+		if err := submitPatchRequest(osInfo); err != nil {
+			return fmt.Errorf("error in patch request: %v", err)
+		}
+		fmt.Println("Successfully submitted PATCH request if marketplace VM")
+	} else {
 
-	for appName, info := range data {
-		for _, ci := range info.AppInfo.DockerInstance {
-
-			newDI := dockerInstance{
-				DockerID:   ci.DockerID,
-				InstanceID: info.AppAPIInfo.AppUUID,
-				ImageID:    ci.ImageID,
-				Ports:      ci.Ports,
-				Status:     ci.Status,
-				Size:       ci.Size,
-				Names:      ci.Names,
-				Networks:   ci.Networks,
-				Image:      ci.Image,
-				Mounts:     ci.Mounts,
-				Tag:        ci.Tag,
-				CreatedAt:  ci.CreatedAt,
+		for appName, compose := range data {
+			newReq := request{
+				UUID:       compose.AppAPIInfo.AppUUID,
+				OsUUID:     compose.AppAPIInfo.OsUUID,
+				Email:      compose.AppAPIInfo.EmailID,
+				AccessInfo: *access_info,
+				OrgID:      orgID,
+				Type:       "compose",
+				Product:    appName,
+				CPUNum:     cpu,
+				Memory:     mem,
+				OptionsState: optionsState{
+					Monitoring: true,
+					Logging:    true,
+					CVEScan:    true,
+				},
+				ComposeFile: compose.AppInfo.ComposeFile,
 			}
-			newDIBody, err := json.Marshal(newDI)
+
+			body, err := json.Marshal(newReq)
 			if err != nil {
 				return err
 			}
 
-			err = common.HttpRequest("POST", containersUrl, token, newDIBody)
+			err = common.HttpRequest("POST", composeUrl, token, body)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("Successfully registered docker info, appName:[%s], dockerName:[%s], appID:[%s]\n", appName, ci.Names, info.AppAPIInfo.AppUUID)
+			fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 		}
 	}
 
+	if ok {
+		for appName, info := range data {
+			for _, ci := range info.AppInfo.DockerInstance {
+
+				newDI := dockerInstance{
+					DockerID:   ci.DockerID,
+					InstanceID: osInfo.OsUUID, // H-
+					ImageID:    ci.ImageID,
+					Ports:      ci.Ports,
+					Status:     ci.Status,
+					Size:       ci.Size,
+					Names:      ci.Names,
+					Networks:   ci.Networks,
+					Image:      ci.Image,
+					Mounts:     ci.Mounts,
+					Tag:        ci.Tag,
+					CreatedAt:  ci.CreatedAt,
+				}
+				newDIBody, err := json.Marshal(newDI)
+				if err != nil {
+					return err
+				}
+
+				err = common.HttpRequest("POST", containersUrl, token, newDIBody)
+				if err != nil {
+					return err
+				}
+
+				fmt.Printf("Successfully registered docker info, appName:[%s], dockerName:[%s], appID:[%s]\n", appName, ci.Names, info.AppAPIInfo.AppUUID)
+			}
+		}
+	}
 	return nil
 }
 
