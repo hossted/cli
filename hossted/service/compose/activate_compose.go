@@ -1,7 +1,6 @@
 package compose
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -274,39 +273,39 @@ func GetClusterInfo() (OsInfo, error) {
 	return osInfo, nil
 }
 
-func submitPatchRequest(osInfo OsInfo) error {
+// func submitPatchRequest(osInfo OsInfo) error {
 
-	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
+// 	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
 
-	// Body of the request
+// 	// Body of the request
 
-	body := map[string]interface{}{
-		"uuid":   osInfo.AppUUID,
-		"osuuid": osInfo.OsUUID,
-		"org_id": osInfo.OrgID,
-		"type":   "vm",
-		"options_state": map[string]bool{
-			"monitoring": true,
-			"logging":    true,
-			"cve_scan":   false,
-		},
-	}
+// 	body := map[string]interface{}{
+// 		"uuid":   osInfo.AppUUID,
+// 		"osuuid": osInfo.OsUUID,
+// 		"org_id": osInfo.OrgID,
+// 		"type":   "vm",
+// 		"options_state": map[string]bool{
+// 			"monitoring": true,
+// 			"logging":    true,
+// 			"cve_scan":   false,
+// 		},
+// 	}
 
-	// Serialize body to JSON
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %v", err)
-	}
+// 	// Serialize body to JSON
+// 	jsonBody, err := json.Marshal(body)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to marshal JSON: %v", err)
+// 	}
 
-	fmt.Println(string(jsonBody), http.MethodPatch, composeUrl)
+// 	fmt.Println(string(jsonBody), http.MethodPatch, composeUrl)
 
-	err = common.HttpRequest(http.MethodPatch, composeUrl, osInfo.Token, jsonBody)
-	if err != nil {
-		return fmt.Errorf("error activating compose for marketplace %v", err)
-	}
+// 	err = common.HttpRequest(http.MethodPatch, composeUrl, osInfo.Token, jsonBody)
+// 	if err != nil {
+// 		return fmt.Errorf("error activating compose for marketplace %v", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // provide prompt to enable monitoring and vulnerability scan
 
