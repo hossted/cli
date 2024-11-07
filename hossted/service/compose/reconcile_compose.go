@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -196,14 +197,14 @@ type request struct {
 	UUID         string       `json:"uuid"`
 	OsUUID       string       `json:"osuuid"`
 	OrgID        string       `json:"org_id"`
-	Email        string       `json:"email"`
-	Type         string       `json:"type"`
-	Product      string       `json:"product"`
-	CPUNum       string       `json:"cpunum"`
-	Memory       string       `json:"memory"`
+	Email        string       `json:"email,omitempty"`
+	Type         string       `json:"type,omitempty"`
+	Product      string       `json:"product,omitempty"`
+	CPUNum       string       `json:"cpunum,omitempty"`
+	Memory       string       `json:"memory,omitempty"`
 	OptionsState optionsState `json:"options_state"`
-	ComposeFile  string       `json:"compose_file"`
-	AccessInfo   AccessInfo   `json:"access_info"`
+	ComposeFile  string       `json:"compose_file,omitempty"`
+	AccessInfo   AccessInfo   `json:"access_info,omitempty"`
 }
 
 type dockerInstance struct {
@@ -225,24 +226,21 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 	hosstedAPIUrl := osInfo.HosstedApiUrl
 	orgID := osInfo.OrgID
 	token := osInfo.Token
+
 	composeInfo, err := readFile(appFilePath)
 	if err != nil {
 		return err
 	}
-
-	composeUrl := hosstedAPIUrl + "/compose/hosts"
-	containersUrl := hosstedAPIUrl + "/compose/containers"
 
 	projectName, err := getProjectName()
 	if err != nil {
 		return err
 	}
 
-	access_info := getAccessInfo("/opt/" + projectName + "/.env")
+	accessInfo := getAccessInfo("/opt/" + projectName + "/.env")
 
 	var data map[string]AppRequest
-	err = json.Unmarshal(composeInfo, &data)
-	if err != nil {
+	if err = json.Unmarshal(composeInfo, &data); err != nil {
 		return err
 	}
 
@@ -255,12 +253,33 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 		return err
 	}
 
+	isMarketplace, err := isMarketplaceVM()
+	if err != nil {
+		return fmt.Errorf("isMarketplaceVM func errored: %v", err)
+	}
+
+	if isMarketplace {
+		if err = submitPatchRequest(osInfo, data, *accessInfo, cpu, mem); err != nil {
+			return fmt.Errorf("error in patch request: %v", err)
+		}
+		fmt.Println("Successfully submitted PATCH request if marketplace VM")
+	} else {
+		if err = registerApplications(data, osInfo, *accessInfo, cpu, mem, orgID, token, hosstedAPIUrl+"/compose/hosts"); err != nil {
+			return err
+		}
+	}
+
+	return registerDockerInstances(data, osInfo, token, hosstedAPIUrl+"/compose/containers", isMarketplace)
+}
+
+// registerApplications registers all applications with the specified API URL.
+func registerApplications(data map[string]AppRequest, osInfo OsInfo, accessInfo AccessInfo, cpu, mem, orgID, token, composeUrl string) error {
 	for appName, compose := range data {
 		newReq := request{
 			UUID:       compose.AppAPIInfo.AppUUID,
 			OsUUID:     compose.AppAPIInfo.OsUUID,
 			Email:      compose.AppAPIInfo.EmailID,
-			AccessInfo: *access_info,
+			AccessInfo: accessInfo,
 			OrgID:      orgID,
 			Type:       "compose",
 			Product:    appName,
@@ -274,25 +293,25 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 			ComposeFile: compose.AppInfo.ComposeFile,
 		}
 
-		body, err := json.Marshal(newReq)
-		if err != nil {
+		if err := sendRequest("POST", composeUrl, token, newReq); err != nil {
 			return err
 		}
-
-		err = common.HttpRequest("POST", composeUrl, token, body)
-		if err != nil {
-			return err
-		}
-
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
 	}
+	return nil
+}
 
+// registerDockerInstances registers all docker instances based on whether it is a marketplace VM.
+func registerDockerInstances(data map[string]AppRequest, osInfo OsInfo, token, containersUrl string, isMarketplace bool) error {
 	for appName, info := range data {
 		for _, ci := range info.AppInfo.DockerInstance {
-
+			instanceID := osInfo.AppUUID
+			if isMarketplace {
+				instanceID = osInfo.OsUUID
+			}
 			newDI := dockerInstance{
 				DockerID:   ci.DockerID,
-				InstanceID: info.AppAPIInfo.AppUUID,
+				InstanceID: instanceID,
 				ImageID:    ci.ImageID,
 				Ports:      ci.Ports,
 				Status:     ci.Status,
@@ -304,18 +323,57 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 				Tag:        ci.Tag,
 				CreatedAt:  ci.CreatedAt,
 			}
-			newDIBody, err := json.Marshal(newDI)
-			if err != nil {
-				return err
-			}
 
-			err = common.HttpRequest("POST", containersUrl, token, newDIBody)
-			if err != nil {
+			if err := sendRequest("POST", containersUrl, token, newDI); err != nil {
 				return err
 			}
 
 			fmt.Printf("Successfully registered docker info, appName:[%s], dockerName:[%s], appID:[%s]\n", appName, ci.Names, info.AppAPIInfo.AppUUID)
 		}
+	}
+	return nil
+}
+
+// submitPatchRequest sends a PATCH request with VM info for marketplace setups.
+func submitPatchRequest(osInfo OsInfo, compose map[string]AppRequest, accessInfo AccessInfo, cpu, mem string) error {
+	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
+
+	var composeFile, applicationName string
+	for appName, appReq := range compose {
+		composeFile = appReq.AppInfo.ComposeFile
+		applicationName = appName
+	}
+
+	newReq := request{
+		UUID:       osInfo.AppUUID,
+		OsUUID:     osInfo.OsUUID,
+		AccessInfo: accessInfo,
+		OrgID:      osInfo.OrgID,
+		Type:       "vm",
+		Product:    applicationName,
+		CPUNum:     cpu,
+		Memory:     mem,
+		OptionsState: optionsState{
+			Monitoring: true,
+			Logging:    true,
+			CVEScan:    false,
+		},
+		ComposeFile: composeFile,
+	}
+
+	return sendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
+}
+
+// sendRequest handles HTTP requests for a given method, URL, token, and request body.
+func sendRequest(method, url, token string, reqBody interface{}) error {
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	err = common.HttpRequest(method, url, token, body)
+	if err != nil {
+		return fmt.Errorf("error in %s request to %s: %v", method, url, err)
 	}
 
 	return nil
@@ -592,7 +650,6 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 		// Replace the UUID placeholder with the actual UUID
 		configStr := string(configData)
 
-		fmt.Println(osUUID, appUUID)
 		configStr = strings.Replace(configStr, "${UUID}", fmt.Sprintf("\"%s\"", osUUID), -1)
 		configStr = strings.Replace(configStr, "${APP_UUID}", fmt.Sprintf("\"%s\"", appUUID), -1)
 
