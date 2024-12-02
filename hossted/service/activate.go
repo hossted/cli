@@ -55,13 +55,19 @@ const (
 var AUTH_TOKEN = common.HOSSTED_AUTH_TOKEN
 
 const (
-	init_activation_started = "_HSTD_ACTIVATION_STARTED"
+	activation_started      = "_HSTD_ACTIVATION_STARTED"
 	init_operator           = "_HSTD_INIT_OPERATOR"
+	init_operator_success   = "_HSTD_INIT_OPERATOR_SUCCESS"
+	init_operator_fail      = "_HSTD_INIT_OPERATOR_FAIL"
 	init_cve                = "_HSTD_INIT_CVE"
+	init_cve_success        = "_HSTD_INIT_CVE_SUCCESS"
+	init_cve_fail           = "_HSTD_INIT_CVE_FAIL"
 	init_monitoring         = "_HSTD_INIT_MONITORING"
+	init_monitoring_success = "_HSTD_INIT_MONITORING_SUCCESS"
 	deployed_operator       = "_HSTD_DEPLOYED_OPERATOR"
 	deployed_cve            = "_HSTD_DEPLOYED_CVE"
 	deployed_monitoring     = "_HSTD_DEPLOYED_MONITORING"
+	activation_complete     = "_HSTD_ACTIVATION_COMPLETE"
 )
 
 // ActivateK8s imports Kubernetes clusters.
@@ -89,7 +95,7 @@ func ActivateK8s(develMode, verbose bool) error {
 		return err
 	}
 
-	err = SendEvent("info", init_activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID, verbose)
+	err = SendEvent("info", activation_started, common.HOSSTED_AUTH_TOKEN, orgID, "", userID, verbose)
 	if err != nil {
 		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 	}
@@ -141,10 +147,6 @@ func ActivateK8s(develMode, verbose bool) error {
 			if err != nil {
 				return err
 			}
-			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID, verbose)
-			if err != nil {
-				return err
-			}
 		}
 
 		err = patchStopCR(releaseName)
@@ -156,14 +158,30 @@ func ActivateK8s(develMode, verbose bool) error {
 		return nil
 	}
 
-	err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID, verbose)
+	err = deployOperator(clusterName, "", orgID, tr.AccessToken, userID, develMode, verbose)
+	if err != nil {
+		_ = SendEvent("info", init_operator_fail, AUTH_TOKEN, orgID, "", userID, verbose)
+		return err
+	}
+
+	err = SendEvent("info", init_operator_success, AUTH_TOKEN, orgID, "", userID, verbose)
 	if err != nil {
 		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 	}
 
-	err = deployOperator(clusterName, "", orgID, tr.AccessToken, userID, develMode, verbose)
+	err = SendEvent("info", init_monitoring_success, AUTH_TOKEN, orgID, "", userID, verbose)
 	if err != nil {
-		return err
+		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
+	}
+
+	err = SendEvent("info", init_cve_success, AUTH_TOKEN, orgID, "", userID, verbose)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = SendEvent("info", activation_complete, AUTH_TOKEN, orgID, "", userID, verbose)
+	if err != nil {
+		fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 	}
 
 	return nil
@@ -615,18 +633,28 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode, 
 			bar.Add(1)
 		}
 
+		err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID, verbose)
+		if err != nil {
+			fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
+		}
+
+		err = SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID, verbose)
+		if err != nil {
+			fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
+		}
+
 		InstallChart(hosstedOperatorReleaseName, "hossted", "hossted-operator", args)
 
 		//------------------------------ Add Events ----------------------------------
-		clusterUUID, err := getClusterUUIDPolling()
-		if err != nil {
-			return err
-		}
+		// clusterUUID, err := getClusterUUIDPolling()
+		// if err != nil {
+		// 	return err
+		// }
 
-		err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID, verbose)
-		if err != nil {
-			return err
-		}
+		// err = addEvents(AUTH_TOKEN, orgID, clusterUUID, userID, verbose)
+		// if err != nil {
+		// 	return err
+		// }
 
 		fmt.Println(green("Success: "), "Hossted Platform components deployed")
 	}
