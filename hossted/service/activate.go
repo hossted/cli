@@ -138,20 +138,12 @@ func ActivateK8s(develMode, verbose bool) error {
 
 		if cveEnabled == "true" {
 			fmt.Println("\033[32mEnabled CVE Scan:\033[0m", cveEnabled) // Green for CVE scan
-			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID, verbose)
-			if err != nil {
-				fmt.Println(err)
-			}
 			installCve()
 		}
 
 		if monitoringEnabled == "true" || loggingEnabled == "true" || cveEnabled == "true" || ingressEnabled == "true" {
 			fmt.Println("\033[33mPatching 'hossted-operator-cr' CR\033[0m") // Yellow for patching
 			err = patchCR(monitoringEnabled, loggingEnabled, cveEnabled, ingressEnabled, releaseName)
-			if err != nil {
-				return err
-			}
-			err := SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID, verbose)
 			if err != nil {
 				return err
 			}
@@ -574,6 +566,10 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode, 
 
 		if cveEnabled == "true" {
 			fmt.Println("Enabled CVE Scan:", green(cveEnabled))
+			err = SendEvent("info", init_cve, AUTH_TOKEN, orgID, "", userID, verbose)
+			if err != nil {
+				fmt.Println(err)
+			}
 			installCve()
 		}
 
@@ -638,6 +634,11 @@ func deployOperator(clusterName, emailID, orgID, JWT, userID string, develMode, 
 		}
 
 		err = SendEvent("info", init_operator, AUTH_TOKEN, orgID, "", userID, verbose)
+		if err != nil {
+			fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
+		}
+
+		err = SendEvent("info", init_monitoring, AUTH_TOKEN, orgID, "", userID, verbose)
 		if err != nil {
 			fmt.Printf("\033[31mError sending event: %v\033[0m\n", err) // Red for error message
 		}
