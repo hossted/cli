@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -213,7 +214,7 @@ type dockerInstance struct {
 	ImageID    string      `json:"image_id"`
 	Ports      interface{} `json:"ports"`
 	Status     string      `json:"status"`
-	Size       int64       `json:"size"`
+	Size       string      `json:"size"`
 	Names      []string    `json:"names"`
 	Mounts     interface{} `json:"mounts"`
 	Networks   string      `json:"networks"`
@@ -522,7 +523,7 @@ func prepareComposeRequest(
 					Image:     container.Image,
 					ImageID:   container.ImageID,
 					Ports:     container.Ports,
-					Size:      imagemeta.Size,
+					Size:      convertInt64ToString(imagemeta.Size),
 					Networks:  container.HostConfig.NetworkMode,
 					DockerID:  container.ID,
 					Mounts:    container.Mounts,
@@ -588,7 +589,7 @@ func prepareComposeRequest(
 					Image:     container.Image,
 					ImageID:   container.ImageID,
 					Ports:     container.Ports,
-					Size:      imagemeta.Size,
+					Size:      convertInt64ToString(imagemeta.Size),
 					Networks:  container.HostConfig.NetworkMode,
 					DockerID:  container.ID,
 					Mounts:    container.Mounts,
@@ -610,6 +611,11 @@ func prepareComposeRequest(
 
 	runMonitoringCompose(enableMonitoring, osUUID, appUUID)
 	return appsData, isComposeStateChange, nil
+}
+
+// convertInt64ToString converts an int64 value to a string
+func convertInt64ToString(value int64) string {
+	return strconv.FormatInt(value, 10) // Base 10 conversion
 }
 
 // GetCPUUsage returns the average CPU usage percentage as a formatted string
