@@ -88,6 +88,7 @@ loki.write "local" {
 		}	
   }
 }
+
 logging {
 	level = "debug"
 }

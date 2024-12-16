@@ -29,13 +29,9 @@ services:
       - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev|host|etc)($$|/)"'
     restart: unless-stopped
 
-  grafana_agent:
-    image: grafana/agent:v0.41.1
-    container_name: hossted_grafana_agent
-    entrypoint: |
-      /bin/bash -c '
-      AGENT_MODE=flow grafana-agent run /etc/config.river
-      '
+  grafana_alloy:
+    image: grafana/alloy:latest
+    container_name: hossted_grafana_alloy
     ports:
       - "12345:12345"
     volumes:
