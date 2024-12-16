@@ -48,7 +48,7 @@ const (
 	hosstedPlatformNamespace   = "hossted-platform"
 	hosstedOperatorReleaseName = "hossted-operator"
 	trivyOperatorReleaseName   = "trivy-operator"
-	grafanaAgentReleaseName    = "hossted-grafana-agent"
+	grafanaAgentReleaseName    = "hossted-grafana-alloy"
 	releaseName                = "hossted-operator-cr"
 )
 
