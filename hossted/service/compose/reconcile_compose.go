@@ -645,7 +645,7 @@ func getMemoryUsage() (string, error) {
 
 func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 	if monitoringEnable == "true" {
-		configFilePath := os.Getenv("HOME") + "/.hossted/compose/monitoring/config.river"
+		configFilePath := os.Getenv("HOME") + "/.hossted/compose/monitoring/config.alloy"
 
 		// Read the Grafana Agent config file
 		configData, err := os.ReadFile(configFilePath)
