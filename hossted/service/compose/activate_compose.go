@@ -199,7 +199,7 @@ func AddComposeFile(develMode bool) {
 	// Set your environment to "prod" or "dev"
 	branch := GetMode(develMode)
 	files := map[string]string{
-		fmt.Sprintf("https://raw.githubusercontent.com/hossted/cli/%s/compose/monitoring/config.river", branch):        "config.river",
+		fmt.Sprintf("https://raw.githubusercontent.com/hossted/cli/%s/compose/monitoring/config.alloy", branch):        "config.alloy",
 		fmt.Sprintf("https://raw.githubusercontent.com/hossted/cli/%s/compose/monitoring/docker-compose.yaml", branch): "docker-compose.yaml",
 	}
 
