@@ -4,7 +4,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     container_name: hossted_cadvisor
-    #ports:
+    # ports:
     #  - "8082:8080"
     volumes:
       - /:/rootfs:ro
@@ -17,7 +17,7 @@ services:
   node_exporter:
     image: prom/node-exporter:latest
     container_name: hossted_node_exporter
-    #ports:
+    # ports:
     #  - "9100:9100"
     volumes:
       - /proc:/host/proc:ro
@@ -35,6 +35,6 @@ services:
     ports:
       - "12345:12345"
     volumes:
-      - ./config.river:/etc/config.river
+      - ./config.alloy:/etc/alloy/config.alloy
       - /var/run/docker.sock:/var/run/docker.sock:ro      
     restart: unless-stopped
