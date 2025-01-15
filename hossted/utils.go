@@ -385,13 +385,19 @@ func PrettyPrint(i interface{}) string {
 func stopTraefik(appDir string) error {
 	fmt.Println("Stopping traefik...")
 
-	command := []string{"sudo docker compose down"}
-	err, _, stderr := Shell(appDir, command)
+	// Construct the docker compose down command
+	cmd := exec.Command("sudo", "docker", "compose", "down")
+	cmd.Dir = appDir // Set the working directory for the command
+
+	// Run the command and capture stdout and stderr
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("error stopping traefik: %v\nOutput: %s", err, string(output))
 	}
-	fmt.Println(trimOutput(stderr))
-	fmt.Println("traefik stopeed")
+
+	// Print the trimmed output for debugging
+	fmt.Println(string(output))
+	fmt.Println("Traefik stopped")
 	return nil
 }
 
