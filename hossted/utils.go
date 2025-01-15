@@ -394,15 +394,22 @@ func stopTraefik(appDir string) error {
 	fmt.Println("traefik stopeed")
 	return nil
 }
+
 func dockerUp(appDir string) error {
 	fmt.Println("Restarting service...")
 
-	command := []string{"sudo docker compose up -d"}
-	err, _, stderr := Shell(appDir, command)
+	// Construct the docker compose command
+	cmd := exec.Command("sudo", "docker", "compose", "up", "-d")
+	cmd.Dir = appDir // Set the working directory for the command
+
+	// Run the command and capture stdout and stderr
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("error running docker compose: %v\nOutput: %s", err, string(output))
 	}
-	fmt.Println(trimOutput(stderr))
+
+	// Print the trimmed output for debugging
+	fmt.Println(string(output))
 	return nil
 }
 
