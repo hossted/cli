@@ -588,7 +588,7 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 	user, err := user.Current()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%s", err.Error())
 	}
 
 	userName := user.Username
@@ -618,10 +618,10 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		return response, fmt.Errorf("Failed to parse JSON. %w", err)
+		return response, fmt.Errorf("failed to parse JSON. %w", err)
 	}
 
-	//fmt.Printf("%v \n", response.Message)
+	fmt.Printf("calling to activity log api %s\n", response.Message)
 	return response, nil
 
 }
