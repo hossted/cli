@@ -371,7 +371,7 @@ func writeProtected(path string, b []byte) error {
 func getAppFilePath(base, relative string) (string, error) {
 	path := filepath.Join(base, relative)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("File not exists. Please check. %w", err)
+		return "", fmt.Errorf("file not exists. please check. %w", err)
 	}
 	return path, nil
 }
@@ -612,7 +612,6 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 	resp, err := req.SendRequest()
 	if err != nil {
-		fmt.Println("err", err)
 		return response, err
 	}
 
@@ -621,7 +620,6 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 		return response, fmt.Errorf("failed to parse JSON. %w", err)
 	}
 
-	fmt.Printf("calling to activity log api %s\n", response.Message)
 	return response, nil
 
 }

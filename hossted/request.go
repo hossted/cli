@@ -63,5 +63,6 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 		return "", fmt.Errorf("HTTP Status is not 200. %s", string(body))
 	}
 
+	fmt.Println(string(body))
 	return string(body), nil
 }

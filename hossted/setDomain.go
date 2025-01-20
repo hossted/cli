@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -82,6 +81,12 @@ func SetDomain(env, app, domain string) error {
 		fmt.Println("Hossted Platform Domain set successfully")
 
 	} else {
+
+		err = CheckHosstedAuthFiles()
+		if err != nil {
+			fmt.Println("Please run hossted activate -t compose, to activate the vm")
+			os.Exit(1)
+		}
 		if !HasContainerRunning() {
 			fmt.Println("The application still in configuration")
 			os.Exit(0)
@@ -94,23 +99,18 @@ func SetDomain(env, app, domain string) error {
 			return fmt.Errorf("\n\n%w", err)
 		}
 
-		err = AddDomainToMotd(domain)
+		err = ChangeMOTD(domain)
 		if err != nil {
 			return err
 		}
 
 		check := verifyInputFormat(domain, "domain")
 		if !check {
-			return fmt.Errorf("Invalid domain input. Expecting domain name (e.g. example.com).\nInput - %s\n", domain)
+			return fmt.Errorf("invalid domain input. Expecting domain name (e.g. example.com). input - %s", domain)
 		}
 
-		// Get .env file and appDir
-		appConfig, err := config.GetAppConfig(app)
-		if err != nil {
-			return err
-		}
-		appDir := appConfig.AppPath
-		envPath, err := getAppFilePath(appConfig.AppPath, ".env")
+		appDir := "/opt/" + app
+		envPath, err := getAppFilePath(appDir, ".env")
 		if err != nil {
 			return err
 		}
@@ -154,40 +154,55 @@ func SetDomain(env, app, domain string) error {
 	return nil
 }
 
-// ChangeMOTD changes the content of the MOTD file, to match the set domain changes
-// TODO: print status
-// TODO: Allow domain to be something other than .com by changing the regex patten
 func ChangeMOTD(domain string) error {
-
 	filepath := "/etc/motd"
+
+	// Read the file
 	b, err := readProtected(filepath)
 	if err != nil {
-		return fmt.Errorf("Can't read the /etc/motd file. Please check - %s and contact administrator.\n%w\n", filepath, err)
+		return fmt.Errorf("unable to read the /etc/motd file. Please check %s and contact administrator: %w", filepath, err)
 	}
 	content := string(b)
 
-	// Currently only .com is supported. Looking for line like
-	// Your ^[[01;32mgitbucket^[[0m is available under ^[[01;34m http://3.215.23.221.c.hossted.com ^[[0m
-	re, err := regexp.Compile(`(.*available under\s*.*https?:\/\/)(.*\.com)(.*)`)
+	// Match and update any URL that starts with https:// followed by a domain
+	re := regexp.MustCompile(`https://[\w\.\-]+\.\w+`)
+	updatedContent := re.ReplaceAllString(content, fmt.Sprintf("https://%s", domain))
+
+	if updatedContent == content {
+		return errors.New("no matching pattern found in /etc/motd. Please ensure the content is formatted correctly")
+	}
+
+	// Write the updated content back to the file
+	err = writeProtected(filepath, []byte(updatedContent))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write to the /etc/motd file: %w", err)
 	}
 
-	matches := re.FindAllStringSubmatch(content, -1)
-	if len(matches) > 0 {
-		if len(matches[0]) == 4 {
-			new := matches[0][1] + domain + matches[0][3]
-			content = strings.Replace(content, matches[0][0], new, 1) // Replace the containing new with new string
-		}
-	} else {
-		return errors.New("No matching pattern in /etc/motd. Please check.\n")
-	}
+	return nil
+}
 
-	// Write back to file
-	err = writeProtected(filepath, []byte(content))
+// CheckHosstedAuthFiles checks if the files ~/.hossted/auth.json and ~/.hossted/authresp.json exist.
+func CheckHosstedAuthFiles() error {
+	// Get the home directory
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
+	// Define the file paths
+	authFilePath := filepath.Join(homeDir, ".hossted", "auth.json")
+	authRespFilePath := filepath.Join(homeDir, ".hossted", "authresp.json")
+
+	// Check if auth.json exists
+	if _, err := os.Stat(authFilePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %s does not exist", authFilePath)
+	}
+
+	// Check if authresp.json exists
+	if _, err := os.Stat(authRespFilePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %s does not exist", authRespFilePath)
+	}
+
+	// Both files exist
 	return nil
 }
