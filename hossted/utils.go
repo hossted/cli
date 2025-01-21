@@ -371,7 +371,7 @@ func writeProtected(path string, b []byte) error {
 func getAppFilePath(base, relative string) (string, error) {
 	path := filepath.Join(base, relative)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("File not exists. Please check. %w", err)
+		return "", fmt.Errorf("file not exists. please check. %w", err)
 	}
 	return path, nil
 }
@@ -385,24 +385,37 @@ func PrettyPrint(i interface{}) string {
 func stopTraefik(appDir string) error {
 	fmt.Println("Stopping traefik...")
 
-	command := []string{"sudo docker compose down"}
-	err, _, stderr := Shell(appDir, command)
+	// Construct the docker compose down command
+	cmd := exec.Command("sudo", "docker", "compose", "down")
+	cmd.Dir = appDir // Set the working directory for the command
+
+	// Run the command and capture stdout and stderr
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("error stopping traefik: %v\nOutput: %s", err, string(output))
 	}
-	fmt.Println(trimOutput(stderr))
-	fmt.Println("traefik stopeed")
+
+	// Print the trimmed output for debugging
+	fmt.Println(string(output))
+	fmt.Println("Traefik stopped")
 	return nil
 }
+
 func dockerUp(appDir string) error {
 	fmt.Println("Restarting service...")
 
-	command := []string{"sudo docker compose up -d"}
-	err, _, stderr := Shell(appDir, command)
+	// Construct the docker compose command
+	cmd := exec.Command("sudo", "docker", "compose", "up", "-d")
+	cmd.Dir = appDir // Set the working directory for the command
+
+	// Run the command and capture stdout and stderr
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("error running docker compose: %v\nOutput: %s", err, string(output))
 	}
-	fmt.Println(trimOutput(stderr))
+
+	// Print the trimmed output for debugging
+	fmt.Println(string(output))
 	return nil
 }
 
@@ -575,7 +588,7 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 	user, err := user.Current()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%s", err.Error())
 	}
 
 	userName := user.Username
@@ -599,16 +612,14 @@ func sendActivityLog(env, uuid, fullCommand, options, typeActivity string) (acti
 
 	resp, err := req.SendRequest()
 	if err != nil {
-		fmt.Println("err", err)
 		return response, err
 	}
 
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		return response, fmt.Errorf("Failed to parse JSON. %w", err)
+		return response, fmt.Errorf("failed to parse JSON. %w", err)
 	}
 
-	//fmt.Printf("%v \n", response.Message)
 	return response, nil
 
 }

@@ -18,7 +18,7 @@ func (c *Config) GetAppConfig(in string) (ConfigApplication, error) {
 	}
 	// Check if any matched
 	if ca.AppName == "" {
-		return ca, fmt.Errorf("No Config found for app - %s", in)
+		return ca, fmt.Errorf("no config found for app - %s", in)
 	}
 	return ca, nil
 }

@@ -61,10 +61,6 @@ func HttpRequest(method, url, token string, body []byte) error {
 		Message interface{} `json:"message"`
 	}
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("rrror sending event, errcode: %d", resp.StatusCode)
-	}
-
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -74,6 +70,10 @@ func HttpRequest(method, url, token string, body []byte) error {
 
 	if err := json.Unmarshal(respBody, &apiResponse); err != nil {
 		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("error sending event, errcode: %d, msg: %s", resp.StatusCode, apiResponse.Message)
 	}
 
 	if !apiResponse.Success {
