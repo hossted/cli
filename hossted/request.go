@@ -3,7 +3,7 @@ package hossted
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -54,7 +54,7 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -63,6 +63,5 @@ func (h *HosstedRequest) SendRequest() (string, error) {
 		return "", fmt.Errorf("HTTP Status is not 200. %s", string(body))
 	}
 
-	fmt.Println(string(body))
 	return string(body), nil
 }
