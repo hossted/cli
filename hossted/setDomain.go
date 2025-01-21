@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
+	"github.com/hossted/cli/hossted/service/compose"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -149,9 +152,48 @@ func SetDomain(env, app, domain string) error {
 		typeActivity := "set_domain"
 
 		sendActivityLog(env, uuid, fullCommand, options, typeActivity)
+
+		osInfo, err := compose.GetClusterInfo()
+		if err != nil {
+			return fmt.Errorf("error getting cluster info %s", err)
+		}
+
+		projectName, err := getProjectName()
+		if err != nil {
+			return fmt.Errorf("error getting project name %s", err)
+		}
+
+		accessInfo := compose.GetAccessInfo("/opt/" + projectName + "/.env")
+
+		err = submitPatchRequest(osInfo, *accessInfo)
+		if err != nil {
+			return fmt.Errorf("error submitting patch request %v", err)
+		}
+
 		return nil
 	}
 	return nil
+}
+
+// submitPatchRequest sends a PATCH request with VM info for marketplace setups.
+func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) error {
+	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
+
+	type req struct {
+		UUID       string             `json:"uuid"`        // Application UUID
+		OsUUID     string             `json:"osuuid"`      // Operating System UUID
+		AccessInfo compose.AccessInfo `json:"access_info"` // Access information for the VM
+		Type       string             `json:"type"`        // Type of the request, e.g., "vm"
+	}
+
+	newReq := req{
+		UUID:       osInfo.AppUUID,
+		OsUUID:     osInfo.OsUUID,
+		AccessInfo: accessInfo,
+		Type:       "vm",
+	}
+
+	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
 }
 
 func ChangeMOTD(domain string) error {
@@ -205,4 +247,48 @@ func CheckHosstedAuthFiles() error {
 
 	// Both files exist
 	return nil
+}
+
+func getSoftwarePath() (string, error) {
+	path := "/opt/hossted/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", nil
+	} else {
+		return path, nil
+	}
+
+}
+
+func getProjectName() (string, error) {
+	path, err := getSoftwarePath()
+	if err != nil {
+		fmt.Println("Error getting software path", err)
+	}
+
+	// its a market place VM, access info object will exist
+	if path == "/opt/hossted/run/software.txt" {
+		// read the file in this path
+		// file will have this convention - Linnovate-AWS-keycloak
+		// capture the last word ie keycloak in this case.
+		// and use this last work ie instead of osInfo.ProjectName
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			return "", err
+		}
+
+		// The file will have the convention Linnovate-AWS-keycloak
+		// Capture the last word (i.e., keycloak in this case)
+		softwareName := strings.TrimSpace(string(data))
+		words := strings.Split(softwareName, "-")
+		if len(words) > 0 {
+			projectName := words[len(words)-1]
+			// Use this last word (i.e., keycloak) instead of osInfo.ProjectName
+			return projectName, nil
+		}
+	} else if path == "" {
+		fmt.Println("Contact Hossted support to add Access Info object")
+		return "", nil
+	}
+	return "", nil
 }

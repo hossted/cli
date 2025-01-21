@@ -178,10 +178,10 @@ func writeComposeRequest2File(
 	return isComposeStateChange, nil
 }
 
-type optionsState struct {
-	Monitoring bool `json:"monitoring"`
-	Logging    bool `json:"logging"`
-	CVEScan    bool `json:"cve_scan"`
+type OptionsState struct {
+	Monitoring bool `json:"monitoring,omitempty"`
+	Logging    bool `json:"logging,omitempty"`
+	CVEScan    bool `json:"cve_scan,omitempty"`
 }
 
 type URLInfo struct {
@@ -194,7 +194,7 @@ type AccessInfo struct {
 	URLs []URLInfo `json:"urls"`
 }
 
-type request struct {
+type Request struct {
 	UUID         string       `json:"uuid"`
 	OsUUID       string       `json:"osuuid"`
 	OrgID        string       `json:"org_id"`
@@ -203,7 +203,7 @@ type request struct {
 	Product      string       `json:"product,omitempty"`
 	CPUNum       string       `json:"cpunum,omitempty"`
 	Memory       string       `json:"memory,omitempty"`
-	OptionsState optionsState `json:"options_state"`
+	OptionsState OptionsState `json:"options_state,omitempty"`
 	ComposeFile  string       `json:"compose_file,omitempty"`
 	AccessInfo   AccessInfo   `json:"access_info,omitempty"`
 }
@@ -238,7 +238,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 		return err
 	}
 
-	accessInfo := getAccessInfo("/opt/" + projectName + "/.env")
+	accessInfo := GetAccessInfo("/opt/" + projectName + "/.env")
 
 	var data map[string]AppRequest
 	if err = json.Unmarshal(composeInfo, &data); err != nil {
@@ -276,7 +276,7 @@ func sendComposeInfo(appFilePath string, osInfo OsInfo) error {
 // registerApplications registers all applications with the specified API URL.
 func registerApplications(data map[string]AppRequest, osInfo OsInfo, accessInfo AccessInfo, cpu, mem, orgID, token, composeUrl string) error {
 	for appName, compose := range data {
-		newReq := request{
+		newReq := Request{
 			UUID:       compose.AppAPIInfo.AppUUID,
 			OsUUID:     compose.AppAPIInfo.OsUUID,
 			Email:      compose.AppAPIInfo.EmailID,
@@ -286,7 +286,7 @@ func registerApplications(data map[string]AppRequest, osInfo OsInfo, accessInfo 
 			Product:    appName,
 			CPUNum:     cpu,
 			Memory:     mem,
-			OptionsState: optionsState{
+			OptionsState: OptionsState{
 				Monitoring: true,
 				Logging:    true,
 				CVEScan:    true,
@@ -294,7 +294,7 @@ func registerApplications(data map[string]AppRequest, osInfo OsInfo, accessInfo 
 			ComposeFile: compose.AppInfo.ComposeFile,
 		}
 
-		if err := sendRequest("POST", composeUrl, token, newReq); err != nil {
+		if err := SendRequest("POST", composeUrl, token, newReq); err != nil {
 			return err
 		}
 		fmt.Printf("Successfully registered app [%s] with appID [%s]\n", appName, compose.AppAPIInfo.AppUUID)
@@ -325,7 +325,7 @@ func registerDockerInstances(data map[string]AppRequest, osInfo OsInfo, token, c
 				CreatedAt:  ci.CreatedAt,
 			}
 
-			if err := sendRequest("POST", containersUrl, token, newDI); err != nil {
+			if err := SendRequest("POST", containersUrl, token, newDI); err != nil {
 				return err
 			}
 
@@ -345,7 +345,7 @@ func submitPatchRequest(osInfo OsInfo, compose map[string]AppRequest, accessInfo
 		applicationName = appName
 	}
 
-	newReq := request{
+	newReq := Request{
 		UUID:       osInfo.AppUUID,
 		OsUUID:     osInfo.OsUUID,
 		AccessInfo: accessInfo,
@@ -354,7 +354,7 @@ func submitPatchRequest(osInfo OsInfo, compose map[string]AppRequest, accessInfo
 		Product:    applicationName,
 		CPUNum:     cpu,
 		Memory:     mem,
-		OptionsState: optionsState{
+		OptionsState: OptionsState{
 			Monitoring: true,
 			Logging:    true,
 			CVEScan:    false,
@@ -362,11 +362,11 @@ func submitPatchRequest(osInfo OsInfo, compose map[string]AppRequest, accessInfo
 		ComposeFile: composeFile,
 	}
 
-	return sendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
+	return SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
 }
 
 // sendRequest handles HTTP requests for a given method, URL, token, and request body.
-func sendRequest(method, url, token string, reqBody interface{}) error {
+func SendRequest(method, url, token string, reqBody interface{}) error {
 	body, err := json.Marshal(reqBody)
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %v", err)
@@ -705,7 +705,7 @@ func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
 	return nil
 }
 
-func getAccessInfo(filepath string) *AccessInfo {
+func GetAccessInfo(filepath string) *AccessInfo {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return &AccessInfo{}
