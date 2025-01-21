@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/hossted/cli/hossted/service/compose"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -82,6 +84,12 @@ func SetDomain(env, app, domain string) error {
 		fmt.Println("Hossted Platform Domain set successfully")
 
 	} else {
+
+		err = CheckHosstedAuthFiles()
+		if err != nil {
+			fmt.Println("Please run hossted activate -t compose, to activate the vm")
+			os.Exit(1)
+		}
 		if !HasContainerRunning() {
 			fmt.Println("The application still in configuration")
 			os.Exit(0)
@@ -94,23 +102,18 @@ func SetDomain(env, app, domain string) error {
 			return fmt.Errorf("\n\n%w", err)
 		}
 
-		err = AddDomainToMotd(domain)
+		err = ChangeMOTD(domain)
 		if err != nil {
 			return err
 		}
 
 		check := verifyInputFormat(domain, "domain")
 		if !check {
-			return fmt.Errorf("Invalid domain input. Expecting domain name (e.g. example.com).\nInput - %s\n", domain)
+			return fmt.Errorf("invalid domain input. Expecting domain name (e.g. example.com). input - %s", domain)
 		}
 
-		// Get .env file and appDir
-		appConfig, err := config.GetAppConfig(app)
-		if err != nil {
-			return err
-		}
-		appDir := appConfig.AppPath
-		envPath, err := getAppFilePath(appConfig.AppPath, ".env")
+		appDir := "/opt/" + app
+		envPath, err := getAppFilePath(appDir, ".env")
 		if err != nil {
 			return err
 		}
@@ -149,45 +152,143 @@ func SetDomain(env, app, domain string) error {
 		typeActivity := "set_domain"
 
 		sendActivityLog(env, uuid, fullCommand, options, typeActivity)
+
+		osInfo, err := compose.GetClusterInfo()
+		if err != nil {
+			return fmt.Errorf("error getting cluster info %s", err)
+		}
+
+		projectName, err := getProjectName()
+		if err != nil {
+			return fmt.Errorf("error getting project name %s", err)
+		}
+
+		accessInfo := compose.GetAccessInfo("/opt/" + projectName + "/.env")
+
+		err = submitPatchRequest(osInfo, *accessInfo)
+		if err != nil {
+			return fmt.Errorf("error submitting patch request %v", err)
+		}
+
 		return nil
 	}
 	return nil
 }
 
-// ChangeMOTD changes the content of the MOTD file, to match the set domain changes
-// TODO: print status
-// TODO: Allow domain to be something other than .com by changing the regex patten
-func ChangeMOTD(domain string) error {
+// submitPatchRequest sends a PATCH request with VM info for marketplace setups.
+func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) error {
+	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
 
+	type req struct {
+		UUID       string             `json:"uuid"`        // Application UUID
+		OsUUID     string             `json:"osuuid"`      // Operating System UUID
+		AccessInfo compose.AccessInfo `json:"access_info"` // Access information for the VM
+		Type       string             `json:"type"`        // Type of the request, e.g., "vm"
+	}
+
+	newReq := req{
+		UUID:       osInfo.AppUUID,
+		OsUUID:     osInfo.OsUUID,
+		AccessInfo: accessInfo,
+		Type:       "vm",
+	}
+
+	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
+}
+
+func ChangeMOTD(domain string) error {
 	filepath := "/etc/motd"
+
+	// Read the file
 	b, err := readProtected(filepath)
 	if err != nil {
-		return fmt.Errorf("Can't read the /etc/motd file. Please check - %s and contact administrator.\n%w\n", filepath, err)
+		return fmt.Errorf("unable to read the /etc/motd file. Please check %s and contact administrator: %w", filepath, err)
 	}
 	content := string(b)
 
-	// Currently only .com is supported. Looking for line like
-	// Your ^[[01;32mgitbucket^[[0m is available under ^[[01;34m http://3.215.23.221.c.hossted.com ^[[0m
-	re, err := regexp.Compile(`(.*available under\s*.*https?:\/\/)(.*\.com)(.*)`)
-	if err != nil {
-		return err
+	// Match and update any URL that starts with https:// followed by a domain
+	re := regexp.MustCompile(`https://[\w\.\-]+\.\w+`)
+	updatedContent := re.ReplaceAllString(content, fmt.Sprintf("https://%s", domain))
+
+	if updatedContent == content {
+		return errors.New("no matching pattern found in /etc/motd. Please ensure the content is formatted correctly")
 	}
 
-	matches := re.FindAllStringSubmatch(content, -1)
-	if len(matches) > 0 {
-		if len(matches[0]) == 4 {
-			new := matches[0][1] + domain + matches[0][3]
-			content = strings.Replace(content, matches[0][0], new, 1) // Replace the containing new with new string
-		}
-	} else {
-		return errors.New("No matching pattern in /etc/motd. Please check.\n")
-	}
-
-	// Write back to file
-	err = writeProtected(filepath, []byte(content))
+	// Write the updated content back to the file
+	err = writeProtected(filepath, []byte(updatedContent))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write to the /etc/motd file: %w", err)
 	}
 
 	return nil
+}
+
+// CheckHosstedAuthFiles checks if the files ~/.hossted/auth.json and ~/.hossted/authresp.json exist.
+func CheckHosstedAuthFiles() error {
+	// Get the home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	// Define the file paths
+	authFilePath := filepath.Join(homeDir, ".hossted", "auth.json")
+	authRespFilePath := filepath.Join(homeDir, ".hossted", "authresp.json")
+
+	// Check if auth.json exists
+	if _, err := os.Stat(authFilePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %s does not exist", authFilePath)
+	}
+
+	// Check if authresp.json exists
+	if _, err := os.Stat(authRespFilePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %s does not exist", authRespFilePath)
+	}
+
+	// Both files exist
+	return nil
+}
+
+func getSoftwarePath() (string, error) {
+	path := "/opt/hossted/run/software.txt"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", nil
+	} else {
+		return path, nil
+	}
+
+}
+
+func getProjectName() (string, error) {
+	path, err := getSoftwarePath()
+	if err != nil {
+		fmt.Println("Error getting software path", err)
+	}
+
+	// its a market place VM, access info object will exist
+	if path == "/opt/hossted/run/software.txt" {
+		// read the file in this path
+		// file will have this convention - Linnovate-AWS-keycloak
+		// capture the last word ie keycloak in this case.
+		// and use this last work ie instead of osInfo.ProjectName
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			return "", err
+		}
+
+		// The file will have the convention Linnovate-AWS-keycloak
+		// Capture the last word (i.e., keycloak in this case)
+		softwareName := strings.TrimSpace(string(data))
+		words := strings.Split(softwareName, "-")
+		if len(words) > 0 {
+			projectName := words[len(words)-1]
+			// Use this last word (i.e., keycloak) instead of osInfo.ProjectName
+			return projectName, nil
+		}
+	} else if path == "" {
+		fmt.Println("Contact Hossted support to add Access Info object")
+		return "", nil
+	}
+	return "", nil
 }
