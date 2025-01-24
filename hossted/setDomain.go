@@ -197,6 +197,7 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 }
 
 // ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
+// ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
 func ChangeMOTD(newDomain string) error {
 	// Hardcoded file path
 	filePath := "/etc/motd"
@@ -212,8 +213,8 @@ func ChangeMOTD(newDomain string) error {
 	var updatedLines []string
 	scanner := bufio.NewScanner(file)
 
-	// Regex to match URLs and plain domains (e.g., abc.com, xyz.io, example.dev)
-	re := regexp.MustCompile(`https?://\S+|[a-zA-Z0-9.-]+\.(com|io|dev)`)
+	// Regex to match URLs and domains with optional paths (e.g., abc.com/guacamole)
+	re := regexp.MustCompile(`(https?://[a-zA-Z0-9.-]+\.(com|io|dev)(/[^\s]*)?|[a-zA-Z0-9.-]+\.(com|io|dev)(/[^\s]*)?)`)
 
 	// Process each line
 	for scanner.Scan() {
@@ -221,10 +222,15 @@ func ChangeMOTD(newDomain string) error {
 
 		// Check if the line contains "is", "available", and "under"
 		if strings.Contains(line, "is") && strings.Contains(line, "available") && strings.Contains(line, "under") {
-			// If the regex matches, replace the URL or domain
-			if re.MatchString(line) {
-				line = re.ReplaceAllString(line, newDomain)
-			}
+			// If the regex matches, replace the domain and retain the path
+			line = re.ReplaceAllStringFunc(line, func(match string) string {
+				// Extract the path (if any) and append it to the new domain
+				matches := re.FindStringSubmatch(match)
+				if len(matches) > 4 && matches[5] != "" { // If there's a path, retain it
+					return newDomain + matches[5]
+				}
+				return newDomain
+			})
 		}
 
 		updatedLines = append(updatedLines, line)
