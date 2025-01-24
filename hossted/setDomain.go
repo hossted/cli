@@ -1,8 +1,8 @@
 package hossted
 
 import (
+	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -196,30 +196,67 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
 }
 
-func ChangeMOTD(domain string) error {
-	filepath := "/etc/motd"
+// ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
+func ChangeMOTD(newDomain string) error {
+	// Hardcoded file path
+	filePath := "/etc/motd"
 
-	// Read the file
-	b, err := readProtected(filepath)
+	// Open the file for reading
+	file, err := os.Open(filePath)
 	if err != nil {
-		return fmt.Errorf("unable to read the /etc/motd file. Please check %s and contact administrator: %w", filepath, err)
+		return fmt.Errorf("failed to open file: %w", err)
 	}
-	content := string(b)
+	defer file.Close()
 
-	// Match and update any URL that starts with https:// followed by a domain
-	re := regexp.MustCompile(`https://[\w\.\-]+\.\w+`)
-	updatedContent := re.ReplaceAllString(content, fmt.Sprintf("https://%s", domain))
+	// Prepare to read the file line by line
+	var updatedLines []string
+	scanner := bufio.NewScanner(file)
 
-	if updatedContent == content {
-		return errors.New("no matching pattern found in /etc/motd. Please ensure the content is formatted correctly")
+	// Regex to match URLs and plain domains (e.g., abc.com, xyz.io, example.dev)
+	re := regexp.MustCompile(`https?://\S+|[a-zA-Z0-9.-]+\.(com|io|dev)`)
+
+	// Process each line
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if the line contains "is", "available", and "under"
+		if strings.Contains(line, "is") && strings.Contains(line, "available") && strings.Contains(line, "under") {
+			// If the regex matches, replace the URL or domain
+			if re.MatchString(line) {
+				line = re.ReplaceAllString(line, newDomain)
+			}
+		}
+
+		updatedLines = append(updatedLines, line)
+	}
+
+	// Check for scanner errors
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
 	}
 
 	// Write the updated content back to the file
-	err = writeProtected(filepath, []byte(updatedContent))
+	file, err = os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to write to the /etc/motd file: %w", err)
+		return fmt.Errorf("failed to open file for writing: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	for _, line := range updatedLines {
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			return fmt.Errorf("failed to write to file: %w", err)
+		}
 	}
 
+	// Flush the writer to ensure all content is written
+	err = writer.Flush()
+	if err != nil {
+		return fmt.Errorf("failed to flush content to file: %w", err)
+	}
+
+	fmt.Println("Successfully updated the MOTD file.")
 	return nil
 }
 
