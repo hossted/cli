@@ -14,7 +14,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -618,29 +617,28 @@ func convertInt64ToString(value int64) string {
 	return strconv.FormatInt(value, 10) // Base 10 conversion
 }
 
-// GetCPUUsage returns the average CPU usage percentage as a formatted string
+// getCPUUsage returns the average CPU usage percentage and the number of CPU cores.
 func getCPUUsage() (string, error) {
-	percentages, err := cpu.Percent(time.Second, false)
+
+	// Get the number of CPU cores
+	numCores, err := cpu.Counts(true)
 	if err != nil {
 		return "", err
 	}
 
-	if len(percentages) > 0 {
-		return fmt.Sprintf("%.2f%%", percentages[0]), nil
-	}
-
-	return "", fmt.Errorf("no CPU usage data available")
+	// Convert the number of cores to a string
+	return fmt.Sprintf("%d", numCores), nil
 }
 
-// GetMemoryUsage returns the memory usage statistics as a formatted string
+// getMemoryUsage returns a string summarizing the total memory of the server.
 func getMemoryUsage() (string, error) {
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
 		return "", err
 	}
 
-	memUsage := fmt.Sprintf("%.2f%%", vmStat.UsedPercent)
-	return memUsage, nil
+	// Summarize total memory in a single string (in GB)
+	return fmt.Sprintf("%.2f GB", float64(vmStat.Total)/(1024*1024*1024)), nil
 }
 
 func runMonitoringCompose(monitoringEnable, osUUID, appUUID string) error {
