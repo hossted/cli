@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -102,11 +101,6 @@ func SetDomain(env, app, domain string) error {
 			return fmt.Errorf("\n\n%w", err)
 		}
 
-		err = ChangeMOTD(domain)
-		if err != nil {
-			return err
-		}
-
 		check := verifyInputFormat(domain, "domain")
 		if !check {
 			return fmt.Errorf("invalid domain input. Expecting domain name (e.g. example.com). input - %s", domain)
@@ -118,15 +112,41 @@ func SetDomain(env, app, domain string) error {
 			return err
 		}
 
-		// Use sed to change the domain
-		// TODO: check if the line really exists in the file first
-		fmt.Println("Changing settings...")
-		text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", domain)
-		cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
-		_, err = cmd.Output()
+		// Read the existing PROJECT_BASE_URL
+		existingDomain, err := GetProjectBaseURL(envPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading PROJECT_BASE_URL: %v", err)
 		}
+
+		fmt.Println("Current PROJECT_BASE_URL:", existingDomain)
+
+		// Update the PROJECT_BASE_URL with a new domain
+		//newDomain := "new-domain.com"
+		err = UpdateProjectBaseURL(envPath, domain)
+		if err != nil {
+			return fmt.Errorf("error updating PROJECT_BASE_URL: %v", err)
+		}
+
+		// Update the MOTD file with the new domain
+		err = UpdateMOTD(existingDomain, domain)
+		if err != nil {
+			return fmt.Errorf("error updating MOTD: %v", err)
+		}
+
+		// // Use sed to change the domain
+		// // TODO: check if the line really exists in the file first
+		// fmt.Println("Changing settings...")
+		// text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", domain)
+		// cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
+		// _, err = cmd.Output()
+		// if err != nil {
+		// 	return err
+		// }
+
+		// err = ChangeMOTD(domain)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Try command
 		fmt.Println("Stopping traefik...")
@@ -196,7 +216,6 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
 }
 
-// ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
 // ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
 func ChangeMOTD(newDomain string) error {
 	// Hardcoded file path
@@ -334,4 +353,124 @@ func getProjectName() (string, error) {
 		return "", nil
 	}
 	return "", nil
+}
+
+// GetProjectBaseURL reads the PROJECT_BASE_URL value from the .env file.
+func GetProjectBaseURL(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open .env file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "PROJECT_BASE_URL=") {
+			// Extract and return the value after "PROJECT_BASE_URL="
+			return strings.TrimPrefix(line, "PROJECT_BASE_URL="), nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("failed to read .env file: %w", err)
+	}
+
+	return "", fmt.Errorf("PROJECT_BASE_URL not found in .env file")
+}
+
+// UpdateProjectBaseURL updates the PROJECT_BASE_URL value in the .env file while preserving any existing path.
+func UpdateProjectBaseURL(filePath, newDomain string) error {
+	// Open the .env file for reading
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open .env file: %w", err)
+	}
+	defer file.Close()
+
+	var updatedLines []string
+	scanner := bufio.NewScanner(file)
+	updated := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "PROJECT_BASE_URL=") {
+			// Extract the existing value of PROJECT_BASE_URL
+			existingDomain := strings.TrimPrefix(line, "PROJECT_BASE_URL=")
+
+			// Use preservePath to update the domain while retaining the path
+			updatedDomain := preservePath(existingDomain, newDomain)
+			line = fmt.Sprintf("PROJECT_BASE_URL=%s", updatedDomain)
+			updated = true
+		}
+		updatedLines = append(updatedLines, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to read .env file: %w", err)
+	}
+
+	if !updated {
+		return fmt.Errorf("PROJECT_BASE_URL not found in .env file")
+	}
+
+	// Write the updated content back to the file
+	err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")+"\n"), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write updated .env file: %w", err)
+	}
+
+	fmt.Println("Successfully updated PROJECT_BASE_URL in .env file.")
+	return nil
+}
+
+// UpdateMOTD searches for the existing domain in the MOTD file and replaces it with the new domain, preserving paths.
+func UpdateMOTD(existingDomain, newDomain string) error {
+	const motdFilePath = "/etc/motd"
+
+	// Open the MOTD file for reading
+	file, err := os.Open(motdFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to open MOTD file: %w", err)
+	}
+	defer file.Close()
+
+	var updatedLines []string
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if the line contains the existing domain
+		if strings.Contains(line, existingDomain) {
+			// Replace only the domain part, preserving any path
+			line = strings.ReplaceAll(line, existingDomain, preservePath(existingDomain, newDomain))
+		}
+
+		updatedLines = append(updatedLines, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to read MOTD file: %w", err)
+	}
+
+	// Write the updated content back to the MOTD file
+	err = os.WriteFile(motdFilePath, []byte(strings.Join(updatedLines, "\n")+"\n"), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write updated MOTD file: %w", err)
+	}
+
+	fmt.Println("Successfully updated the MOTD file.")
+	return nil
+}
+
+// preservePath replaces the domain in a URL while preserving the path.
+func preservePath(existingDomain, newDomain string) string {
+	// Check if the existing domain contains a path
+	if idx := strings.Index(existingDomain, "/"); idx != -1 {
+		// Extract the path and append it to the new domain
+		return newDomain + existingDomain[idx:]
+	}
+	// If no path exists, just return the new domain
+	return newDomain
 }
