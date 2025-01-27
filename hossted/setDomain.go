@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/hossted/cli/hossted/service/compose"
@@ -133,21 +132,6 @@ func SetDomain(env, app, domain string) error {
 			return fmt.Errorf("error updating MOTD: %v", err)
 		}
 
-		// // Use sed to change the domain
-		// // TODO: check if the line really exists in the file first
-		// fmt.Println("Changing settings...")
-		// text := fmt.Sprintf("s/(PROJECT_BASE_URL=)(.*)/\\1%s/", domain)
-		// cmd := exec.Command("sudo", "sed", "-i", "-E", text, envPath)
-		// _, err = cmd.Output()
-		// if err != nil {
-		// 	return err
-		// }
-
-		// err = ChangeMOTD(domain)
-		// if err != nil {
-		// 	return err
-		// }
-
 		// Try command
 		fmt.Println("Stopping traefik...")
 		err = stopTraefik(appDir)
@@ -214,75 +198,6 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 	}
 
 	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
-}
-
-// ChangeMOTD updates the domain in lines that contain "is", "available", and "under" and have a URL or a plain domain.
-func ChangeMOTD(newDomain string) error {
-	// Hardcoded file path
-	filePath := "/etc/motd"
-
-	// Open the file for reading
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Prepare to read the file line by line
-	var updatedLines []string
-	scanner := bufio.NewScanner(file)
-
-	// Regex to match URLs and domains with optional paths (e.g., abc.com/guacamole)
-	re := regexp.MustCompile(`(https?://[a-zA-Z0-9.-]+\.(com|io|dev)(/[^\s]*)?|[a-zA-Z0-9.-]+\.(com|io|dev)(/[^\s]*)?)`)
-
-	// Process each line
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Check if the line contains "is", "available", and "under"
-		if strings.Contains(line, "is") && strings.Contains(line, "available") && strings.Contains(line, "under") {
-			// If the regex matches, replace the domain and retain the path
-			line = re.ReplaceAllStringFunc(line, func(match string) string {
-				// Extract the path (if any) and append it to the new domain
-				matches := re.FindStringSubmatch(match)
-				if len(matches) > 4 && matches[5] != "" { // If there's a path, retain it
-					return newDomain + matches[5]
-				}
-				return newDomain
-			})
-		}
-
-		updatedLines = append(updatedLines, line)
-	}
-
-	// Check for scanner errors
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
-
-	// Write the updated content back to the file
-	file, err = os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open file for writing: %w", err)
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	for _, line := range updatedLines {
-		_, err := writer.WriteString(line + "\n")
-		if err != nil {
-			return fmt.Errorf("failed to write to file: %w", err)
-		}
-	}
-
-	// Flush the writer to ensure all content is written
-	err = writer.Flush()
-	if err != nil {
-		return fmt.Errorf("failed to flush content to file: %w", err)
-	}
-
-	fmt.Println("Successfully updated the MOTD file.")
-	return nil
 }
 
 // CheckHosstedAuthFiles checks if the files ~/.hossted/auth.json and ~/.hossted/authresp.json exist.
