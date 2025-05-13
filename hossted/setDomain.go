@@ -132,6 +132,12 @@ func SetDomain(env, app, domain string) error {
 			return fmt.Errorf("error updating MOTD: %v", err)
 		}
 
+		// Update the 404.html file with the new domain
+		err = Update404(existingDomain, domain)
+		if err != nil {
+			return fmt.Errorf("error updating 404.html: %v", err)
+		}
+
 		// Try command
 		fmt.Println("Stopping traefik...")
 		err = stopTraefik(appDir)
@@ -388,4 +394,84 @@ func preservePath(existingDomain, newDomain string) string {
 	}
 	// If no path exists, just return the new domain
 	return newDomain
+}
+
+// Update404 searches for the existing domain in the 404.html file and replaces it with the new domain.
+func Update404(existingDomain, newDomain string) error {
+	// Get the project name dynamically
+	projectName, err := getProjectName()
+	if err != nil {
+		return fmt.Errorf("error getting project name: %s", err)
+	}
+
+	// Construct the path to the 404.html file
+	error404FilePath := filepath.Join("/opt", projectName, "hossted", "error-pages", "404.html")
+
+	// Check if the file exists
+	if _, err := os.Stat(error404FilePath); os.IsNotExist(err) {
+		fmt.Printf("404.html file not found at %s, skipping update\n", error404FilePath)
+		return nil
+	}
+
+	// Open the 404.html file for reading
+	file, err := os.Open(error404FilePath)
+	if err != nil {
+		return fmt.Errorf("failed to open 404.html file: %w", err)
+	}
+	defer file.Close()
+
+	var updatedLines []string
+	scanner := bufio.NewScanner(file)
+	updated := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if the line contains the iframe src with url parameter
+		if strings.Contains(line, "url=https://") {
+			// Find the url parameter value and replace the domain
+			// Look for pattern like url=https://domain.example.com
+			start := strings.Index(line, "url=https://")
+			if start != -1 {
+				// Find the end of the domain (either & or " or end of string)
+				urlStart := start + len("url=https://")
+				end := urlStart
+				for end < len(line) && line[end] != '&' && line[end] != '"' && line[end] != ' ' {
+					end++
+				}
+
+				if end > urlStart {
+					oldURL := line[urlStart:end]
+					// Check if this URL contains our existing domain
+					if strings.Contains(oldURL, existingDomain) {
+						// Replace the domain while preserving the URL structure
+						newURL := strings.Replace(oldURL, existingDomain, newDomain, 1)
+						line = line[:urlStart] + newURL + line[end:]
+						updated = true
+					}
+				}
+			}
+		}
+
+		updatedLines = append(updatedLines, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to read 404.html file: %w", err)
+	}
+
+	if !updated {
+		// This might be okay if the domain wasn't found in this file
+		fmt.Println("Domain not found in 404.html file, no updates made")
+		return nil
+	}
+
+	// Write the updated content back to the file
+	err = os.WriteFile(error404FilePath, []byte(strings.Join(updatedLines, "\n")+"\n"), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write updated 404.html file: %w", err)
+	}
+
+	fmt.Println("Successfully updated the 404.html file.")
+	return nil
 }
