@@ -175,7 +175,7 @@ func SetDomain(env, app, domain string) error {
 
 		accessInfo := compose.GetAccessInfo("/opt/" + projectName + "/.env")
 
-		err = submitPatchRequest(osInfo, *accessInfo)
+		err = submitPatchRequest(osInfo, *accessInfo, domain)
 		if err != nil {
 			return fmt.Errorf("error submitting patch request %v", err)
 		}
@@ -186,7 +186,7 @@ func SetDomain(env, app, domain string) error {
 }
 
 // submitPatchRequest sends a PATCH request with VM info for marketplace setups.
-func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) error {
+func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo, domain string) error {
 	composeUrl := osInfo.HosstedApiUrl + "/compose/hosts/" + osInfo.OsUUID
 
 	type req struct {
@@ -194,6 +194,8 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 		OsUUID     string             `json:"osuuid"`      // Operating System UUID
 		AccessInfo compose.AccessInfo `json:"access_info"` // Access information for the VM
 		Type       string             `json:"type"`        // Type of the request, e.g., "vm"
+		URL        string             `json:"url"`         // Updated url value
+
 	}
 
 	newReq := req{
@@ -201,6 +203,7 @@ func submitPatchRequest(osInfo compose.OsInfo, accessInfo compose.AccessInfo) er
 		OsUUID:     osInfo.OsUUID,
 		AccessInfo: accessInfo,
 		Type:       "vm",
+		URL:        domain,
 	}
 
 	return compose.SendRequest(http.MethodPatch, composeUrl, osInfo.Token, newReq)
